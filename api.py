@@ -7,6 +7,9 @@ from Yowsup.Common.constants import Constants
 from Examples.EchoClient import WhatsappEchoClient
 from Examples.GetClient import WhatsappGetClient
 from Yowsup.Contacts.contacts import WAContactsSyncRequest
+from Yowsup.Registration.v2.coderequest import WACodeRequest
+from Yowsup.Registration.v2.existsrequest import WAExistsRequest
+from Yowsup.Registration.v2.regrequest import WARegRequest
 
 client = MongoClient()
 db = client.waapi
@@ -39,7 +42,7 @@ def messages_get():
     res["error"] = "no-key"
   return res'''
 
-@route("/messages", method="POST")
+@route("/message", method="POST")
 def messages_post():
   res = {"success": False}
   key = request.params.key
@@ -57,7 +60,7 @@ def messages_post():
             wa.login(str(line["pn"]), str(base64.b64decode(bytes(line["pw"].encode('utf-8')))))
             res["success"] = True
           else:
-            res["error"] = "wrong-params"
+            res["error"] = "bad-param"
         else:
           res["error"] = "no-permission"
       else:
@@ -66,6 +69,23 @@ def messages_post():
       res["error"] = "invalid-key"
   else:
     res["error"] = "no-key"
+  return res
+
+@route("/line/validate", method="GET")
+def line_validate():
+  res = {"success": False}
+  pn = request.params.pn
+  cc = request.params.cc
+  method = request.params.method
+  if pn and cc:
+    wa = WACodeRequest(cc, pn, Utilities.processIdentity(""), method)
+    if wa:
+      res["success"] = True
+      res["result"] = wa.send()
+    else:
+      res["error"] = "could-not-send"
+  else:
+    res["error"] = "bad-param"
   return res
 
 
