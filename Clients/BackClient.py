@@ -51,6 +51,9 @@ class WhatsappBackClient:
     while not self.done:
       time.sleep(0.2)
     return self.result
+    
+  def logout(self):
+    self.methodsInterface.call("disconnect")
   
   def onAuthSuccess(self, username):
     print("Authed %s" % username)

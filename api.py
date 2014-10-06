@@ -1,4 +1,5 @@
 import json, base64
+import time
 from bottle import route, run, request
 from pymongo import MongoClient
 from Yowsup.Common.utilities import Utilities
@@ -100,14 +101,14 @@ def line_validate():
           pw = base64.b64decode(bytes(line["pass"].encode('utf-8')))
         except TypeError:
           res["error"] = "password-type-error"
-          Lines.update({"_id": lId}, {"$set": {"validated": "wrong"}})
+          Lines.update({"_id": lId}, {"$set": {"valid": "wrong"}})
           return res
         res["success"] = True
         res["result"] = wa.login(user, pw)
         if (res["result"] == "valid"):
-          Lines.update({"_id": lId}, {"$set": {"validated": True}})
+          Lines.update({"_id": lId}, {"$set": {"valid": True}})
         else:
-          Lines.update({"_id": lId}, {"$set": {"validated": "wrong"}})
+          Lines.update({"_id": lId}, {"$set": {"valid": "wrong"}})
       else:
         res["error"] = "could-not-connect"
     else:
@@ -134,14 +135,16 @@ def line_run():
             pw = base64.b64decode(bytes(line["pass"].encode('utf-8')))
           except TypeError:
             res["error"] = "password-type-error"
-            Lines.update({"_id": lId}, {"$set": {"validated": "wrong"}})
+            Lines.update({"_id": lId}, {"$set": {"valid": "wrong", "reconnect": False}})
             return res
           loginRes = wa.login(user, pw)
           if (loginRes == "success"):
             res["success"] = True
             running[lId] = wa
+            Lines.update({"_id": lId}, {"$set": {"valid": True, "active": True}})
           else:
             res["error"] = "auth-failed"
+            Lines.update({"_id": lId}, {"$set": {"valid": "wrong", "reconnect": False}})
         else:
           res["error"] = "could-not-connect"
       else:
@@ -166,14 +169,16 @@ def line_activate():
             pw = base64.b64decode(bytes(line["pass"].encode('utf-8')))
           except TypeError:
             res["error"] = "password-type-error"
-            Lines.update({"_id": lId}, {"$set": {"validated": "wrong"}})
+            Lines.update({"_id": lId}, {"$set": {"valid": "wrong", "reconnect": False}})
             return res
           loginRes = wa.login(user, pw)
           if (loginRes == "success"):
             res["success"] = True
             running[lId] = wa
+            Lines.update({"_id": lId}, {"$set": {"valid": True, "active": True}})
           else:
             res["error"] = "auth-failed"
+            Lines.update({"_id": lId}, {"$set": {"valid": "wrong", "reconnect": False}})
         else:
           res["error"] = "could-not-connect"
       else:
@@ -182,6 +187,23 @@ def line_activate():
       res["error"] = "invalid-key"
   else:
     res["error"] = "no-key"
+  return res
+
+@route("/line/stop", method="GET")
+def line_stop():
+  res = {"success": False}
+  lId = request.params.id
+  if lId:
+    if lId in running:
+      wa = running[lId]
+      wa.logout()
+      del running[lId]
+      Lines.update({"_id": lId}, {"$set": {"reconnect": False, "active": False}})
+      res["success"] = True
+    else:
+      res["error"] = "no-such-line"
+  else:
+    res["error"] = "bad-param"
   return res
 
 run(host="192.168.2.2", port="8080", debug=True, reloader=True)
