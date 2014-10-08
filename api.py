@@ -32,7 +32,7 @@ def messages_post():
   if key:
     line = Lines.find_one({"tokens": {"$elemMatch": {"key": key}}})
     if line:
-      me = line["cc"] + line["pn"]
+      me = line["_id"]
       token = filter(lambda e: e['key'] == key, line['tokens'])[0]
       if token:
         if "permissions" in token and "write" in token["permissions"]:
