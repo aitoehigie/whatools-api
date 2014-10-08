@@ -117,42 +117,6 @@ def line_validate():
     res["error"] = "bad-param"
   return res
   
-@route("/line/run", method="GET")
-def line_run():
-  res = {"success": False}
-  lId = request.params.id
-  if lId:
-    if lId in running:
-      wa = running[lId]
-      res["error"] = "already-running"
-    else:
-      line = Lines.find_one({"_id": lId})
-      if line:
-        wa = WhatsappBackClient()
-        if wa:
-          user = line["cc"] + line["pn"]
-          try:
-            pw = base64.b64decode(bytes(line["pass"].encode('utf-8')))
-          except TypeError:
-            res["error"] = "password-type-error"
-            Lines.update({"_id": lId}, {"$set": {"valid": "wrong", "reconnect": False}})
-            return res
-          loginRes = wa.login(user, pw)
-          if (loginRes == "success"):
-            res["success"] = True
-            running[lId] = wa
-            Lines.update({"_id": lId}, {"$set": {"valid": True, "active": True}})
-          else:
-            res["error"] = "auth-failed"
-            Lines.update({"_id": lId}, {"$set": {"valid": "wrong", "reconnect": False}})
-        else:
-          res["error"] = "could-not-connect"
-      else:
-        res["error"] = "no-such-line"
-  else:
-    res["error"] = "bad-param"
-  return res
-  
 @route("/line/activate", method="GET")
 def line_activate():
   res = {"success": False}
@@ -160,6 +124,7 @@ def line_activate():
   if key:
     line = Lines.find_one({"tokens": {"$elemMatch": {"key": key}}})
     if line:
+      lId = line["_id"]
       token = filter(lambda e: e['key'] == key, line['tokens'])[0]
       if token:
         wa = WhatsappBackClient()
@@ -188,22 +153,31 @@ def line_activate():
   else:
     res["error"] = "no-key"
   return res
-
-@route("/line/stop", method="GET")
-def line_stop():
+  
+@route("/line/deactivate", method="GET")
+def line_activate():
   res = {"success": False}
-  lId = request.params.id
-  if lId:
-    if lId in running:
-      wa = running[lId]
-      wa.logout()
-      del running[lId]
-      Lines.update({"_id": lId}, {"$set": {"reconnect": False, "active": False}})
-      res["success"] = True
+  key = request.params.key
+  if key:
+    line = Lines.find_one({"tokens": {"$elemMatch": {"key": key}}})
+    if line:
+      lId = line["_id"]
+      token = filter(lambda e: e['key'] == key, line['tokens'])[0]
+      if token:
+        if lId in running:
+          wa = running[lId]
+          wa.logout()
+          del running[lId]
+          Lines.update({"_id": lId}, {"$set": {"reconnect": False, "active": False}})
+          res["success"] = True
+        else:
+          res["error"] = "no-such-line"
+      else:
+        res["error"] = "no-token"
     else:
-      res["error"] = "no-such-line"
+      res["error"] = "invalid-key"
   else:
-    res["error"] = "bad-param"
+    res["error"] = "no-key"
   return res
 
 run(host="192.168.2.2", port="8080", debug=True, reloader=True)
