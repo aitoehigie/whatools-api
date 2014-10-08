@@ -43,6 +43,7 @@ def messages_post():
               res["success"] = True
               chat = Chats.find_one({"from": me, "to": to})
               msg = {
+                "mine": True,
                 "body": body,
                 "stamp": int(time.time()*1000)
               }
