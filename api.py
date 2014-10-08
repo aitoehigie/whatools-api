@@ -18,6 +18,7 @@ db = client.waapi
 
 Users = db.users
 Lines = db.lines
+Chats = db.chats
 
 running = {}
 
@@ -31,6 +32,7 @@ def messages_post():
   if key:
     line = Lines.find_one({"tokens": {"$elemMatch": {"key": key}}})
     if line:
+      me = line["cc"] + line["pn"]
       token = filter(lambda e: e['key'] == key, line['tokens'])[0]
       if token:
         if "permissions" in token and "write" in token["permissions"]:
@@ -39,6 +41,21 @@ def messages_post():
               wa = running[line["_id"]];
               wa.say(to, body, ack)
               res["success"] = True
+              chat = Chats.find_one({"from": me, "to": to})
+              msg = {
+                "body": body,
+                "stamp": int(time.time()*1000)
+              }
+              if chat:
+                # Push it
+                Chats.update({"from": me, "to": to}, {"$push": {"messages": msg}});
+              else:
+                # Create new chat
+                Chats.insert({
+                  "from": me,
+                  "to": to,
+                  "messages": [msg]
+                })
             else:
               res["error"] = "inactive-line"
           else:
