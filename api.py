@@ -2,6 +2,7 @@ import json, base64
 import time
 from bottle import route, run, request
 from pymongo import MongoClient
+from bson import objectid
 from Yowsup.Common.utilities import Utilities
 from Yowsup.Common.debugger import Debugger
 from Yowsup.Common.constants import Constants
@@ -42,20 +43,23 @@ def messages_post():
               wa.say(to, body, ack)
               res["success"] = True
               chat = Chats.find_one({"from": me, "to": to})
+              stamp = int(time.time()*1000)
               msg = {
                 "mine": True,
                 "body": body,
-                "stamp": int(time.time()*1000)
+                "stamp": stamp
               }
               if chat:
                 # Push it
-                Chats.update({"from": me, "to": to}, {"$push": {"messages": msg}});
+                Chats.update({"from": me, "to": to}, {"$push": {"messages": msg}, "$set": {"lastStamp": stamp}});
               else:
                 # Create new chat
                 Chats.insert({
+                  "_id": str(objectid.ObjectId()),
                   "from": me,
                   "to": to,
-                  "messages": [msg]
+                  "messages": [msg],
+                  "lastStamp": stamp
                 })
             else:
               res["error"] = "inactive-line"
@@ -145,31 +149,45 @@ def line_activate():
       lId = line["_id"]
       token = filter(lambda e: e['key'] == key, line['tokens'])[0]
       if token:
-        wa = WhatsappBackClient()
-        if wa:
-          user = line["cc"] + line["pn"]
-          try:
-            pw = base64.b64decode(bytes(line["pass"].encode('utf-8')))
-          except TypeError:
-            res["error"] = "password-type-error"
-            Lines.update({"_id": lId}, {"$set": {"valid": "wrong", "reconnect": False}})
-            return res
-          loginRes = wa.login(user, pw)
-          if (loginRes == "success"):
-            res["success"] = True
-            running[lId] = wa
-            Lines.update({"_id": lId}, {"$set": {"valid": True, "active": True}})
-          else:
-            res["error"] = "auth-failed"
-            Lines.update({"_id": lId}, {"$set": {"valid": "wrong", "reconnect": False}})
+        if lId in running:
+          wa = running[lId]["yowsup"]
+          # TODO: Check if connected and reconnect if not
+          if token["key"] not in running[lId]["tokens"]:
+            running[lId]["tokens"].append(token["key"])
+          Lines.update({"_id": lId}, {"$set": {"valid": True, "active": True}})
+          res["success"] = True
         else:
-          res["error"] = "could-not-connect"
+          wa = WhatsappBackClient()
+          if wa:
+            user = line["cc"] + line["pn"]
+            try:
+              pw = base64.b64decode(bytes(line["pass"].encode('utf-8')))
+            except TypeError:
+              res["error"] = "password-type-error"
+              Lines.update({"_id": lId}, {"$set": {"valid": "wrong", "reconnect": False}})
+              return res
+            loginRes = wa.login(user, pw)
+            if (loginRes == "success"):
+              res["success"] = True
+              running[lId] = {
+                "yowsup": wa,
+                "tokens": [token["key"]]
+              }
+              Lines.update({"_id": lId}, {"$set": {"valid": True, "active": True}})
+            else:
+              res["error"] = "auth-failed"
+              Lines.update({"_id": lId}, {"$set": {"valid": "wrong", "reconnect": False}})
+          else:
+            res["error"] = "could-not-connect"
       else:
         res["error"] = "no-token"
     else:
       res["error"] = "invalid-key"
   else:
     res["error"] = "no-key"
+  print ">>>>>>>>>>>>>"
+  print running
+  print ">>>>>>>>>>>>>"
   return res
   
 @route("/line/deactivate", method="GET")
@@ -183,9 +201,11 @@ def line_activate():
       token = filter(lambda e: e['key'] == key, line['tokens'])[0]
       if token:
         if lId in running:
-          wa = running[lId]
+          wa = running[lId]["yowsup"]
           wa.logout()
-          del running[lId]
+          running[lId]["tokens"].remove(token["key"])
+          if len(running[lId]["tokens"]) < 1:
+            del running[lId]
           Lines.update({"_id": lId}, {"$set": {"reconnect": False, "active": False}})
           res["success"] = True
         else:
@@ -196,6 +216,9 @@ def line_activate():
       res["error"] = "invalid-key"
   else:
     res["error"] = "no-key"
+  print "<<<<<<<<<<<<<"
+  print running
+  print "<<<<<<<<<<<<<"
   return res
 
 run(host="192.168.2.2", port="8080", debug=True, reloader=True)
