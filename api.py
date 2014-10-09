@@ -21,6 +21,30 @@ Users = db.users
 Lines = db.lines
 Chats = db.chats
 
+def onMessageReceived(me, messageId, jid, messageContent, timestamp, wantsReceipt, pushName, isBroadCast):
+  to = jid.split("@")[0]
+  chat = Chats.find_one({"from": me, "to": to})
+  stamp = int(timestamp)*1000
+  msg = {
+    "mine": False,
+    "body": messageContent,
+    "stamp": stamp
+  }
+  if chat:
+    # Push it
+    Chats.update({"from": me, "to": to}, {"$push": {"messages": msg}, "$set": {"lastStamp": stamp}});
+  else:
+    # Create new chat
+    Chats.insert({
+      "_id": str(objectid.ObjectId()),
+      "from": me,
+      "to": to,
+      "messages": [msg],
+      "lastStamp": stamp
+    })
+
+eventHandler = {"onMessageReceived": onMessageReceived}
+
 running = {}
 
 @route("/message", method="POST")
@@ -28,7 +52,7 @@ def messages_post():
   res = {"success": False}
   key = request.params.key
   to = request.params.to
-  body = request.params.body.encode('ascii','replace')
+  body = request.params.body.encode('utf8','replace')
   ack = request.params.ack
   if key:
     line = Lines.find_one({"tokens": {"$elemMatch": {"key": key}}})
@@ -39,7 +63,7 @@ def messages_post():
         if "permissions" in token and "write" in token["permissions"]:
           if to and body:
             if line["_id"] in running:
-              wa = running[line["_id"]];
+              wa = running[line["_id"]]["yowsup"];
               wa.say(to, body, ack)
               res["success"] = True
               chat = Chats.find_one({"from": me, "to": to})
@@ -157,7 +181,7 @@ def line_activate():
           Lines.update({"_id": lId}, {"$set": {"valid": True, "active": True}})
           res["success"] = True
         else:
-          wa = WhatsappBackClient()
+          wa = WhatsappBackClient(lId, eventHandler, True, True)
           if wa:
             user = line["cc"] + line["pn"]
             try:

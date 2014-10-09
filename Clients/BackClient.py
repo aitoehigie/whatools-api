@@ -31,7 +31,9 @@ from Yowsup.connectionmanager import YowsupConnectionManager
 
 class WhatsappBackClient:
   
-  def __init__(self, keepAlive = True, sendReceipts = False):
+  def __init__(self, me, eventHandler, keepAlive = True, sendReceipts = False):
+    self.me = me
+    self.eventHandler = eventHandler
     self.sendReceipts = sendReceipts
     connectionManager = YowsupConnectionManager()
     connectionManager.setAutoPong(keepAlive)
@@ -71,6 +73,7 @@ class WhatsappBackClient:
 
   def onMessageReceived(self, messageId, jid, messageContent, timestamp, wantsReceipt, pushName, isBroadCast):
     formattedDate = datetime.datetime.fromtimestamp(timestamp).strftime('%d-%m-%Y %H:%M')
+    self.eventHandler["onMessageReceived"](self.me, messageId, jid, messageContent, timestamp, wantsReceipt, pushName, isBroadCast)
     print("%s [%s]:%s"%(jid, formattedDate, messageContent))
     if wantsReceipt and self.sendReceipts:
       self.methodsInterface.call("message_ack", (jid, messageId))
