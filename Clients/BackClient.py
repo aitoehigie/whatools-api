@@ -31,8 +31,8 @@ from Yowsup.connectionmanager import YowsupConnectionManager
 
 class WhatsappBackClient:
   
-  def __init__(self, me, eventHandler, keepAlive = True, sendReceipts = False):
-    self.me = me
+  def __init__(self, line, eventHandler, keepAlive = True, sendReceipts = False):
+    self.line = line
     self.eventHandler = eventHandler
     self.sendReceipts = sendReceipts
     connectionManager = YowsupConnectionManager()
@@ -46,9 +46,13 @@ class WhatsappBackClient:
     self.cm = connectionManager
     self.result = False
     self.done = False
+    self.username = False
+    self.password = False
+    self.errors = 0
   
   def login(self, username, password):
     self.username = username
+    self.password = password
     self.methodsInterface.call("auth_login", (username, password))
     while not self.done:
       time.sleep(0.2)
@@ -62,13 +66,16 @@ class WhatsappBackClient:
     self.methodsInterface.call("ready")
     self.result = "success"
     self.done = True
+    self.eventHandler["onAuthSuccess"](self)
 
   def onAuthFailed(self, username, err):
     print("Auth Failed!")
     self.result = "failed"
     self.done = True
+    self.eventHandler["onAuthFailed"](self)
 
   def onDisconnected(self, reason):
+    self.eventHandler["onDisconnected"](self, reason)
     print("Disconnected because %s" %reason)
 
   def onMessageReceived(self, messageId, jid, messageContent, timestamp, wantsReceipt, pushName, isBroadCast):

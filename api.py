@@ -21,9 +21,26 @@ Users = db.users
 Lines = db.lines
 Chats = db.chats
 
-def onMessageReceived(me, messageId, jid, messageContent, timestamp, wantsReceipt, pushName, isBroadCast):
+def onAuthFailed(wa):
+  Lines.update({"_id": wa.line["_id"]}, {"$set": {"active": False, "reconnect": False, "valid": False}});
+
+def onAuthSuccess(wa):
+  Lines.update({"_id": wa.line["_id"]}, {"$set": {"active": True, "reconnect": True, "valid": True}});
+
+def onDisconnected(wa, reason):
+  line = Lines.find_one({"_id": wa.line["_id"]});
+  if wa.errors < 3:
+    Lines.update({"_id": wa.line["_id"]}, {"$set": {"active": False}});
+    wa.errors += 1
+    if line["reconnect"]:
+      wa.login(wa.username, wa.password);
+  else:
+    Lines.update({"_id": wa.line["_id"]}, {"$set": {"active": False, "reconnect": False}});
+    wa.errors = 0
+
+def onMessageReceived(line, messageId, jid, messageContent, timestamp, wantsReceipt, pushName, isBroadCast):
   to = jid.split("@")[0]
-  chat = Chats.find_one({"from": me, "to": to})
+  chat = Chats.find_one({"from": line["_id"], "to": to})
   stamp = int(timestamp)*1000
   msg = {
     "mine": False,
@@ -32,18 +49,23 @@ def onMessageReceived(me, messageId, jid, messageContent, timestamp, wantsReceip
   }
   if chat:
     # Push it
-    Chats.update({"from": me, "to": to}, {"$push": {"messages": msg}, "$set": {"lastStamp": stamp}});
+    Chats.update({"from": line["_id"], "to": to}, {"$push": {"messages": msg}, "$set": {"lastStamp": stamp}});
   else:
     # Create new chat
     Chats.insert({
       "_id": str(objectid.ObjectId()),
-      "from": me,
+      "from": line,
       "to": to,
       "messages": [msg],
       "lastStamp": stamp
     })
 
-eventHandler = {"onMessageReceived": onMessageReceived}
+eventHandler = {
+  "onAuthFailed": onAuthFailed,
+  "onAuthSuccess": onAuthSuccess,
+  "onDisconnected": onDisconnected,
+  "onMessageReceived": onMessageReceived
+}
 
 running = {}
 
@@ -181,7 +203,7 @@ def line_activate():
           Lines.update({"_id": lId}, {"$set": {"valid": True, "active": True}})
           res["success"] = True
         else:
-          wa = WhatsappBackClient(lId, eventHandler, True, True)
+          wa = WhatsappBackClient(line, eventHandler, True, True)
           if wa:
             user = line["cc"] + line["pn"]
             try:
@@ -225,12 +247,12 @@ def line_activate():
       token = filter(lambda e: e['key'] == key, line['tokens'])[0]
       if token:
         if lId in running:
+          Lines.update({"_id": lId}, {"$set": {"reconnect": False, "active": False}})
           wa = running[lId]["yowsup"]
           wa.logout()
           running[lId]["tokens"].remove(token["key"])
           if len(running[lId]["tokens"]) < 1:
             del running[lId]
-          Lines.update({"_id": lId}, {"$set": {"reconnect": False, "active": False}})
           res["success"] = True
         else:
           res["error"] = "no-such-line"
