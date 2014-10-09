@@ -38,9 +38,9 @@ def onDisconnected(wa, reason):
     Lines.update({"_id": wa.line["_id"]}, {"$set": {"active": False, "reconnect": False}});
     wa.errors = 0
 
-def onMessageReceived(line, messageId, jid, messageContent, timestamp, wantsReceipt, pushName, isBroadCast):
+def onMessageReceived(wa, messageId, jid, messageContent, timestamp, wantsReceipt, pushName, isBroadCast):
   to = jid.split("@")[0]
-  chat = Chats.find_one({"from": line["_id"], "to": to})
+  chat = Chats.find_one({"from": wa.line["_id"], "to": to})
   stamp = int(timestamp)*1000
   msg = {
     "mine": False,
@@ -49,12 +49,12 @@ def onMessageReceived(line, messageId, jid, messageContent, timestamp, wantsRece
   }
   if chat:
     # Push it
-    Chats.update({"from": line["_id"], "to": to}, {"$push": {"messages": msg}, "$set": {"lastStamp": stamp}});
+    Chats.update({"from": wa.line["_id"], "to": to}, {"$push": {"messages": msg}, "$set": {"lastStamp": stamp}});
   else:
     # Create new chat
     Chats.insert({
       "_id": str(objectid.ObjectId()),
-      "from": line,
+      "from": wa.line["_id"],
       "to": to,
       "messages": [msg],
       "lastStamp": stamp
