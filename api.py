@@ -185,8 +185,8 @@ def line_validate():
     res["error"] = "bad-param"
   return res
   
-@route("/line/activate", method="GET")
-def line_activate():
+@route("/line/subscribe", method="GET")
+def line_subscribe():
   res = {"success": False}
   key = request.params.key
   if key:
@@ -236,8 +236,8 @@ def line_activate():
   print ">>>>>>>>>>>>>"
   return res
   
-@route("/line/deactivate", method="GET")
-def line_activate():
+@route("/line/unsubscribe", method="GET")
+def line_unsubscribe():
   res = {"success": False}
   key = request.params.key
   if key:
