@@ -1,5 +1,9 @@
+#!/usr/bin/python
+#  -*- coding: utf8 -*-
+
 import json, base64
 import time
+import httplib, urllib
 from bottle import route, run, request
 from pymongo import MongoClient
 from bson import objectid
@@ -14,12 +18,26 @@ from Yowsup.Registration.v2.coderequest import WACodeRequest
 from Yowsup.Registration.v2.existsrequest import WAExistsRequest
 from Yowsup.Registration.v2.regrequest import WARegRequest
 
+running = {}
+
 client = MongoClient('mongodb://192.168.1.2')
 db = client.waapi
 
 Users = db.users
 Lines = db.lines
 Chats = db.chats
+
+def push(url, method, data):
+  data["_method"] = method
+  params = urllib.urlencode(data)
+  headers = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/plain"}
+  if url[0] == "https":
+    conn = httplib.HTTPSConnection(url[1], int(url[2]))
+  else:
+    conn = httplib.HTTPConnection(url[1], int(url[2]))
+  conn.request("POST", url[3], params, headers)
+  res = conn.getresponse()
+  return res
 
 def onAuthFailed(wa):
   Lines.update({"_id": wa.line["_id"]}, {"$set": {"active": False, "reconnect": False, "valid": False}});
@@ -39,6 +57,14 @@ def onDisconnected(wa, reason):
     wa.errors = 0
 
 def onMessageReceived(wa, messageId, jid, messageContent, timestamp, wantsReceipt, pushName, isBroadCast):
+  if len(running):
+    allTokens = Lines.find_one({"_id": wa.line["_id"]})["tokens"]
+    runningTokens = running[wa.line["_id"]]["tokens"]
+    for token in allTokens:
+      if token["key"] in runningTokens:
+        if token["push"]:
+          res = push(token["push"], "message", {"messageId": messageId, "jid": jid, "messageContent": messageContent, "timestamp": timestamp, "wantsReceipt": wantsReceipt, "pushName": pushName, "isBroadCast": isBroadCast})
+          print res.read()
   to = jid.split("@")[0]
   chat = Chats.find_one({"from": wa.line["_id"], "to": to})
   stamp = int(timestamp)*1000
@@ -48,7 +74,7 @@ def onMessageReceived(wa, messageId, jid, messageContent, timestamp, wantsReceip
     "stamp": stamp
   }
   if chat:
-    # Push it
+    # Push it to db
     Chats.update({"from": wa.line["_id"], "to": to}, {"$push": {"messages": msg}, "$set": {"lastStamp": stamp}});
   else:
     # Create new chat
@@ -59,15 +85,14 @@ def onMessageReceived(wa, messageId, jid, messageContent, timestamp, wantsReceip
       "messages": [msg],
       "lastStamp": stamp
     })
-
+  
+  
 eventHandler = {
   "onAuthFailed": onAuthFailed,
   "onAuthSuccess": onAuthSuccess,
   "onDisconnected": onDisconnected,
   "onMessageReceived": onMessageReceived
 }
-
-running = {}
 
 @route("/message", method="POST")
 def messages_post():
@@ -203,7 +228,7 @@ def line_subscribe():
           Lines.update({"_id": lId}, {"$set": {"valid": True, "active": True}})
           res["success"] = True
         else:
-          wa = WhatsappBackClient(line, eventHandler, True, True)
+          wa = WhatsappBackClient(line, token, eventHandler, True, True)
           if wa:
             user = line["cc"] + line["pn"]
             try:

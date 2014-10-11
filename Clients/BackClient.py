@@ -31,8 +31,9 @@ from Yowsup.connectionmanager import YowsupConnectionManager
 
 class WhatsappBackClient:
   
-  def __init__(self, line, eventHandler, keepAlive = True, sendReceipts = False):
+  def __init__(self, line, token, eventHandler, keepAlive = True, sendReceipts = False):
     self.line = line
+    self.token = token
     self.eventHandler = eventHandler
     self.sendReceipts = sendReceipts
     connectionManager = YowsupConnectionManager()
