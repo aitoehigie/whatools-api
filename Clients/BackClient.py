@@ -87,6 +87,5 @@ class WhatsappBackClient:
       self.methodsInterface.call("message_ack", (jid, messageId))
       
   def say(self, to, body, ack = False):
-    self.methodsInterface.call("message_send", (to + "@s.whatsapp.net", body))
-    return True
+    return self.methodsInterface.call("message_send", (to + "@s.whatsapp.net", body))
   

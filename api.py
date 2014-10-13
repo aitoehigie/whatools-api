@@ -69,6 +69,7 @@ def onMessageReceived(wa, messageId, jid, messageContent, timestamp, wantsReceip
   chat = Chats.find_one({"from": wa.line["_id"], "to": to})
   stamp = int(timestamp)*1000
   msg = {
+    "id": messageId,
     "mine": False,
     "body": messageContent,
     "stamp": stamp
@@ -111,11 +112,12 @@ def messages_post():
           if to and body:
             if line["_id"] in running:
               wa = running[line["_id"]]["yowsup"];
-              wa.say(to, body, ack)
+              msgId = wa.say(to, body, ack)
               res["success"] = True
               chat = Chats.find_one({"from": me, "to": to})
               stamp = int(time.time()*1000)
               msg = {
+                "id": msgId,
                 "mine": True,
                 "body": body,
                 "stamp": stamp
