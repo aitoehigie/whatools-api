@@ -1,9 +1,7 @@
 #!/usr/bin/python
 #  -*- coding: utf8 -*-
 
-import json, base64
-import time
-import httplib, urllib
+import json, base64, time, httplib, urllib
 from bottle import route, run, request
 from pymongo import MongoClient
 from bson import objectid
@@ -28,6 +26,7 @@ Lines = db.lines
 Chats = db.chats
 
 def push(url, method, data):
+  res = False
   data["_method"] = method
   params = urllib.urlencode(data)
   headers = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/plain"}
@@ -35,8 +34,11 @@ def push(url, method, data):
     conn = httplib.HTTPSConnection(url[1], int(url[2]))
   else:
     conn = httplib.HTTPConnection(url[1], int(url[2]))
-  conn.request("POST", url[3], params, headers)
-  res = conn.getresponse()
+  try:
+    conn.request("POST", url[3], params, headers)
+    res = conn.getresponse()
+  except:
+    print "[PUSH] Connection refused"
   return res
 
 def onAuthFailed(wa):
@@ -64,7 +66,8 @@ def onMessageReceived(wa, messageId, jid, messageContent, timestamp, wantsReceip
       if token["key"] in runningTokens:
         if token["push"]:
           res = push(token["push"], "message", {"messageId": messageId, "jid": jid, "messageContent": messageContent, "timestamp": timestamp, "wantsReceipt": wantsReceipt, "pushName": pushName, "isBroadCast": isBroadCast})
-          print res.read()
+          if res:
+            print res.read()
   to = jid.split("@")[0]
   chat = Chats.find_one({"from": wa.line["_id"], "to": to})
   stamp = int(timestamp)*1000
@@ -102,6 +105,7 @@ def messages_post():
   to = request.params.to
   body = request.params.body.encode('utf8','replace')
   ack = request.params.ack
+  broadcast = request.params.broadcast
   if key:
     line = Lines.find_one({"tokens": {"$elemMatch": {"key": key}}})
     if line:
@@ -113,6 +117,7 @@ def messages_post():
             if line["_id"] in running:
               wa = running[line["_id"]]["yowsup"];
               msgId = wa.say(to, body, ack)
+              res["result"] = msgId
               res["success"] = True
               chat = Chats.find_one({"from": me, "to": to})
               stamp = int(time.time()*1000)
@@ -134,6 +139,11 @@ def messages_post():
                   "messages": [msg],
                   "lastStamp": stamp
                 })
+              runningTokens = running[line["_id"]]["tokens"]
+              for token in line["tokens"]:
+                if token["key"] in runningTokens:
+                  if token["push"]:
+                    push(token["push"], "carbon", {"messageId": msgId, "jid": to, "messageContent": body, "timestamp": stamp, "wantsReceipt": ack, "isBroadCast": broadcast})
             else:
               res["error"] = "inactive-line"
           else:
