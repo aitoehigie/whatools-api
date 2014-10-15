@@ -38,8 +38,20 @@ def push(url, method, data):
     conn.request("POST", url[3], params, headers)
     res = conn.getresponse()
   except:
-    print "[PUSH] Connection refused"
+    print "[PUSH] Connection refused while trying to " + method
   return res
+
+def onAck(wa, grade, jid, messageId):
+  print "ACK from " + jid + " to " + wa.line["cc"] + wa.line["pn"] 
+  if len(running):
+    allTokens = Lines.find_one({"_id": wa.line["_id"]})["tokens"]
+    runningTokens = running[wa.line["_id"]]["tokens"]
+    for token in allTokens:
+      if token["key"] in runningTokens:
+        if token["push"]:
+          res = push(token["push"], "ack", {"grade": grade, "jid": jid, "messageId": messageId})
+          if res:
+            print res.read()
 
 def onAuthFailed(wa):
   Lines.update({"_id": wa.line["_id"]}, {"$set": {"active": False, "reconnect": False, "valid": False}});
@@ -92,10 +104,11 @@ def onMessageReceived(wa, messageId, jid, messageContent, timestamp, wantsReceip
   
   
 eventHandler = {
+  "onAck": onAck,
   "onAuthFailed": onAuthFailed,
   "onAuthSuccess": onAuthSuccess,
   "onDisconnected": onDisconnected,
-  "onMessageReceived": onMessageReceived
+  "onMessageReceived": onMessageReceived,
 }
 
 @route("/message", method="POST")
@@ -142,7 +155,7 @@ def messages_post():
               runningTokens = running[line["_id"]]["tokens"]
               for token in line["tokens"]:
                 if token["key"] in runningTokens:
-                  if token["push"]:
+                  if token["push"] and token["key"] != key:
                     push(token["push"], "carbon", {"messageId": msgId, "jid": to, "messageContent": body, "timestamp": stamp, "wantsReceipt": ack, "isBroadCast": broadcast})
             else:
               res["error"] = "inactive-line"
@@ -249,15 +262,16 @@ def line_subscribe():
               res["error"] = "password-type-error"
               Lines.update({"_id": lId}, {"$set": {"valid": "wrong", "reconnect": False}})
               return res
+            running[lId] = {
+              "yowsup": wa,
+              "tokens": [token["key"]]
+            }
             loginRes = wa.login(user, pw)
             if (loginRes == "success"):
               res["success"] = True
-              running[lId] = {
-                "yowsup": wa,
-                "tokens": [token["key"]]
-              }
               Lines.update({"_id": lId}, {"$set": {"valid": True, "active": True}})
             else:
+              del running[lId]
               res["error"] = "auth-failed"
               Lines.update({"_id": lId}, {"$set": {"valid": "wrong", "reconnect": False}})
           else:

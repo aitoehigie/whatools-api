@@ -40,10 +40,12 @@ class WhatsappBackClient:
     connectionManager.setAutoPong(keepAlive)
     self.signalsInterface = connectionManager.getSignalsInterface()
     self.methodsInterface = connectionManager.getMethodsInterface()
-    self.signalsInterface.registerListener("message_received", self.onMessageReceived)
-    self.signalsInterface.registerListener("auth_success", self.onAuthSuccess)
     self.signalsInterface.registerListener("auth_fail", self.onAuthFailed)
+    self.signalsInterface.registerListener("auth_success", self.onAuthSuccess)
     self.signalsInterface.registerListener("disconnected", self.onDisconnected)
+    self.signalsInterface.registerListener("message_received", self.onMessageReceived)
+    self.signalsInterface.registerListener("receipt_messageDelivered", self.onDeliveredAck)
+    self.signalsInterface.registerListener("receipt_visible", self.onVisibleAck)
     self.cm = connectionManager
     self.result = False
     self.done = False
@@ -86,6 +88,12 @@ class WhatsappBackClient:
     if wantsReceipt and self.sendReceipts:
       self.methodsInterface.call("message_ack", (jid, messageId))
       
+  def onDeliveredAck(self, jid, messageId):
+    self.eventHandler["onAck"](self, 'delivered', jid, messageId)
+    
+  def onVisibleAck(self, jid, messageId):
+    self.eventHandler["onAck"](self, 'visible', jid, messageId)
+    
   def say(self, to, body, ack = False):
     return self.methodsInterface.call("message_send", (to + "@s.whatsapp.net", body))
   
