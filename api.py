@@ -25,6 +25,17 @@ Users = db.users
 Lines = db.lines
 Chats = db.chats
 
+freePlanSignature = "\n\n[Message sent by using WAAPI. If it's SPAM, report it to https://waapi.com/report]"
+
+def lineIsNotExpired(line):
+  now = int(time.time()*1000)
+  return now < line["expires"]
+  
+def messageSign(text, line):
+  if line["plan"] == "free":
+    text += freePlanSignature
+  return text
+
 def push(url, method, data):
   res = False
   data["_method"] = method
@@ -35,14 +46,14 @@ def push(url, method, data):
   else:
     conn = httplib.HTTPConnection(url[1], int(url[2]))
   try:
-    conn.request("POST", url[3], params, headers)
+    conn.request("POST", '/' + url[3], params, headers)
     res = conn.getresponse()
   except:
     print "[PUSH] Connection refused while trying to " + method
   return res
 
 def onAck(wa, grade, jid, messageId):
-  print "ACK from " + jid + " to " + wa.line["cc"] + wa.line["pn"] 
+  print "ACK from " + jid + " to " + wa.line["cc"] + wa.line["pn"]
   if len(running):
     allTokens = Lines.find_one({"_id": wa.line["_id"]})["tokens"]
     runningTokens = running[wa.line["_id"]]["tokens"]
@@ -128,8 +139,9 @@ def messages_post():
         if "permissions" in token and "write" in token["permissions"]:
           if to and body:
             if line["_id"] in running:
+              signedBody = messageSign(body, line)
               wa = running[line["_id"]]["yowsup"];
-              msgId = wa.say(to, body, ack)
+              msgId = wa.say(to, signedBody, ack)
               res["result"] = msgId
               res["success"] = True
               chat = Chats.find_one({"from": me, "to": to})
