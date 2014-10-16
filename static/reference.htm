@@ -1,0 +1,241 @@
+<html>
+  <head>
+    <title>WAAPI Reference v0</title>
+  </head>
+  <body>
+    <header>
+      <h1>WAAPI Reference v0</h1>
+      <p>by Waaltcom</p>
+    </header>
+    <section>
+      <header>
+        <h2>Base URL</h2>
+      </header>
+      <article>
+        <a class="url">https://waapi.waalt.com/v0</a>
+        <p>(HTTPS is compulsory)</p>
+      </article>
+    </section>
+    <section>
+      <header>
+        <h2>API Methods</h2>
+      </header>
+      <article>
+        <header>
+          <h3>Subscribe</h3>
+        </header>
+        <p>Before using any app you NEED to subscribe the token to the API.</p>
+        <span class="method">GET</span>
+        <a class="url">/<strong>subscribe</strong>?<em>key</em>=<span class="value"></span></a>
+        <ul class="params">
+          <li><strong>key</strong>the app key, similar to <em>"bedfcfae-6c45-40d5-c56f-125c572bae41"</em></li>
+        </ul>
+        <ul class="results">
+          <li><code class="success">{"success": "true"}</code></li>
+          <li><code class="error">{"error": "no-key"}</code>No token was specified</li>
+          <li><code class="error">{"error": "no-token-matches-key"}</code>There's no token matching such app key</li>
+          <li><code class="error">{"error": "no-line-matches-key"}</code>There's no line matching such app key</li>
+          <li><code class="error">{"error": "line-is-expired"}</code>The line is expired. You'll need to pay for renovation</li>
+          <li><code class="error">{"error": "could-not-connect"}</code>WhatsApp service is not currently available</li>
+          <li><code class="error">{"error": "auth-failed"}</code>WhatsApp authentication failed. Your credentials are wrong or they've recently changed</li>
+        </ul>
+      </article>
+      <article>
+        <header>
+          <h3>Unsubscribe</h3>
+        </header>
+        <p>When you close your app, you MUST unsubscribe its token so that further notifications and messages are not lost.</p>
+        <span class="method">GET</span>
+        <a class="url">/<strong>unsubscribe</strong>?<em>key</em>=<span class="value"></span></a>
+        <ul class="params">
+          <li><strong>key</strong>the app key, similar to <em>"bedfcfae-6c45-40d5-c56f-125c572bae41"</em></li>
+        </ul>
+        <ul class="results">
+          <li><code class="success">{"success": "true"}</code></li>
+          <li><code class="error">{"error": "no-key"}</code>No token was specified</li>
+          <li><code class="error">{"error": "no-token-matches-key"}</code>There's no token matching such app key</li>
+          <li><code class="error">{"error": "no-line-matches-key"}</code>There's no line matching such app key</li>
+          <li><code class="error">{"error": "line-was-not-running"}</code>You are trying to unsubscribe from a line that has no active apps</li>
+        </ul>
+      </article>
+      <article>
+        <header>
+          <h3>Message sending</h3>
+        </header>
+        <p>You can send messages to any WhatsApp user by using this POST method. Note that the token MUST be subscribed in order to work properly.</p>
+        <span class="method">POST</span>
+        <a class="url">/<strong>message</strong>?<em>key</em>=<span class="value">&<em>to</em>=<span class="value">&<em>body</em>=<span class="value">&<em>ack</em>=<span class="value"></span></a>
+        <ul class="params">
+          <li><strong>key</strong>the app key, similar to <em>"bedfcfae-6c45-40d5-c56f-125c572bae41"</em></li>
+          <li><strong>to</strong>the message's addressee's phone number in international format, like <em>34663163375</em> (no <em>+</em> or <em>00</em>)</li>
+          <li><strong>body</strong>the body of the message</li>
+          <li><strong class="optional">ack</strong>[true/false] whether you want to receive a notification upon delivery</em></li>
+        </ul>
+        <ul class="results">
+          <li><code class="success">{"success": "true"}</code></li>
+          <li><code class="error">{"error": "no-key"}</code>No token was specified</li>
+          <li><code class="error">{"error": "no-token-matches-key"}</code>There's no token matching such app key</li>
+          <li><code class="error">{"error": "no-line-matches-key"}</code>There's no line matching such app key</li>
+          <li><code class="error">{"error": "line-is-expired"}</code>The line is expired. You'll need to pay for renovation</li>
+          <li><code class="error">{"error": "no-permission"}</code>This app is not authorized to perform this action</li>
+          <li><code class="error">{"error": "bad-param"}</code>The <em>to</em> or <em>body</em> fields are empty</li>
+          <li><code class="error">{"error": "inactive-line"}</code>There's no active apps for this line. Please remember to subscribe before sending messages.</li>
+        </ul>
+        <p>Note that success of this method DO imply receival of the message by WhatsApp servers (single tick).</p>
+      </article>
+    </section>
+    <section>
+      <header>
+        <h2>PUSH Methods</h2>
+      </header>
+      <p>When a message or notification is received, a POST query is sent to every active apps' PUSH URL.</p>
+      <p>You can tell one method from another, by reading the <em>"_method"</em> parameter in the POST query. Currently the possible values are <em>"message"</em>, <em>"carbon"</em>, <em>"ack"</em> and <em>"ping"</em>.</p>
+      <p>In order to preserve your privacy, we encourage you to use HTTPS at the PUSH URL endpoint.</p>
+      <article>
+        <header>
+          <h3>message</h3>
+        </header>
+        <p>A PUSH with type <em>"message"</em> is sent every time the WhatsApp receives a new message.</p>
+        <ul class="params">
+          <li><strong>messageId</strong>unique ID of the message</li>
+          <li><strong>jid</strong>full JabberID of the message sender, like <em>('48668475723@s.whatsapp.net')</em></li>
+          <li><strong>messageContent</strong>the body of the message</li>
+          <li><strong>timestamp</strong>time stamp in EPOCH format (seconds since Jan 1st 1970)</li>
+          <li><strong>wantsReceipt</strong>whether the sender requested ACK in return</li>
+          <li><strong>pushName</strong>the sender's WhatsApp friendly name</li>
+          <li><strong>isBroadCast</strong>whether it's a broadcast message</li>
+        </ul>
+      </article>
+      <article>
+        <header>
+          <h3>carbon</h3>
+        </header>
+        <p>For the sake of synchronization and consistency between apps, when you send a message and there are more active apps, a PUSH with type <em>"carbon"</em> is sent to all of them.</p>
+        <ul class="params">
+          <li><strong>messageId</strong>unique ID of the message</li>
+          <li><strong>jid</strong>full JabberID of the message addressee, like <em>('48668475723@s.whatsapp.net')</em></li>
+          <li><strong>messageContent</strong>the body of the message</li>
+          <li><strong>timestamp</strong>time stamp in EPOCH format (seconds since Jan 1st 1970)</li>
+          <li><strong>wantsReceipt</strong>whether the sender requests ACK in return</li>
+          <li><strong>isBroadCast</strong>whether it's a broadcast message</li>
+        </ul>
+      </article>
+      <article>
+        <header>
+          <h3>ack</h3>
+        </header>
+        <p>A PUSH with type <em>"ack"</em> is sent to every active app every time a WhatsApp <em>"delivery notification"</em> is received.</p>
+        <ul class="params">
+          <li><strong>messageId</strong>unique ID of the message to be acknowledged</li>
+          <li><strong>jid</strong>full JabberID of the message sender, like <em>('48668475723@s.whatsapp.net')</em></li>
+          <li><strong>grade</strong>[delivered/visible] tells if the message has been delivered (double tick) or visible (secret WhatsApp feature: triple tick)</li>
+        </ul>
+      </article>
+      <article>
+        <header>
+          <h3>ping</h3>
+        </header>
+        <p>WAAPI servers can send <em>"ping"</em> requests to apps in order to validate PUSH URLs and tell if they are still active. These requests MUST be always be answered with the <em>"PONG"</em> text.</p>
+        <ul class="params">
+          <li>No parameters</li>
+        </ul>
+      </article>
+    </section>
+    <style type="text/css">
+      html {
+        background-color: #EEE;
+      }
+      body {
+        margin: 30px auto;
+        max-width: 700px;
+        background-color: #FFF;
+        padding: 50px;
+      }
+      p {
+        margin-bottom: 25px;
+      }
+      a.url {
+        padding: 7px 10px;
+        background-color: #EEE;
+        border: 1px solid #CCC;
+        border-radius: 4px;
+        color: #666;
+      }
+      span.method {
+        padding: 7px 10px;
+        border: 1px dashed #AAA;
+        border-radius: 4px;
+        color: #666;
+      }
+      span.value:before {
+        content: "< value >";
+        opacity: .5;
+        font-size: .9em;
+      }
+      ul.params {
+        padding: 20px 20px 20px 20px;
+        border: 1px solid #CCC;
+        border-radius: 4px;
+        background-color: #EEE;
+      }
+      ul.params:before {
+        content: "Parameters";
+        position: relative;
+        top: -10px;
+        left: -10px;
+        opacity: .5;
+        font-size: .8em;
+        font-style: italic;
+      }
+      ul.params li {
+        list-style-type: none;
+        color: #666;
+      }
+      ul.params li strong::after,
+      ul.results li code.error::after {
+        content: "→";
+        margin: 0 10px;
+        opacity: .5;
+      }
+      ul.params li strong.optional {
+        opacity: .5;
+      }
+      ul.results {
+        padding: 20px 20px 20px 20px;
+        margin-top: -10px;
+        border: 1px solid #CCC;
+        border-radius: 4px;
+        background-color: #EEE;
+      }
+      ul.results:before {
+        content: "Response samples";
+        position: relative;
+        top: -10px;
+        left: -10px;
+        opacity: .5;
+        font-size: .8em;
+        font-style: italic;
+      }
+      ul.results li {
+        margin-left: 10px;
+        color: #666;
+      }
+      code.success {
+        color: green;
+      }
+      code.error {
+        color: red;
+      }
+      body > header {
+        text-align: center;
+      }
+      section {
+        border-top: 1px dashed #AAA;
+        margin-bottom: 40px;
+      }
+      article {
+        margin-bottom: 40px;
+      }
+    </style>
+  </body>
+</html>
