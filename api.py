@@ -2,7 +2,7 @@
 #  -*- coding: utf8 -*-
 
 import json, base64, time, httplib, urllib
-from bottle import route, run, request
+from bottle import route, run, request, static_file
 from pymongo import MongoClient
 from bson import objectid
 from Yowsup.Common.utilities import Utilities
@@ -178,7 +178,9 @@ def messages_post():
                 for token in line["tokens"]:
                   if token["key"] in runningTokens:
                     if token["push"] and token["key"] != key:
-                      push(token["push"], "carbon", {"messageId": msgId, "jid": to, "messageContent": body, "timestamp": stamp, "wantsReceipt": ack, "isBroadCast": broadcast})
+                      pushRes = push(token["push"], "carbon", {"messageId": msgId, "jid": to, "messageContent": body, "timestamp": stamp, "wantsReceipt": ack, "isBroadCast": broadcast})
+                      if pushRes:
+                        print pushRes.read()
               else:
                 res["error"] = "inactive-line"
             else:
@@ -346,5 +348,16 @@ def line_unsubscribe():
   print running
   print "<<<<<<<<<<<<<"
   return res
+  
+  
+'''
 
-run(host="192.168.2.2", port="8080", debug=True, reloader=True)
+STATIC CONTENT
+
+'''
+
+@route("/reference", method="GET")
+def reference():
+  return static_file('reference.htm', './static')
+
+run(host="192.168.2.2", port="8080", server='paste')
