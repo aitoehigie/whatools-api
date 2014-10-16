@@ -113,6 +113,14 @@ def onMessageReceived(wa, messageId, jid, messageContent, timestamp, wantsReceip
       "lastStamp": stamp
     })
   
+def onPing(wa, pingId):
+  line = wa.line
+  if (not lineIsNotExpired(line)):
+    Lines.update({"_id": lId}, {"$set": {"valid": "wrong", "reconnect": False, "active": False}})
+    wa = running[line["_id"]]["yowsup"]
+    wa.logout()
+    # TODO: Notify expiracy to active tokens
+    del running[line["_id"]]
   
 eventHandler = {
   "onAck": onAck,
@@ -120,6 +128,7 @@ eventHandler = {
   "onAuthSuccess": onAuthSuccess,
   "onDisconnected": onDisconnected,
   "onMessageReceived": onMessageReceived,
+  "onPing": onPing
 }
 
 @route("/message", method="POST")
@@ -134,51 +143,55 @@ def messages_post():
     line = Lines.find_one({"tokens": {"$elemMatch": {"key": key}}})
     if line:
       me = line["_id"]
-      token = filter(lambda e: e['key'] == key, line['tokens'])[0]
-      if token:
-        if "permissions" in token and "write" in token["permissions"]:
-          if to and body:
-            if line["_id"] in running:
-              signedBody = messageSign(body, line)
-              wa = running[line["_id"]]["yowsup"];
-              msgId = wa.say(to, signedBody, ack)
-              res["result"] = msgId
-              res["success"] = True
-              chat = Chats.find_one({"from": me, "to": to})
-              stamp = int(time.time()*1000)
-              msg = {
-                "id": msgId,
-                "mine": True,
-                "body": body,
-                "stamp": stamp
-              }
-              if chat:
-                # Push it
-                Chats.update({"from": me, "to": to}, {"$push": {"messages": msg}, "$set": {"lastStamp": stamp}});
+      if lineIsNotExpired(line):
+        token = filter(lambda e: e['key'] == key, line['tokens'])[0]
+        if token:
+          if "permissions" in token and "write" in token["permissions"]:
+            if to and body:
+              if line["_id"] in running:
+                signedBody = messageSign(body, line)
+                wa = running[line["_id"]]["yowsup"]
+                msgId = wa.say(to, signedBody, ack)
+                res["result"] = msgId
+                res["success"] = True
+                chat = Chats.find_one({"from": me, "to": to})
+                stamp = int(time.time()*1000)
+                msg = {
+                  "id": msgId,
+                  "mine": True,
+                  "body": body,
+                  "stamp": stamp
+                }
+                if chat:
+                  # Push it
+                  Chats.update({"from": me, "to": to}, {"$push": {"messages": msg}, "$set": {"lastStamp": stamp}});
+                else:
+                  # Create new chat
+                  Chats.insert({
+                    "_id": str(objectid.ObjectId()),
+                    "from": me,
+                    "to": to,
+                    "messages": [msg],
+                    "lastStamp": stamp
+                  })
+                runningTokens = running[line["_id"]]["tokens"]
+                for token in line["tokens"]:
+                  if token["key"] in runningTokens:
+                    if token["push"] and token["key"] != key:
+                      push(token["push"], "carbon", {"messageId": msgId, "jid": to, "messageContent": body, "timestamp": stamp, "wantsReceipt": ack, "isBroadCast": broadcast})
               else:
-                # Create new chat
-                Chats.insert({
-                  "_id": str(objectid.ObjectId()),
-                  "from": me,
-                  "to": to,
-                  "messages": [msg],
-                  "lastStamp": stamp
-                })
-              runningTokens = running[line["_id"]]["tokens"]
-              for token in line["tokens"]:
-                if token["key"] in runningTokens:
-                  if token["push"] and token["key"] != key:
-                    push(token["push"], "carbon", {"messageId": msgId, "jid": to, "messageContent": body, "timestamp": stamp, "wantsReceipt": ack, "isBroadCast": broadcast})
+                res["error"] = "inactive-line"
             else:
-              res["error"] = "inactive-line"
+              res["error"] = "bad-param"
           else:
-            res["error"] = "bad-param"
+            res["error"] = "no-permission"
         else:
-          res["error"] = "no-permission"
+          res["error"] = "no-token-matches-key"
       else:
-        res["error"] = "no-token"
+        res["error"] = "line-is-expired"
+        Lines.update({"_id": lId}, {"$set": {"valid": "wrong", "reconnect": False, "active": False}})
     else:
-      res["error"] = "invalid-key"
+      res["error"] = "no-line-matches-key"
   else:
     res["error"] = "no-key"
   return res
@@ -247,7 +260,7 @@ def line_validate():
     res["error"] = "bad-param"
   return res
   
-@route("/line/subscribe", method="GET")
+@route("/subscribe", method="GET")
 def line_subscribe():
   res = {"success": False}
   key = request.params.key
@@ -255,43 +268,47 @@ def line_subscribe():
     line = Lines.find_one({"tokens": {"$elemMatch": {"key": key}}})
     if line:
       lId = line["_id"]
-      token = filter(lambda e: e['key'] == key, line['tokens'])[0]
-      if token:
-        if lId in running:
-          wa = running[lId]["yowsup"]
-          # TODO: Check if connected and reconnect if not
-          if token["key"] not in running[lId]["tokens"]:
-            running[lId]["tokens"].append(token["key"])
-          Lines.update({"_id": lId}, {"$set": {"valid": True, "active": True}})
-          res["success"] = True
-        else:
-          wa = WhatsappBackClient(line, token, eventHandler, True, True)
-          if wa:
-            user = line["cc"] + line["pn"]
-            try:
-              pw = base64.b64decode(bytes(line["pass"].encode('utf-8')))
-            except TypeError:
-              res["error"] = "password-type-error"
-              Lines.update({"_id": lId}, {"$set": {"valid": "wrong", "reconnect": False}})
-              return res
-            running[lId] = {
-              "yowsup": wa,
-              "tokens": [token["key"]]
-            }
-            loginRes = wa.login(user, pw)
-            if (loginRes == "success"):
-              res["success"] = True
-              Lines.update({"_id": lId}, {"$set": {"valid": True, "active": True}})
-            else:
-              del running[lId]
-              res["error"] = "auth-failed"
-              Lines.update({"_id": lId}, {"$set": {"valid": "wrong", "reconnect": False}})
+      if lineIsNotExpired(line):
+        token = filter(lambda e: e['key'] == key, line['tokens'])[0]
+        if token:
+          if lId in running:
+            wa = running[lId]["yowsup"]
+            # TODO: Check if connected and reconnect if not
+            if token["key"] not in running[lId]["tokens"]:
+              running[lId]["tokens"].append(token["key"])
+            Lines.update({"_id": lId}, {"$set": {"valid": True, "active": True}})
+            res["success"] = True
           else:
-            res["error"] = "could-not-connect"
+            wa = WhatsappBackClient(line, token, eventHandler, True, True)
+            if wa:
+              user = line["cc"] + line["pn"]
+              try:
+                pw = base64.b64decode(bytes(line["pass"].encode('utf-8')))
+              except TypeError:
+                res["error"] = "password-type-error"
+                Lines.update({"_id": lId}, {"$set": {"valid": "wrong", "reconnect": False}})
+                return res
+              running[lId] = {
+                "yowsup": wa,
+                "tokens": [token["key"]]
+              }
+              loginRes = wa.login(user, pw)
+              if (loginRes == "success"):
+                res["success"] = True
+                Lines.update({"_id": lId}, {"$set": {"valid": True, "active": True}})
+              else:
+                del running[lId]
+                res["error"] = "auth-failed"
+                Lines.update({"_id": lId}, {"$set": {"valid": "wrong", "reconnect": False}})
+            else:
+              res["error"] = "could-not-connect"
+        else:
+          res["error"] = "no-token-matches-key"
       else:
-        res["error"] = "no-token"
+        res["error"] = "line-is-expired"
+        Lines.update({"_id": lId}, {"$set": {"valid": "wrong", "reconnect": False, "active": False}})
     else:
-      res["error"] = "invalid-key"
+      res["error"] = "no-line-matches-key"
   else:
     res["error"] = "no-key"
   print ">>>>>>>>>>>>>"
@@ -299,7 +316,7 @@ def line_subscribe():
   print ">>>>>>>>>>>>>"
   return res
   
-@route("/line/unsubscribe", method="GET")
+@route("/unsubscribe", method="GET")
 def line_unsubscribe():
   res = {"success": False}
   key = request.params.key
@@ -318,11 +335,11 @@ def line_unsubscribe():
             del running[lId]
           res["success"] = True
         else:
-          res["error"] = "no-such-line"
+          res["error"] = "line-was-not-running"
       else:
-        res["error"] = "no-token"
+        res["error"] = "no-token-matches-key"
     else:
-      res["error"] = "invalid-key"
+      res["error"] = "no-line-matches-key"
   else:
     res["error"] = "no-key"
   print "<<<<<<<<<<<<<"
