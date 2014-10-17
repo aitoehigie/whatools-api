@@ -18,8 +18,9 @@ from Yowsup.Registration.v2.regrequest import WARegRequest
 
 running = {}
 
-client = MongoClient('mongodb://192.168.1.2')
+client = MongoClient('mongodb://127.0.0.1')
 db = client.waapi
+db.authenticate('waapi', 'adventuretime')
 
 Users = db.users
 Lines = db.lines
