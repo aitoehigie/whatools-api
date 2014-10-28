@@ -29,7 +29,7 @@ Chats = db.chats
 freePlanSignature = "\n\n[Message sent by using WAAPI. If it's SPAM, report it to https://waapi.com/report]"
 
 def lineIsNotExpired(line):
-  now = int(time.time()*1000)
+  now = long(time.time()*1000)
   return now < line["expires"]
   
 def messageSign(text, line):
@@ -94,7 +94,7 @@ def onMessageReceived(wa, messageId, jid, messageContent, timestamp, wantsReceip
             print res.read()
   to = jid.split("@")[0]
   chat = Chats.find_one({"from": wa.line["_id"], "to": to})
-  stamp = int(timestamp)*1000
+  stamp = long(timestamp)*1000
   msg = {
     "id": messageId,
     "mine": False,
@@ -156,7 +156,7 @@ def messages_post():
                 res["result"] = msgId
                 res["success"] = True
                 chat = Chats.find_one({"from": me, "to": to})
-                stamp = int(time.time()*1000)
+                stamp = long(time.time()*1000)
                 msg = {
                   "id": msgId,
                   "mine": True,
@@ -349,7 +349,55 @@ def line_unsubscribe():
   print running
   print "<<<<<<<<<<<<<"
   return res
-  
+
+
+@route("/history", method="GET")
+def history():
+  res = {"success": False}
+  key = request.params.key
+  start = request.params.start
+  end = request.params.end or long(time.time()*1000)
+  if key:
+    line = Lines.find_one({"tokens": {"$elemMatch": {"key": key}}})
+    if line:
+      lId = line["_id"]
+      token = filter(lambda e: e['key'] == key, line['tokens'])[0]
+      if token:
+        if "permissions" in token and "manage" in token["permissions"]:
+          if start:
+            obj = {
+              "messages": [],
+              "totals": {
+                "all": 0,
+                "in": 0,
+                "out": 0
+              }
+            }
+            myChats = Chats.find({"from": lId})
+            for chat in myChats:
+              for message in chat["messages"]:
+                if long(message["stamp"]) >= long(start) and long(message["stamp"]) <= long(end):
+                  message["from"] = line["cc"] + line["pn"]
+                  message["to"] = chat["to"]
+                  obj["messages"].append(message)
+                  if message["mine"] == True:
+                    obj["totals"]["out"] += 1
+                  else:
+                    obj["totals"]["in"] += 1
+            obj["totals"]["all"] = len(obj["messages"])
+            res["result"] = json.dumps(obj)
+            res["success"] = True
+          else:
+            res["error"] = "bad-param"
+        else:
+          res["error"] = "no-permission"
+      else:
+        res["error"] = "no-token-matches-key"
+    else:
+      res["error"] = "no-line-matches-key"
+  else:
+    res["error"] = "no-key"
+  return res
   
 '''
 
@@ -361,4 +409,5 @@ STATIC CONTENT
 def reference():
   return static_file('reference.htm', './static')
 
-run(host="waapi.waalt.com", port="8080", server='paste')
+run(host="waapi.waalt.com
+", port="8080", server='paste')
