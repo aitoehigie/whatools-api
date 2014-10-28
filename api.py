@@ -355,7 +355,7 @@ def line_unsubscribe():
 def history():
   res = {"success": False}
   key = request.params.key
-  start = request.params.start
+  start = request.params.start or long(0)
   end = request.params.end or long(time.time()*1000)
   if key:
     line = Lines.find_one({"tokens": {"$elemMatch": {"key": key}}})
@@ -364,31 +364,28 @@ def history():
       token = filter(lambda e: e['key'] == key, line['tokens'])[0]
       if token:
         if "permissions" in token and "manage" in token["permissions"]:
-          if start:
-            obj = {
-              "messages": [],
-              "totals": {
-                "all": 0,
-                "in": 0,
-                "out": 0
-              }
+          obj = {
+            "messages": [],
+            "totals": {
+              "all": 0,
+              "in": 0,
+              "out": 0
             }
-            myChats = Chats.find({"from": lId})
-            for chat in myChats:
-              for message in chat["messages"]:
-                if long(message["stamp"]) >= long(start) and long(message["stamp"]) <= long(end):
-                  message["from"] = line["cc"] + line["pn"]
-                  message["to"] = chat["to"]
-                  obj["messages"].append(message)
-                  if message["mine"] == True:
-                    obj["totals"]["out"] += 1
-                  else:
-                    obj["totals"]["in"] += 1
-            obj["totals"]["all"] = len(obj["messages"])
-            res["result"] = json.dumps(obj)
-            res["success"] = True
-          else:
-            res["error"] = "bad-param"
+          }
+          myChats = Chats.find({"from": lId})
+          for chat in myChats:
+            for message in chat["messages"]:
+              if long(message["stamp"]) >= long(start) and long(message["stamp"]) <= long(end):
+                message["from"] = line["cc"] + line["pn"]
+                message["to"] = chat["to"]
+                obj["messages"].append(message)
+                if message["mine"] == True:
+                  obj["totals"]["out"] += 1
+                else:
+                  obj["totals"]["in"] += 1
+          obj["totals"]["all"] = len(obj["messages"])
+          res["result"] = json.dumps(obj)
+          res["success"] = True
         else:
           res["error"] = "no-permission"
       else:
