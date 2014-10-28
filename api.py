@@ -409,4 +409,4 @@ STATIC CONTENT
 def reference():
   return static_file('reference.htm', './static')
 
-run(host="waapi.waalt.com", port="8080", server='paste')
+run(host="127.0.0.1", port="8080", server='paste')
