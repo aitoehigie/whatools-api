@@ -87,16 +87,17 @@
         <header>
           <h3>History</h3>
         </header>
-        <p>You can send messages to any WhatsApp user by using this POST method. Note that the token MUST be subscribed in order to work properly.</p>
+        <p>Retrieve all messages for a line since <em>start</em> time to <em>end</em> time.</p>
+        <p>The app key calling this method needs to have the <em>manage</em> special permission.</p>
         <span class="method">GET</span>
-        <a class="url">/<strong>message</strong>?<em>key</em>=<span class="value">&<em>to</em>=<span class="value">&<em>body</em>=<span class="value">&<em>ack</em>=<span class="value"></span></a>
+        <a class="url">/<strong>message</strong>?<em>key</em>=<span class="value">&<em>start</em>=<span class="value">&<em>end</em>=<span class="value"></a>
         <ul class="params">
           <li><strong>key</strong>the app key, similar to <em>"bedfcfae-6c45-40d5-c56f-125c572bae41"</em></li>
-          <li><strong class="optional">start</strong>the message's addressee's phone number in international format, like <em>34663163375</em> (no <em>+</em> or <em>00</em>)</li>
-          <li><strong class="optional">end</strong>the body of the message</li>
+          <li><strong class="optional">start</strong>retrieve messages since this date in EPOCH format (milliseconds since Jan 1st 1970)</li>
+          <li><strong class="optional">end</strong>retrieve messages until this date in EPOCH format (milliseconds since Jan 1st 1970)</li>
         </ul>
         <ul class="results">
-          <li><code class="success">{"success": "true"}</code></li>
+          <li><code class="success">{"success": "true", result: {"messages": [...], totals: {"all": 14, "in": 5, "out": 14}}}</code></li>
           <li><code class="error">{"error": "no-key"}</code>No token was specified</li>
           <li><code class="error">{"error": "no-token-matches-key"}</code>There's no token matching such app key</li>
           <li><code class="error">{"error": "no-line-matches-key"}</code>There's no line matching such app key</li>
@@ -213,7 +214,7 @@
       }
       ul.params li strong::after,
       ul.results li code.error::after {
-        content: "→";
+        content: ">";
         margin: 0 10px;
         opacity: .5;
       }
