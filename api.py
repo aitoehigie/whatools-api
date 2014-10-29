@@ -64,6 +64,7 @@ def onAck(wa, grade, jid, messageId):
           res = push(token["push"], "ack", {"grade": grade, "jid": jid, "messageId": messageId})
           if res:
             print res.read()
+    Chats.update({"from": wa.line["_id"], "to": jid.split("@")[0], 'messages.id': messageId}, {$set: {'messages.$.ack': grade}})
 
 def onAuthFailed(wa):
   Lines.update({"_id": wa.line["_id"]}, {"$set": {"active": False, "reconnect": False, "valid": False}});
