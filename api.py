@@ -112,7 +112,8 @@ def onMessageReceived(wa, messageId, jid, messageContent, timestamp, wantsReceip
       "from": wa.line["_id"],
       "to": to,
       "messages": [msg],
-      "lastStamp": stamp
+      "lastStamp": stamp,
+      "alias": pushName or False
     })
   
 def onPing(wa, pingId):
