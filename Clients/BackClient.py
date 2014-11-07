@@ -86,8 +86,7 @@ class WhatsappBackClient:
     formattedDate = datetime.datetime.fromtimestamp(timestamp).strftime('%d-%m-%Y %H:%M')
     self.eventHandler["onMessageReceived"](self, messageId, jid, messageContent, timestamp, wantsReceipt, pushName, isBroadCast)
     print("%s [%s]:%s"%(jid, formattedDate, messageContent))
-    if wantsReceipt and self.sendReceipts:
-      self.methodsInterface.call("message_ack", (jid, messageId))
+    self.methodsInterface.call("message_ack", (jid, messageId))
       
   def onDeliveredAck(self, jid, messageId):
     self.eventHandler["onAck"](self, 'delivered', jid, messageId)
