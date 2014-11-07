@@ -18,7 +18,7 @@ from Yowsup.Registration.v2.regrequest import WARegRequest
 
 running = {}
 
-client = MongoClient('waapi.waalt.com')
+client = MongoClient('localhost')
 db = client.waapi
 db.authenticate('waapi', 'adventuretime')
 
