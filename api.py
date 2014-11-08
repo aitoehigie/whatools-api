@@ -331,7 +331,7 @@ def line_unsubscribe():
       lId = line["_id"]
       token = filter(lambda e: e['key'] == key, line['tokens'])[0]
       if token:
-        if lId in running:
+        if lId in running and token["key"] in running[lId]["tokens"]:
           Lines.update({"_id": lId}, {"$set": {"reconnect": False, "active": False}})
           wa = running[lId]["yowsup"]
           wa.logout()
@@ -340,7 +340,7 @@ def line_unsubscribe():
             del running[lId]
           res["success"] = True
         else:
-          res["error"] = "line-was-not-running"
+          res["error"] = "token-was-not-subscribed"
       else:
         res["error"] = "no-token-matches-key"
     else:
