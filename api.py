@@ -71,6 +71,7 @@ def onAuthFailed(wa):
 
 def onAuthSuccess(wa):
   Lines.update({"_id": wa.line["_id"]}, {"$set": {"active": True, "reconnect": True, "valid": True}});
+  wa.errors = 0
 
 def onDisconnected(wa, reason):
   line = Lines.find_one({"_id": wa.line["_id"]});
