@@ -105,7 +105,7 @@ def onMessageReceived(wa, messageId, jid, messageContent, timestamp, wantsReceip
   }
   if chat:
     # Push it to db
-    Chats.update({"from": wa.line["_id"], "to": to}, {"$push": {"messages": msg}, "$set": {"lastStamp": stamp}});
+    Chats.update({"from": wa.line["_id"], "to": to}, {"$push": {"messages": msg}, "$set": {"lastStamp": stamp}, "$inc": {"unread": 1}});
   else:
     # Create new chat
     Chats.insert({
@@ -164,11 +164,12 @@ def messages_post():
                   "id": msgId,
                   "mine": True,
                   "body": body,
-                  "stamp": stamp
+                  "stamp": stamp,
+                  "ack": "sent"
                 }
                 if chat:
                   # Push it
-                  Chats.update({"from": me, "to": to}, {"$push": {"messages": msg}, "$set": {"lastStamp": stamp}});
+                  Chats.update({"from": me, "to": to}, {"$push": {"messages": msg}, "$set": {"unread": 0}});
                 else:
                   # Create new chat
                   Chats.insert({
