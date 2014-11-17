@@ -328,11 +328,9 @@ class YowsupConnectionManager:
 
 	def sendReceipt(self,jid,mtype,mid):
 		self._d("sending message received to "+jid+" - type:"+mtype+" - id:"+mid)
-		attr = {"to": jid, "id": mid}
-		if mtype == "read":
-		  attr["type"] = "read"
-		receiptNode = ProtocolTreeNode("receipt", attr)
-		self._writeNode(receiptNode)
+		receivedNode = ProtocolTreeNode("received",{"xmlns": "urn:xmpp:receipts"})
+		messageNode = ProtocolTreeNode("message",{"to":jid,"type":mtype,"id":mid},[receivedNode]);
+		self._writeNode(messageNode);
 
 
 	def sendDeliveredReceiptAck(self,to,msg_id):
