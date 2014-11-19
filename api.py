@@ -58,15 +58,15 @@ def onAck(wa, grade, jid, messageId):
   if len(running):
     allTokens = Lines.find_one({"_id": wa.line["_id"]})["tokens"]
     runningTokens = running[wa.line["_id"]]["tokens"]
+    message = Chats.find_one({"from": wa.line["_id"], "to": jid.split("@")[0], 'messages.id': messageId}, {"messages.$": 1})["messages"][0]
+    if "ack" in message and message["ack"] == "delivered":
+      grade = "visible"
     for token in allTokens:
       if token["key"] in runningTokens:
         if token["push"]:
           res = push(token["push"], "ack", {"grade": grade, "jid": jid, "messageId": messageId})
           if res:
             print res.read()
-    message = Chats.find_one({"from": wa.line["_id"], "to": jid.split("@")[0], 'messages.id': messageId}, {"messages.$": 1})["messages"][0]
-    if "ack" in message and message["ack"] == "delivered":
-      grade = "visible"
     Chats.update({"from": wa.line["_id"], "to": jid.split("@")[0], 'messages.id': messageId}, {"$set": {'messages.$.ack': grade}})
 
 def onAuthFailed(wa):
