@@ -65,7 +65,7 @@ def onAck(wa, grade, jid, messageId):
           if res:
             print res.read()
     message = Chats.find_one({"from": wa.line["_id"], "to": jid.split("@")[0], 'messages.id': messageId}, {"messages.$": 1})["messages"][0]
-    if message["ack"] == "delivered":
+    if "ack" in message and message["ack"] == "delivered":
       grade = "visible"
     Chats.update({"from": wa.line["_id"], "to": jid.split("@")[0], 'messages.id': messageId}, {"$set": {'messages.$.ack': grade}})
 
