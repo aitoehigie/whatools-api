@@ -99,4 +99,8 @@ class WhatsappBackClient:
     
   def say(self, to, body, ack = False):
     return self.methodsInterface.call("message_send", (to + "@s.whatsapp.net", body))
+    
+  def presence_sendAvailableForChat(self, nickname):
+    print nickname
+    self.methodsInterface.call("presence_sendAvailableForChat", ([nickname]))
   

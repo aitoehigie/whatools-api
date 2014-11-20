@@ -403,6 +403,66 @@ def history():
     res["error"] = "no-key"
   return res
   
+@route("/nickname", method="GET")
+def nickname_get():
+  res = {"success": False}
+  key = request.params.key
+  if key:
+    line = Lines.find_one({"tokens": {"$elemMatch": {"key": key}}})
+    if line:
+      lId = line["_id"]
+      token = filter(lambda e: e['key'] == key, line['tokens'])[0]
+      if token:
+        if "permissions" in token and "read" in token["permissions"]:
+          res["result"] = line["nickname"] if "nickname" in line else False
+          res["success"] = True
+        else:
+          res["error"] = "no-permission"
+      else:
+        res["error"] = "no-token-matches-key"
+    else:
+      res["error"] = "no-line-matches-key"
+  else:
+    res["error"] = "no-key"
+  return res
+
+@route("/nickname", method="POST")
+def nickname_post():
+  res = {"success": False}
+  key = request.params.key
+  nickname = request.params.nickname
+  if key:
+    line = Lines.find_one({"tokens": {"$elemMatch": {"key": key}}})
+    if line:
+      lId = line["_id"]
+      token = filter(lambda e: e['key'] == key, line['tokens'])[0]
+      if lineIsNotExpired(line):
+        if token:
+          if "permissions" in token and "manage" in token["permissions"]:
+            if nickname:
+              if line["_id"] in running:
+                wa = running[line["_id"]]["yowsup"]
+                wa.presence_sendAvailableForChat(nickname)
+                Lines.update({"_id": lId}, {"$set": {"nickname": nickname}})
+                res["success"] = True
+              else:
+                res["error"] = "inactive-line"
+            else:
+              res["error"] = "bad-param"
+          else:
+            res["error"] = "no-permission"
+        else:
+          res["error"] = "no-token-matches-key"
+      else:
+        res["error"] = "line-is-expired"
+        Lines.update({"_id": lId}, {"$set": {"valid": "wrong", "reconnect": False, "active": False}})
+    else:
+      res["error"] = "no-line-matches-key"
+  else:
+    res["error"] = "no-key"
+  return res
+
+  
 '''
 
 STATIC CONTENT
