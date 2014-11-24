@@ -86,6 +86,44 @@ def onDisconnected(wa, reason):
   else:
     Lines.update({"_id": wa.line["_id"]}, {"$set": {"active": False, "reconnect": False}});
     wa.errors = 0
+    
+def onMediaReceived(wa, messageId, jid, type, preview, url, size, wantsReceipt, isBroadCast):
+  if len(running):
+    allTokens = Lines.find_one({"_id": wa.line["_id"]})["tokens"]
+    runningTokens = running[wa.line["_id"]]["tokens"]
+    for token in allTokens:
+      if token["key"] in runningTokens:
+        if token["push"]:
+          res = push(token["push"], "media", {"messageId": messageId, "jid": jid, "preview": preview, "url": url, "size": size, "wantsReceipt": wantsReceipt, "isBroadCast": isBroadCast})
+          if res:
+            print res.read()
+  to = jid.split("@")[0]
+  chat = Chats.find_one({"from": wa.line["_id"], "to": to})
+  stamp = long(time.time())*1000
+  msg = {
+    "id": messageId,
+    "mine": False,
+    "stamp": stamp,
+    "media": {
+      "type": type,
+      "preview": preview,
+      "url": url,
+      "size": size
+    }
+  }
+  if chat:
+    # Push it to db
+    Chats.update({"from": wa.line["_id"], "to": to}, {"$push": {"messages": msg}, "$set": {"lastStamp": stamp}, "$inc": {"unread": 1}});
+  else:
+    # Create new chat
+    Chats.insert({
+      "_id": str(objectid.ObjectId()),
+      "from": wa.line["_id"],
+      "to": to,
+      "messages": [msg],
+      "lastStamp": stamp,
+      "alias": pushName or False
+    })
 
 def onMessageReceived(wa, messageId, jid, messageContent, timestamp, wantsReceipt, pushName, isBroadCast):
   if len(running):
@@ -134,6 +172,7 @@ eventHandler = {
   "onAuthFailed": onAuthFailed,
   "onAuthSuccess": onAuthSuccess,
   "onDisconnected": onDisconnected,
+  "onMediaReceived": onMediaReceived,
   "onMessageReceived": onMessageReceived,
   "onPing": onPing
 }
@@ -305,6 +344,7 @@ def line_subscribe():
               loginRes = wa.login(user, pw)
               if (loginRes == "success"):
                 res["success"] = True
+                wa.presence_sendAvailableForChat(line["nickname"])
                 Lines.update({"_id": lId}, {"$set": {"valid": True, "active": True}})
               else:
                 del running[lId]

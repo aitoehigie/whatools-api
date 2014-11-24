@@ -43,6 +43,7 @@ class WhatsappBackClient:
     self.signalsInterface.registerListener("auth_fail", self.onAuthFailed)
     self.signalsInterface.registerListener("auth_success", self.onAuthSuccess)
     self.signalsInterface.registerListener("disconnected", self.onDisconnected)
+    self.signalsInterface.registerListener("image_received", self.onImageReceived)
     self.signalsInterface.registerListener("message_received", self.onMessageReceived)
     self.signalsInterface.registerListener("ping", self.onPing)
     self.signalsInterface.registerListener("receipt_messageDelivered", self.onDeliveredAck)
@@ -81,6 +82,9 @@ class WhatsappBackClient:
   def onDisconnected(self, reason):
     self.eventHandler["onDisconnected"](self, reason)
     print("Disconnected because %s" %reason)
+    
+  def onImageReceived(self, messageId, jid, preview, url, size, wantsReceipt, isBroadCast):
+    self.eventHandler["onMediaReceived"](self, messageId, jid, "image", preview, url, size, wantsReceipt, isBroadCast)
 
   def onMessageReceived(self, messageId, jid, messageContent, timestamp, wantsReceipt, pushName, isBroadCast):
     formattedDate = datetime.datetime.fromtimestamp(timestamp).strftime('%d-%m-%Y %H:%M')
