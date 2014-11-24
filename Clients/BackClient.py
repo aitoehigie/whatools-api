@@ -85,6 +85,7 @@ class WhatsappBackClient:
     
   def onImageReceived(self, messageId, jid, preview, url, size, wantsReceipt, isBroadCast):
     self.eventHandler["onMediaReceived"](self, messageId, jid, "image", preview, url, size, wantsReceipt, isBroadCast)
+    self.methodsInterface.call("message_ack", (jid, messageId))
 
   def onMessageReceived(self, messageId, jid, messageContent, timestamp, wantsReceipt, pushName, isBroadCast):
     formattedDate = datetime.datetime.fromtimestamp(timestamp).strftime('%d-%m-%Y %H:%M')
