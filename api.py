@@ -32,7 +32,7 @@ def recover():
   activeLines = Lines.find({"tokens.active": True}, {"tokens.$": 1})
   for line in activeLines:
     token = line["tokens"][0]
-    print "@@@ RECOVERING TOKEN {} FOR LINE {} @@@".format(token["key"], line["_id"])
+    print "@@@ RECOVERING TOKEN {0} FOR LINE {1} @@@".format(token["key"], line["_id"])
     fullLine = Lines.find_one({"_id": line["_id"]})
     wa = WhatsappBackClient(fullLine, token, eventHandler, True, True)
     if wa:
