@@ -28,6 +28,33 @@ Chats = db.chats
 
 freePlanSignature = "\n\n[Message sent by using WAAPI. If it's SPAM, report it to https://waapi.com/report]"
 
+def recover():
+  activeLines = Lines.find({"tokens.active": True}, {"tokens.$": 1})
+  for line in activeLines:
+    token = line["tokens"][0]
+    print "@@@ RECOVERING TOKEN {} FOR LINE {} @@@".format(token["key"], line["_id"])
+    fullLine = Lines.find_one({"_id": line["_id"]})
+    wa = WhatsappBackClient(fullLine, token, eventHandler, True, True)
+    if wa:
+      user = fullLine["cc"] + fullLine["pn"]
+      pw = base64.b64decode(bytes(fullLine["pass"].encode('utf-8')))
+      if wa.login(user, pw):
+        if fullLine["_id"] in running:
+          running[fullLine["_id"]]["tokens"].append(token["key"])
+        else:
+          running[fullLine["_id"]] = {
+            "yowsup": wa,
+            "tokens": [token["key"]]
+          }
+        print "@@@@ RECOVER SUCCESS @@@@"
+      else:
+        print "@@@@ RECOVER ERROR @@@@"
+    else:
+      print "@@@@ RECOVER ERROR @@@@"
+  print "@@@@@@@@@@@@@"
+  print running
+  print "@@@@@@@@@@@@@"
+
 def lineIsNotExpired(line):
   now = long(time.time()*1000)
   return now < line["expires"]
@@ -325,7 +352,7 @@ def line_subscribe():
             # TODO: Check if connected and reconnect if not
             if token["key"] not in running[lId]["tokens"]:
               running[lId]["tokens"].append(token["key"])
-            Lines.update({"_id": lId}, {"$set": {"valid": True, "active": True}})
+            Lines.update({"_id": lId, "tokens.key": token["key"]}, {"$set": {"valid": True, "active": True, "tokens.$.active": True}})
             res["success"] = True
           else:
             wa = WhatsappBackClient(line, token, eventHandler, True, True)
@@ -335,7 +362,7 @@ def line_subscribe():
                 pw = base64.b64decode(bytes(line["pass"].encode('utf-8')))
               except TypeError:
                 res["error"] = "password-type-error"
-                Lines.update({"_id": lId}, {"$set": {"valid": "wrong", "reconnect": False}})
+                Lines.update({"_id": lId, "tokens.key": token["key"]}, {"$set": {"valid": "wrong", "reconnect": False, "tokens.$.active": False}})
                 return res
               running[lId] = {
                 "yowsup": wa,
@@ -346,18 +373,18 @@ def line_subscribe():
                 res["success"] = True
                 if line["nickname"]:
                   wa.presence_sendAvailableForChat(line["nickname"])
-                Lines.update({"_id": lId}, {"$set": {"valid": True, "active": True}})
+                Lines.update({"_id": lId, "tokens.key": token["key"]}, {"$set": {"valid": True, "active": True, "tokens.$.active": True}})
               else:
                 del running[lId]
                 res["error"] = "auth-failed"
-                Lines.update({"_id": lId}, {"$set": {"valid": "wrong", "reconnect": False}})
+                Lines.update({"_id": lId, "tokens.key": token["key"]}, {"$set": {"valid": "wrong", "reconnect": False, "tokens.$.active": False}})
             else:
               res["error"] = "could-not-connect"
         else:
           res["error"] = "no-token-matches-key"
       else:
         res["error"] = "line-is-expired"
-        Lines.update({"_id": lId}, {"$set": {"valid": "wrong", "reconnect": False, "active": False}})
+        Lines.update({"_id": lId, "tokens.key": token["key"]}, {"$set": {"valid": "wrong", "reconnect": False, "active": False, "tokens.$.active": False}})
     else:
       res["error"] = "no-line-matches-key"
   else:
@@ -378,7 +405,7 @@ def line_unsubscribe():
       token = filter(lambda e: e['key'] == key, line['tokens'])[0]
       if token:
         if lId in running and token["key"] in running[lId]["tokens"]:
-          Lines.update({"_id": lId}, {"$set": {"reconnect": False, "active": False}})
+          Lines.update({"_id": lId, "tokens.key": token["key"]}, {"$set": {"reconnect": False, "active": False, "tokens.$.active": False}})
           wa = running[lId]["yowsup"]
           wa.logout()
           running[lId]["tokens"].remove(token["key"])
@@ -514,4 +541,5 @@ STATIC CONTENT
 def reference():
   return static_file('reference.htm', './static')
 
+recover()
 run(host="127.0.0.1", port="8080", server='paste')
