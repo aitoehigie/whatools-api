@@ -344,7 +344,8 @@ def line_subscribe():
               loginRes = wa.login(user, pw)
               if (loginRes == "success"):
                 res["success"] = True
-                wa.presence_sendAvailableForChat(line["nickname"])
+                if line["nickname"]:
+                  wa.presence_sendAvailableForChat(line["nickname"])
                 Lines.update({"_id": lId}, {"$set": {"valid": True, "active": True}})
               else:
                 del running[lId]
