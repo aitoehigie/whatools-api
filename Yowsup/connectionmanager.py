@@ -358,8 +358,6 @@ class YowsupConnectionManager:
 		attrs = {"to": from_jid, "class": "notification", "id": msg_id, "type": notificationType}
 		if participant is not None:
 			attrs["participant"] = participant
-		if from_jid is not None:
-			attrs["from"] = from_jid
 		ackNode = ProtocolTreeNode("ack", attrs, [childNode] if childNode is not None else None)
 		self._writeNode(ackNode)
 
