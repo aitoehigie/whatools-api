@@ -362,7 +362,7 @@ class YowsupConnectionManager:
 			attrs["from"] = from_jid
 		print "############", attrs
 		ackNode = ProtocolTreeNode("ack", attrs, [childNode] if childNode is not None else None)
-		self._writeNode(ackNode)
+		#self._writeNode(ackNode)
 
 	def sendCleanDirty(self, dirtyType):
 		idx = self.makeId("clean_dirty_")
