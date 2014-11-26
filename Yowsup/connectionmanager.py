@@ -360,6 +360,7 @@ class YowsupConnectionManager:
 			attrs["participant"] = participant
 		if from_jid is not None:
 			attrs["from"] = from_jid
+		print "############", attrs
 		ackNode = ProtocolTreeNode("ack", attrs, [childNode] if childNode is not None else None)
 		self._writeNode(ackNode)
 
