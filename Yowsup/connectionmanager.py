@@ -355,14 +355,13 @@ class YowsupConnectionManager:
 		self._writeNode(receiptNode)
 
 	def sendNotificationReceived(self, to, msg_id, from_jid, participant, notificationType, childNode):
-		attrs = {"to": to, "class": "notification", "id": msg_id, "type": notificationType}
+		attrs = {"to": from_jid, "class": "notification", "id": msg_id, "type": notificationType}
 		if participant is not None:
 			attrs["participant"] = participant
 		if from_jid is not None:
 			attrs["from"] = from_jid
-		print "############", attrs
 		ackNode = ProtocolTreeNode("ack", attrs, [childNode] if childNode is not None else None)
-		#self._writeNode(ackNode)
+		self._writeNode(ackNode)
 
 	def sendCleanDirty(self, dirtyType):
 		idx = self.makeId("clean_dirty_")
