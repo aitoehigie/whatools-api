@@ -384,7 +384,7 @@ def line_subscribe():
           res["error"] = "no-token-matches-key"
       else:
         res["error"] = "line-is-expired"
-        Lines.update({"_id": lId}, {"$set": {"valid": "wrong", "reconnect": False, "active": False, "tokens.active": False}})
+        Lines.update({"_id": lId}, {"$set": {"valid": "wrong", "reconnect": False, "active": False}})
     else:
       res["error"] = "no-line-matches-key"
   else:
