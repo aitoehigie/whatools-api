@@ -355,11 +355,11 @@ class YowsupConnectionManager:
 		self._writeNode(receiptNode)
 
 	def sendNotificationReceived(self, to, msg_id, from_jid, participant, notificationType, childNode):
-		attrs = {"to": from_jid, "class": "notification", "id": msg_id, "type": notificationType}
+		attrs = {"to": to, "class": "notification", "id": msg_id, "type": notificationType}
 		if participant is not None:
 			attrs["participant"] = participant
-		if to is not None:
-			attrs["from"] = to
+		if from_jid is not None:
+			attrs["from"] = from_jid
 		ackNode = ProtocolTreeNode("ack", attrs, [childNode] if childNode is not None else None)
 		self._writeNode(ackNode)
 
@@ -1051,7 +1051,7 @@ class ReaderThread(threading.Thread):
 						elif notificationType == "web":
 							self._d("web notification not implemented")
 
-							self.sendNotificationReceived(fromJid, notificationId, notificationTo, participant, notificationType, None)
+							self.sendNotificationReceived(notificationTo, notificationId, fromJid, participant, notificationType, None)
 
 						elif notificationType == "status":
 							setNode = node.getChild("set")
@@ -1080,7 +1080,7 @@ class ReaderThread(threading.Thread):
 							  self.signalInterface.send("notification_contactAdded", (contactJid, ))
 								
 							contactsNode = ProtocolTreeNode("sync", {"contacts": "out"})
-							self.sendNotificationReceived(fromJid, notificationId, notificationTo, participant, notificationType, contactsNode)
+							self.sendNotificationReceived(notificationTo, notificationId, fromJid, participant, notificationType, contactsNode)
 
 					elif ProtocolTreeNode.tagEquals(node, "receipt"):
 						receiptType = node.getAttributeValue("type");
