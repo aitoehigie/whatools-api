@@ -412,7 +412,8 @@ def line_unsubscribe():
             running[lId]["tokens"].remove(token["key"])
           if len(running[lId]["tokens"]) < 1:
             Lines.update({"_id": lId}, {"$set": {"reconnect": False, "active": False}})
-            del running[lId]
+            if lId in running:
+              del running[lId]
           res["success"] = True
         else:
           res["error"] = "token-was-not-subscribed"
