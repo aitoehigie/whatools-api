@@ -40,16 +40,17 @@ class WhatsappBackClient:
     connectionManager.setAutoPong(keepAlive)
     self.signalsInterface = connectionManager.getSignalsInterface()
     self.methodsInterface = connectionManager.getMethodsInterface()
+    self.signalsInterface.registerListener("audio_received", self.onAudioReceived)
     self.signalsInterface.registerListener("auth_fail", self.onAuthFailed)
     self.signalsInterface.registerListener("auth_success", self.onAuthSuccess)
     self.signalsInterface.registerListener("disconnected", self.onDisconnected)
     self.signalsInterface.registerListener("image_received", self.onImageReceived)
-    self.signalsInterface.registerListener("video_received", self.onVideoReceived)
-    self.signalsInterface.registerListener("audio_received", self.onAudioReceived)
+    self.signalsInterface.registerListener("location_received", self.onLocationReceived)
     self.signalsInterface.registerListener("message_received", self.onMessageReceived)
     self.signalsInterface.registerListener("ping", self.onPing)
     self.signalsInterface.registerListener("receipt_messageDelivered", self.onDeliveredAck)
     self.signalsInterface.registerListener("receipt_visible", self.onVisibleAck)
+    self.signalsInterface.registerListener("video_received", self.onVideoReceived)
     self.cm = connectionManager
     self.result = False
     self.done = False
@@ -69,7 +70,7 @@ class WhatsappBackClient:
     self.methodsInterface.call("disconnect")
 
   def onAudioReceived(self, messageId, jid, url, size, wantsReceipt, isBroadCast):
-    self.eventHandler["onMediaReceived"](self, messageId, jid, "audio", False, url, size, wantsReceipt, isBroadCast)
+    self.eventHandler["onMediaReceived"](self, messageId, jid, False, "audio", False, url, size, wantsReceipt, isBroadCast)
     self.methodsInterface.call("message_ack", (jid, messageId))
 
   def onAuthSuccess(self, username):
@@ -90,7 +91,11 @@ class WhatsappBackClient:
     print("Disconnected because %s" %reason)
     
   def onImageReceived(self, messageId, jid, preview, url, size, wantsReceipt, isBroadCast):
-    self.eventHandler["onMediaReceived"](self, messageId, jid, "image", preview, url, size, wantsReceipt, isBroadCast)
+    self.eventHandler["onMediaReceived"](self, messageId, jid, False, "image", preview, url, size, wantsReceipt, isBroadCast)
+    self.methodsInterface.call("message_ack", (jid, messageId))
+    
+  def onLocationReceived(self, messageId, jid, caption, preview, latitude, longitude, wantsReceipt, isBroadCast):
+    self.eventHandler["onMediaReceived"](self, messageId, jid, caption, "location", preview, latitude, longitude, wantsReceipt, isBroadCast)
     self.methodsInterface.call("message_ack", (jid, messageId))
 
   def onMessageReceived(self, messageId, jid, messageContent, timestamp, wantsReceipt, pushName, isBroadCast):
@@ -103,7 +108,7 @@ class WhatsappBackClient:
     self.eventHandler["onAck"](self, 'delivered', jid, messageId)
 
   def onVideoReceived(self, messageId, jid, preview, url, size, wantsReceipt, isBroadCast):
-    self.eventHandler["onMediaReceived"](self, messageId, jid, "video", preview, url, size, wantsReceipt, isBroadCast)
+    self.eventHandler["onMediaReceived"](self, messageId, jid, False, "video", preview, url, size, wantsReceipt, isBroadCast)
     self.methodsInterface.call("message_ack", (jid, messageId))
 
   def onVisibleAck(self, jid, messageId):

@@ -114,14 +114,17 @@ def onDisconnected(wa, reason):
     Lines.update({"_id": wa.line["_id"]}, {"$set": {"active": False, "reconnect": False}});
     wa.errors = 0
     
-def onMediaReceived(wa, messageId, jid, type, preview, url, size, wantsReceipt, isBroadCast):
+def onMediaReceived(wa, messageId, jid, caption, type, preview, url, size, wantsReceipt, isBroadCast):
   if len(running):
     allTokens = Lines.find_one({"_id": wa.line["_id"]})["tokens"]
     runningTokens = running[wa.line["_id"]]["tokens"]
     for token in allTokens:
       if token["key"] in runningTokens:
         if token["push"]:
-          res = push(token["push"], "media", {"messageId": messageId, "jid": jid, "preview": preview, "url": url, "size": size, "wantsReceipt": wantsReceipt, "isBroadCast": isBroadCast})
+          if type == "location":
+            res = push(token["push"], "media", {"messageId": messageId, "jid": jid, "type": type, "preview": preview, "latitude": url, "longitude": size, "wantsReceipt": wantsReceipt, "isBroadCast": isBroadCast})
+          else:
+            res = push(token["push"], "media", {"messageId": messageId, "jid": jid, "type": type, "preview": preview, "url": url, "size": size, "wantsReceipt": wantsReceipt, "isBroadCast": isBroadCast})
           if res:
             print res.read()
   to = jid.split("@")[0]
@@ -134,10 +137,17 @@ def onMediaReceived(wa, messageId, jid, type, preview, url, size, wantsReceipt, 
     "media": {
       "type": type,
       "preview": preview,
+      "latitude": url,
+      "longitude": size
+    } if type == "location" else {
+      "type": type,
+      "preview": preview,
       "url": url,
       "size": size
     }
   }
+  if caption:
+    msg["body"] = caption;
   if chat:
     # Push it to db
     Chats.update({"from": wa.line["_id"], "to": to}, {"$push": {"messages": msg}, "$set": {"lastStamp": stamp}, "$inc": {"unread": 1}});
