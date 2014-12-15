@@ -45,6 +45,7 @@ class WhatsappBackClient:
     self.signalsInterface.registerListener("disconnected", self.onDisconnected)
     self.signalsInterface.registerListener("image_received", self.onImageReceived)
     self.signalsInterface.registerListener("video_received", self.onVideoReceived)
+    self.signalsInterface.registerListener("audio_received", self.onAudioReceived)
     self.signalsInterface.registerListener("message_received", self.onMessageReceived)
     self.signalsInterface.registerListener("ping", self.onPing)
     self.signalsInterface.registerListener("receipt_messageDelivered", self.onDeliveredAck)
@@ -66,7 +67,11 @@ class WhatsappBackClient:
     
   def logout(self):
     self.methodsInterface.call("disconnect")
-  
+
+  def onAudioReceived(self, messageId, jid, url, size, wantsReceipt, isBroadCast):
+    self.eventHandler["onMediaReceived"](self, messageId, jid, "audio", False, url, size, wantsReceipt, isBroadCast)
+    self.methodsInterface.call("message_ack", (jid, messageId))
+
   def onAuthSuccess(self, username):
     print("Authed %s" % username)
     self.methodsInterface.call("ready")
