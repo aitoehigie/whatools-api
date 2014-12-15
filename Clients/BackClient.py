@@ -44,6 +44,7 @@ class WhatsappBackClient:
     self.signalsInterface.registerListener("auth_success", self.onAuthSuccess)
     self.signalsInterface.registerListener("disconnected", self.onDisconnected)
     self.signalsInterface.registerListener("image_received", self.onImageReceived)
+    self.signalsInterface.registerListener("video_received", self.onVideoReceived)
     self.signalsInterface.registerListener("message_received", self.onMessageReceived)
     self.signalsInterface.registerListener("ping", self.onPing)
     self.signalsInterface.registerListener("receipt_messageDelivered", self.onDeliveredAck)
@@ -95,7 +96,11 @@ class WhatsappBackClient:
       
   def onDeliveredAck(self, jid, messageId):
     self.eventHandler["onAck"](self, 'delivered', jid, messageId)
-    
+
+  def onVideoReceived(self, messageId, jid, preview, url, size, wantsReceipt, isBroadCast):
+    self.eventHandler["onMediaReceived"](self, messageId, jid, "video", preview, url, size, wantsReceipt, isBroadCast)
+    self.methodsInterface.call("message_ack", (jid, messageId))
+
   def onVisibleAck(self, jid, messageId):
     self.eventHandler["onAck"](self, 'visible', jid, messageId)
     
