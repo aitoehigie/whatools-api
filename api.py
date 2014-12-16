@@ -598,11 +598,14 @@ def nickname_post():
                 f.write(src.decode('base64'))
                 f.close()
                 idx = wa.profile_setPicture(path)
-                uploads[idx] = {
-                  "src": name,
-                  "token": token["key"]
-                }
-                res["success"] = True
+                if idx:
+                  uploads[idx] = {
+                    "src": name,
+                    "token": token["key"]
+                  }
+                  res["success"] = True
+                else:
+                  res["error"] = "wrong-file-type"
               else:
                 res["error"] = "inactive-line"
             else:
