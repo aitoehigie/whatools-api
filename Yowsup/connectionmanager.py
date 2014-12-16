@@ -683,7 +683,7 @@ class YowsupConnectionManager:
 
 		imageData = Image.open(imagePath)
 		previewData = bytearray(imageData.resize((96, 96)).tostring("jpeg", "RGB"))
-		imageData = bytearray(imageData.tostring("jpeg", "RGB"))
+		imageData = bytearray(imageData.resize((640, 640)).tostring("jpeg", "RGB"))
 		
 		idx = self.makeId("set_picture_")
 		self.readerThread.requests[idx] = self.readerThread.parseSetPicture
