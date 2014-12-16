@@ -680,26 +680,24 @@ class YowsupConnectionManager:
 		return self.sendSetPicture(self.jid, filepath)
 	
 	def sendSetPicture(self, jid, imagePath):
-    
-    try:
-		  imageData = Image.open(imagePath)
-		  previewData = bytearray(imageData.resize((96, 96)).tostring("jpeg", "RGB"))
-		  imageData = bytearray(imageData.resize((640, 640)).tostring("jpeg", "RGB"))
-		
-		  idx = self.makeId("set_picture_")
-		  self.readerThread.requests[idx] = self.readerThread.parseSetPicture
+		try:
+			imageData = Image.open(imagePath)
+			previewData = bytearray(imageData.resize((96, 96)).tostring("jpeg", "RGB"))
+			imageData = bytearray(imageData.resize((640, 640)).tostring("jpeg", "RGB"))
 
-		  imageNode = ProtocolTreeNode("picture",{"type":"image"}, None, imageData)
-		  previewNode = ProtocolTreeNode("picture",{"type":"preview"}, None, previewData)
+			idx = self.makeId("set_picture_")
+			self.readerThread.requests[idx] = self.readerThread.parseSetPicture
 
-		  iqNode = ProtocolTreeNode("iq",{"id":idx,"to":jid,"type":"set","xmlns":"w:profile:picture"},[imageNode, previewNode])
+			imageNode = ProtocolTreeNode("picture",{"type":"image"}, None, imageData)
+			previewNode = ProtocolTreeNode("picture",{"type":"preview"}, None, previewData)
 
-		  self._writeNode(iqNode)
-		  break
-		  
-	  except IOError:
-	    idx = False
-		
+			iqNode = ProtocolTreeNode("iq",{"id":idx,"to":jid,"type":"set","xmlns":"w:profile:picture"},[imageNode, previewNode])
+
+			self._writeNode(iqNode)
+			
+		except IOError:
+			idx = False
+			
 		return idx
 
 	
