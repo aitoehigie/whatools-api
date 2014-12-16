@@ -20,6 +20,7 @@ OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 '''
 
 from Yowsup.Common.debugger import Debugger
+import binascii
 
 
 class ProtocolTreeNode():
@@ -41,7 +42,7 @@ class ProtocolTreeNode():
 					out+= " "+key+'="'+val+'"'
 			out+= ">\n";
 			if self.data is not None:
-				out += (" " * (depth + 4)) + self.data.encode("hex") + "\n"
+				out += (" " * (depth + 4)) + binascii.hexlify(self.data) + "\n"
 
 			if self.children is not None:
 				for c in self.children:
@@ -49,6 +50,8 @@ class ProtocolTreeNode():
 			#print sel
 			out+= (" " * depth) + "</"+self.tag+">\n"
 			return out
+		except AttributeError:
+		  print("ignored toString call, no way to encode data", self.data, type(self.data))
 		except TypeError:
 			print("ignored toString call, probably encountered byte")
 		except UnicodeDecodeError:

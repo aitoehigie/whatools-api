@@ -2,7 +2,7 @@
 #  -*- coding: utf8 -*-
 
 import json, base64, time, httplib, urllib
-from bottle import route, run, request, static_file
+from bottle import route, run, request, static_file, BaseRequest
 from pymongo import MongoClient
 from bson import objectid
 from Yowsup.Common.utilities import Utilities
@@ -16,17 +16,21 @@ from Yowsup.Registration.v2.coderequest import WACodeRequest
 from Yowsup.Registration.v2.existsrequest import WAExistsRequest
 from Yowsup.Registration.v2.regrequest import WARegRequest
 
+BaseRequest.MEMFILE_MAX = 1.5 * 1024 * 1024 
+
 running = {}
+uploads = {}
 
 client = MongoClient('localhost')
 db = client.waapi
 db.authenticate('waapi', 'adventuretime')
 
-Users = db.users
 Lines = db.lines
 Chats = db.chats
+Avatars = db.avatars
 
 freePlanSignature = "\n\n[Message sent by using WAAPI. If it's SPAM, report it to https://waapi.com/report]"
+storage = "/var/waapi/storage/"
 
 def recover():
   activeLines = Lines.find({"tokens.active": True}, {"tokens.$": 1})
@@ -204,6 +208,22 @@ def onPing(wa, pingId):
     # TODO: Notify expiracy to active tokens
     del running[line["_id"]]
   
+def onProfileSetPictureError(wa, idx, errorCode):
+  if idx in uploads:
+    del uploads[idx]
+
+def onProfileSetPictureSuccess(wa, idx, pictureId):
+  if idx in uploads:
+    line = wa.line
+    src = uploads[idx]
+    item = {
+      "src": src,
+      "id": pictureId
+    }
+    Avatars.update({"jid": line["cc"] + line["pn"]}, {"$push": {"items": item}}, True)
+    del uploads[idx]
+
+
 eventHandler = {
   "onAck": onAck,
   "onAuthFailed": onAuthFailed,
@@ -211,7 +231,9 @@ eventHandler = {
   "onDisconnected": onDisconnected,
   "onMediaReceived": onMediaReceived,
   "onMessageReceived": onMessageReceived,
-  "onPing": onPing
+  "onPing": onPing,
+  "onProfileSetPictureError": onProfileSetPictureError,
+  "onProfileSetPictureSuccess": onProfileSetPictureSuccess
 }
 
 @route("/message", method="POST")
@@ -543,6 +565,46 @@ def nickname_post():
     res["error"] = "no-key"
   return res
 
+@route("/avatar", method="POST")
+def nickname_post():
+  res = {"success": False}
+  key = request.params.key
+  src = request.params.src
+  if key:
+    line = Lines.find_one({"tokens": {"$elemMatch": {"key": key}}})
+    if line:
+      lId = line["_id"]
+      token = filter(lambda e: e['key'] == key, line['tokens'])[0]
+      if lineIsNotExpired(line):
+        if token:
+          if "permissions" in token and "manage" in token["permissions"]:
+            if src:
+              if line["_id"] in running:
+                wa = running[line["_id"]]["yowsup"]
+                name = "avatars/" + line["cc"] + line["pn"] + "-" + str(int(time.time())) + ".jpg"
+                path = storage + name
+                f = open(path, "wb")
+                f.write(src.decode('base64'))
+                f.close()
+                idx = wa.profile_setPicture(path)
+                uploads[idx] = name
+                res["success"] = True
+              else:
+                res["error"] = "inactive-line"
+            else:
+              res["error"] = "bad-param"
+          else:
+            res["error"] = "no-permission"
+        else:
+          res["error"] = "no-token-matches-key"
+      else:
+        res["error"] = "line-is-expired"
+        Lines.update({"_id": lId}, {"$set": {"valid": "wrong", "reconnect": False, "active": False}})
+    else:
+      res["error"] = "no-line-matches-key"
+  else:
+    res["error"] = "no-key"
+  return res
   
 '''
 

@@ -36,7 +36,7 @@ import socket
 import hashlib
 import base64
 import sys
-
+from PIL import Image
 
 import traceback
 class YowsupConnectionManager:
@@ -681,19 +681,21 @@ class YowsupConnectionManager:
 	
 	def sendSetPicture(self, jid, imagePath):
 
-		f = open(imagePath, 'rb')
-		imageData = f.read()
-		imageData = bytearray(imageData)
-		f.close()
+		imageData = Image.open(imagePath)
+		previewData = bytearray(imageData.resize((96, 96)).tostring("jpeg", "RGB"))
+		imageData = bytearray(imageData.tostring("jpeg", "RGB"))
 		
 		idx = self.makeId("set_picture_")
 		self.readerThread.requests[idx] = self.readerThread.parseSetPicture
 
-		listNode = ProtocolTreeNode("picture",{"type":"image"}, None, imageData)
+		imageNode = ProtocolTreeNode("picture",{"type":"image"}, None, imageData)
+		previewNode = ProtocolTreeNode("picture",{"type":"preview"}, None, previewData)
 
-		iqNode = ProtocolTreeNode("iq",{"id":idx,"to":jid,"type":"set","xmlns":"w:profile:picture"},[listNode])
+		iqNode = ProtocolTreeNode("iq",{"id":idx,"to":jid,"type":"set","xmlns":"w:profile:picture"},[imageNode, previewNode])
 
 		self._writeNode(iqNode)
+		
+		return idx
 
 	
 	def sendRequestUpload(self, b64Hash, t, size, b64OrigHash = None):
@@ -1323,6 +1325,7 @@ class ReaderThread(threading.Thread):
 
 	def parseSetPicture(self,node):
 		jid = node.getAttributeValue("from");
+		idx = node.getAttributeValue("id");
 		picNode = node.getChild("picture")
 		
 		try:
@@ -1335,10 +1338,10 @@ class ReaderThread(threading.Thread):
 				self.signalInterface.send("group_setPictureSuccess", (jid, pictureId))
 		except ValueError:
 			if picNode is None:
-				self.signalInterface.send("profile_setPictureError", (0,)) #@@TODO SEND correct error code
+				self.signalInterface.send("profile_setPictureError", (idx, 0,)) #@@TODO SEND correct error code
 			else:
 				pictureId = int(picNode.getAttributeValue("id"))
-				self.signalInterface.send("profile_setPictureSuccess", (pictureId,))
+				self.signalInterface.send("profile_setPictureSuccess", (idx, pictureId,))
 	
 	
 	def parseRequestUpload(self, iqNode, _hash):

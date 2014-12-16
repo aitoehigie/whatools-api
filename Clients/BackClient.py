@@ -48,6 +48,8 @@ class WhatsappBackClient:
     self.signalsInterface.registerListener("location_received", self.onLocationReceived)
     self.signalsInterface.registerListener("message_received", self.onMessageReceived)
     self.signalsInterface.registerListener("ping", self.onPing)
+    self.signalsInterface.registerListener("profile_setPictureError", self.onProfileSetPictureError)
+    self.signalsInterface.registerListener("profile_setPictureSuccess", self.onProfileSetPictureSuccess)
     self.signalsInterface.registerListener("receipt_messageDelivered", self.onDeliveredAck)
     self.signalsInterface.registerListener("receipt_visible", self.onVisibleAck)
     self.signalsInterface.registerListener("video_received", self.onVideoReceived)
@@ -106,6 +108,12 @@ class WhatsappBackClient:
       
   def onDeliveredAck(self, jid, messageId):
     self.eventHandler["onAck"](self, 'delivered', jid, messageId)
+    
+  def onProfileSetPictureError(self, idx, errorCode):
+    self.eventHandler["onProfileSetPictureError"](self, idx, errorCode)
+  
+  def onProfileSetPictureSuccess(self, idx, pictureId):
+    self.eventHandler["onProfileSetPictureSuccess"](self, idx, pictureId)
 
   def onVideoReceived(self, messageId, jid, preview, url, size, wantsReceipt, isBroadCast):
     self.eventHandler["onMediaReceived"](self, messageId, jid, False, "video", preview, url, size, wantsReceipt, isBroadCast)
@@ -123,4 +131,7 @@ class WhatsappBackClient:
   def presence_sendAvailableForChat(self, nickname):
     print nickname
     self.methodsInterface.call("presence_sendAvailableForChat", ([nickname]))
+    
+  def profile_setPicture(self, path):
+    return self.methodsInterface.call("profile_setPicture", ([path]))
   
