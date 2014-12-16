@@ -68,9 +68,11 @@ def messageSign(text, line):
     text += freePlanSignature
   return text
 
-def push(url, method, data):
+def push(token, method, data):
   res = False
+  url = token["push"]
   data["_method"] = method
+  data["_tokenId"] = token["id"]
   params = urllib.urlencode(data)
   headers = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/plain"}
   if url[0] == "https":
@@ -95,7 +97,7 @@ def onAck(wa, grade, jid, messageId):
     for token in allTokens:
       if token["key"] in runningTokens:
         if token["push"]:
-          res = push(token["push"], "ack", {"grade": grade, "jid": jid, "messageId": messageId})
+          res = push(token, "ack", {"grade": grade, "jid": jid, "messageId": messageId})
           if res:
             print res.read()
     Chats.update({"from": wa.line["_id"], "to": jid.split("@")[0], 'messages.id': messageId}, {"$set": {'messages.$.ack': grade}})
@@ -126,9 +128,9 @@ def onMediaReceived(wa, messageId, jid, caption, type, preview, url, size, wants
       if token["key"] in runningTokens:
         if token["push"]:
           if type == "location":
-            res = push(token["push"], "media", {"messageId": messageId, "jid": jid, "type": type, "preview": preview, "latitude": url, "longitude": size, "wantsReceipt": wantsReceipt, "isBroadCast": isBroadCast})
+            res = push(token, "media", {"messageId": messageId, "jid": jid, "type": type, "preview": preview, "latitude": url, "longitude": size, "wantsReceipt": wantsReceipt, "isBroadCast": isBroadCast})
           else:
-            res = push(token["push"], "media", {"messageId": messageId, "jid": jid, "type": type, "preview": preview, "url": url, "size": size, "wantsReceipt": wantsReceipt, "isBroadCast": isBroadCast})
+            res = push(token, "media", {"messageId": messageId, "jid": jid, "type": type, "preview": preview, "url": url, "size": size, "wantsReceipt": wantsReceipt, "isBroadCast": isBroadCast})
           if res:
             print res.read()
   to = jid.split("@")[0]
@@ -173,7 +175,7 @@ def onMessageReceived(wa, messageId, jid, messageContent, timestamp, wantsReceip
     for token in allTokens:
       if token["key"] in runningTokens:
         if token["push"]:
-          res = push(token["push"], "message", {"messageId": messageId, "jid": jid, "messageContent": messageContent, "timestamp": timestamp, "wantsReceipt": wantsReceipt, "pushName": pushName, "isBroadCast": isBroadCast})
+          res = push(token, "message", {"messageId": messageId, "jid": jid, "messageContent": messageContent, "timestamp": timestamp, "wantsReceipt": wantsReceipt, "pushName": pushName, "isBroadCast": isBroadCast})
           if res:
             print res.read()
   to = jid.split("@")[0]
@@ -210,19 +212,28 @@ def onPing(wa, pingId):
   
 def onProfileSetPictureError(wa, idx, errorCode):
   if idx in uploads:
+    allTokens = Lines.find_one({"_id": wa.line["_id"]})["tokens"]
+    runningTokens = running[wa.line["_id"]]["tokens"]
+    for token in allTokens:
+      if token["key"] in runningTokens and token["key"] == uploads[idx]["token"] and token["push"]:
+        res = push(token, "error", {"type": "onProfileSetPictureError", "idx": idx})
     del uploads[idx]
 
 def onProfileSetPictureSuccess(wa, idx, pictureId):
   if idx in uploads:
     line = wa.line
-    src = uploads[idx]
+    src = uploads[idx]["src"]
     item = {
       "src": src,
       "id": pictureId
     }
     Avatars.update({"jid": line["cc"] + line["pn"]}, {"$push": {"items": item}}, True)
+    allTokens = Lines.find_one({"_id": wa.line["_id"]})["tokens"]
+    runningTokens = running[wa.line["_id"]]["tokens"]
+    for token in allTokens:
+      if token["key"] in runningTokens and token["key"] == uploads[idx]["token"] and token["push"]:
+          res = push(token, "success", {"type": "onProfileSetPictureSuccess", "idx": idx, "pictureId": pictureId})
     del uploads[idx]
-
 
 eventHandler = {
   "onAck": onAck,
@@ -284,7 +295,7 @@ def messages_post():
                 for token in line["tokens"]:
                   if token["key"] in runningTokens:
                     if token["push"] and token["key"] != key:
-                      pushRes = push(token["push"], "carbon", {"messageId": msgId, "jid": to, "messageContent": body, "timestamp": stamp, "wantsReceipt": ack, "isBroadCast": broadcast})
+                      pushRes = push(token, "carbon", {"messageId": msgId, "jid": to, "messageContent": body, "timestamp": stamp, "wantsReceipt": ack, "isBroadCast": broadcast})
                       if pushRes:
                         print pushRes.read()
               else:
@@ -587,7 +598,10 @@ def nickname_post():
                 f.write(src.decode('base64'))
                 f.close()
                 idx = wa.profile_setPicture(path)
-                uploads[idx] = name
+                uploads[idx] = {
+                  "src": name,
+                  "token": token["key"]
+                }
                 res["success"] = True
               else:
                 res["error"] = "inactive-line"
