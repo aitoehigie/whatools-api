@@ -412,7 +412,7 @@ def line_subscribe():
             if wa:
               user = line["cc"] + line["pn"]
               try:
-                pw = base64.b64decode(bytes(line["pass"].encode('utf-8')))
+                pw = base64.b64decode(bytes(str(line["pass"])))
               except TypeError:
                 res["error"] = "password-type-error"
                 Lines.update({"_id": lId, "tokens.key": token["key"]}, {"$set": {"valid": "wrong", "reconnect": False, "tokens.$.active": False}})
