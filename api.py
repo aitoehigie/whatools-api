@@ -29,7 +29,7 @@ Lines = db.lines
 Chats = db.chats
 Avatars = db.avatars
 
-freePlanSignature = "\n\n[Message sent by using WAAPI. If it's SPAM, report it to https://waapi.com/report]"
+freePlanSignature = "\n\n[Message sent by using a WhaTools free account. If it's SPAM, report it to https://wha.tools/report]"
 storage = "/var/waapi/storage/"
 
 def recover():
