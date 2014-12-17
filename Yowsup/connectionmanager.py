@@ -478,8 +478,9 @@ class YowsupConnectionManager:
 		iqNode = ProtocolTreeNode("iq", {"to": self.domain, "type": "set", "id": idx, "xmlns": "status"}, [statusNode]);
 		
 		self._writeNode(iqNode);
+		self.readerThread.requests[idx] = self.readerThread.parseSetStatus;
 		
-		return messageNode.getAttributeValue("id")
+		return idx
 		
 		
 	
@@ -1345,7 +1346,11 @@ class ReaderThread(threading.Thread):
 			else:
 				pictureId = int(picNode.getAttributeValue("id"))
 				self.signalInterface.send("profile_setPictureSuccess", (idx, pictureId,))
-	
+
+	def parseSetStatus(self,node):
+		jid = node.getAttributeValue("from");
+		idx = node.getAttributeValue("id");
+		self.signalInterface.send("profile_setStatusSuccess", (jid, idx,))
 	
 	def parseRequestUpload(self, iqNode, _hash):
 

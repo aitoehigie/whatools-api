@@ -252,7 +252,8 @@ eventHandler = {
   "onMessageReceived": onMessageReceived,
   "onPing": onPing,
   "onProfileSetPictureError": onProfileSetPictureError,
-  "onProfileSetPictureSuccess": onProfileSetPictureSuccess
+  "onProfileSetPictureSuccess": onProfileSetPictureSuccess,
+  "onProfileSetStatusSuccess": onProfileSetStatusSuccess
 }
 
 
@@ -586,7 +587,7 @@ def nickname_post():
   return res
   
 @route("/status", method="POST")
-def statusMessage_post():
+def status_post():
   res = {"success": False}
   key = request.params.key
   message = request.params.message
@@ -601,7 +602,7 @@ def statusMessage_post():
             if message:
               if line["_id"] in running:
                 wa = running[line["_id"]]["yowsup"]
-                wa.profile_setStatus(statusMessage)
+                wa.profile_setStatus(message.encode('utf-8').strip())
                 Lines.update({"_id": lId}, {"$set": {"statusMessage": message}})
                 res["success"] = True
               else:
