@@ -235,6 +235,14 @@ def onProfileSetPictureSuccess(wa, idx, pictureId):
           res = push(token, "success", {"type": "onProfileSetPictureSuccess", "idx": idx, "pictureId": pictureId})
     del uploads[idx]
 
+def onProfileSetStatusSuccess(wa, jid, idx):
+  allTokens = Lines.find_one({"_id": wa.line["_id"]})["tokens"]
+  runningTokens = running[wa.line["_id"]]["tokens"]
+  for token in allTokens:
+    if token["key"] in runningTokens and token["push"]:
+        res = push(token, "success", {"type": "onProfileSetStatusSuccess", "idx": idx})
+
+
 eventHandler = {
   "onAck": onAck,
   "onAuthFailed": onAuthFailed,
@@ -246,6 +254,7 @@ eventHandler = {
   "onProfileSetPictureError": onProfileSetPictureError,
   "onProfileSetPictureSuccess": onProfileSetPictureSuccess
 }
+
 
 @route("/message", method="POST")
 def messages_post():
@@ -558,6 +567,42 @@ def nickname_post():
                 wa = running[line["_id"]]["yowsup"]
                 wa.presence_sendAvailableForChat(nickname)
                 Lines.update({"_id": lId}, {"$set": {"nickname": nickname}})
+                res["success"] = True
+              else:
+                res["error"] = "inactive-line"
+            else:
+              res["error"] = "bad-param"
+          else:
+            res["error"] = "no-permission"
+        else:
+          res["error"] = "no-token-matches-key"
+      else:
+        res["error"] = "line-is-expired"
+        Lines.update({"_id": lId}, {"$set": {"valid": "wrong", "reconnect": False, "active": False}})
+    else:
+      res["error"] = "no-line-matches-key"
+  else:
+    res["error"] = "no-key"
+  return res
+  
+@route("/status", method="POST")
+def statusMessage_post():
+  res = {"success": False}
+  key = request.params.key
+  message = request.params.message
+  if key:
+    line = Lines.find_one({"tokens": {"$elemMatch": {"key": key}}})
+    if line:
+      lId = line["_id"]
+      token = filter(lambda e: e['key'] == key, line['tokens'])[0]
+      if lineIsNotExpired(line):
+        if token:
+          if "permissions" in token and "manage" in token["permissions"]:
+            if message:
+              if line["_id"] in running:
+                wa = running[line["_id"]]["yowsup"]
+                wa.profile_setStatus(statusMessage)
+                Lines.update({"_id": lId}, {"$set": {"statusMessage": message}})
                 res["success"] = True
               else:
                 res["error"] = "inactive-line"
