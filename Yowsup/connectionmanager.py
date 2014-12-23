@@ -27,7 +27,7 @@ from Yowsup.Common.utilities import Utilities
 from Yowsup.Common.debugger import Debugger
 import threading, select, time
 from Yowsup.Common.watime import WATime
-from .Auth.auth import YowsupAuth
+from Yowsup.Auth.auth import YowsupAuth
 from Yowsup.Common.constants import Constants
 from Yowsup.Interfaces.Lib.LibInterface import LibMethodInterface, LibSignalInterface
 import tempfile
@@ -36,7 +36,7 @@ import socket
 import hashlib
 import base64
 import sys
-
+from PIL import Image
 
 import traceback
 class YowsupConnectionManager:
@@ -355,11 +355,11 @@ class YowsupConnectionManager:
 		self._writeNode(receiptNode)
 
 	def sendNotificationReceived(self, to, msg_id, from_jid, participant, notificationType, childNode):
-		attrs = {"to": to, "class": "notification", "id": msg_id, "type": notificationType}
+		attrs = {"to": from_jid, "class": "notification", "id": msg_id, "type": notificationType}
 		if participant is not None:
 			attrs["participant"] = participant
-		if from_jid is not None:
-			attrs["from"] = from_jid
+		if to is not None:
+			attrs["from"] = to
 		ackNode = ProtocolTreeNode("ack", attrs, [childNode] if childNode is not None else None)
 		self._writeNode(ackNode)
 
@@ -478,8 +478,9 @@ class YowsupConnectionManager:
 		iqNode = ProtocolTreeNode("iq", {"to": self.domain, "type": "set", "id": idx, "xmlns": "status"}, [statusNode]);
 		
 		self._writeNode(iqNode);
+		self.readerThread.requests[idx] = self.readerThread.parseSetStatus;
 		
-		return messageNode.getAttributeValue("id")
+		return idx
 		
 		
 	
@@ -680,20 +681,25 @@ class YowsupConnectionManager:
 		return self.sendSetPicture(self.jid, filepath)
 	
 	def sendSetPicture(self, jid, imagePath):
+		try:
+			imageData = Image.open(imagePath)
+			previewData = bytearray(imageData.resize((96, 96)).tostring("jpeg", "RGB"))
+			imageData = bytearray(imageData.resize((640, 640)).tostring("jpeg", "RGB"))
 
-		f = open(imagePath, 'rb')
-		imageData = f.read()
-		imageData = bytearray(imageData)
-		f.close()
-		
-		idx = self.makeId("set_picture_")
-		self.readerThread.requests[idx] = self.readerThread.parseSetPicture
+			idx = self.makeId("set_picture_")
+			self.readerThread.requests[idx] = self.readerThread.parseSetPicture
 
-		listNode = ProtocolTreeNode("picture",{"type":"image"}, None, imageData)
+			imageNode = ProtocolTreeNode("picture",{"type":"image"}, None, imageData)
+			previewNode = ProtocolTreeNode("picture",{"type":"preview"}, None, previewData)
 
-		iqNode = ProtocolTreeNode("iq",{"id":idx,"to":jid,"type":"set","xmlns":"w:profile:picture"},[listNode])
+			iqNode = ProtocolTreeNode("iq",{"id":idx,"to":jid,"type":"set","xmlns":"w:profile:picture"},[imageNode, previewNode])
 
-		self._writeNode(iqNode)
+			self._writeNode(iqNode)
+			
+		except IOError:
+			idx = False
+			
+		return idx
 
 	
 	def sendRequestUpload(self, b64Hash, t, size, b64OrigHash = None):
@@ -885,8 +891,8 @@ class ReaderThread(threading.Thread):
 			self.disconnectedSent = True
 			if self.disconnectedCallback:
 				self.disconnectedCallback()
-			self.lock.release()
-			self.signalInterface.send("disconnected", (reason,))
+		self.lock.release()
+		self.signalInterface.send("disconnected", (reason,))
 
 	def run(self):
 		self._d("Read thread startedX");
@@ -927,7 +933,8 @@ class ReaderThread(threading.Thread):
 							raise Exception("iq doesn't have type")
 
 						if iqxmlns == "urn:xmpp:ping":
-							self.sendPong(idx)	
+							self.onPing(idx)
+
 						elif iqType == "result":
 							if idx in self.requests:
 								self.requests[idx](node)
@@ -995,6 +1002,7 @@ class ReaderThread(threading.Thread):
 						fromJid = node.getAttributeValue("from");
 						timestamp =int(node.getAttributeValue("t"))
 						msgId = node.getAttributeValue("id")
+						participant = None
 							
 						if notificationType == "picture":
 							bodyNode = node.getChild("set")
@@ -1007,7 +1015,7 @@ class ReaderThread(threading.Thread):
 									self.signalInterface.send("notification_contactProfilePictureUpdated",(bodyNode.getAttributeValue("jid"), timestamp, msgId, pictureId, receiptRequested))
 
 							else:
-								bodyNode = notifNode.getChild("delete")
+								bodyNode = node.getChild("delete")
 
 								if bodyNode:
 									if "-" in bodyNode.getAttributeValue("jid"):
@@ -1021,7 +1029,7 @@ class ReaderThread(threading.Thread):
 							#else:
 							#	self.signalInterface.send("notification_contactProfilePictureUpdated",(bodyNode.getAttributeValue("jid"), timestamp, msgId, receiptRequested))
 
-							#self.sendNotificationReceived(notificationTo, notificationId, fromJid, participant, notificationType, None)
+							self.sendNotificationReceived(notificationTo, notificationId, fromJid, participant, notificationType, None)
 
 						elif notificationType == "participant":
 							addSubject = None
@@ -1045,12 +1053,12 @@ class ReaderThread(threading.Thread):
 							if removeSubject is not None:
 								self.signalInterface.send("notification_groupParticipantRemoved", (fromAttribute, removeSubject, author, timestamp, msgId, receiptRequested))
 
-							#self.sendNotificationReceived(notificationTo, notificationId, fromJid, participant, notificationType, None)
+							self.sendNotificationReceived(notificationTo, notificationId, fromJid, participant, notificationType, None)
 
 						elif notificationType == "web":
 							self._d("web notification not implemented")
 
-							#self.sendNotificationReceived(fromJid, notificationId, notificationTo, participant, notificationType, None)
+							self.sendNotificationReceived(notificationTo, notificationId, fromJid, participant, notificationType, None)
 
 						elif notificationType == "status":
 							setNode = node.getChild("set")
@@ -1059,7 +1067,7 @@ class ReaderThread(threading.Thread):
 							if status is not None:
 								self.signalInterface.send("contact_statusReceived",(fromJid, status))
 
-							#self.sendNotificationReceived(notificationTo, notificationId, fromJid, participant, notificationType, None)
+							self.sendNotificationReceived(notificationTo, notificationId, fromJid, participant, notificationType, None)
 
 						elif notificationType == "subject":
 							receiptRequested = True;
@@ -1070,27 +1078,32 @@ class ReaderThread(threading.Thread):
 							if newSubject is not None:
 								self.signalInterface.send("group_subjectReceived",(msgId, fromAttribute, author, newSubject, int(attribute_t),  receiptRequested))
 
-							#self.sendNotificationReceived(notificationTo, notificationId, fromJid, participant, notificationType, None)
+							self.sendNotificationReceived(notificationTo, notificationId, fromJid, participant, notificationType, None)
 
 						elif notificationType == "contacts":
 							contactNode = node.getChild("add")
-							contactJid = contactNode.getAttributeValue("jid")
-							self.signalInterface.send("notification_contactAdded", (contactJid, ))
+							if contactNode:
+							  contactJid = contactNode.getAttributeValue("jid")
+							  self.signalInterface.send("notification_contactAdded", (contactJid, ))
 								
 							contactsNode = ProtocolTreeNode("sync", {"contacts": "out"})
-							#self.sendNotificationReceived(fromJid, notificationId, notificationTo, participant, notificationType, contactsNode)
+							self.sendNotificationReceived(notificationTo, notificationId, fromJid, participant, notificationType, contactsNode)
 
 					elif ProtocolTreeNode.tagEquals(node, "receipt"):
 						receiptType = node.getAttributeValue("type");
 						fromJid = node.getAttributeValue("from");
 						msg_id = node.getAttributeValue("id")
-						participant = node.getAttributeValue("participant")
-						if receiptType == "delivered" or receiptType == "played" or receiptType != "":
-							self.sendReceiptAck(msg_id, receiptType)
 						if fromJid[-9:] == "broadcast":
-							self.signalInterface.send("receipt_messageDelivered", (participant, msg_id))
-						else:
+							fromJid = node.getAttributeValue("participant")
+						self.sendReceiptAck(msg_id, receiptType)
+						if receiptType != "delivered" and receiptType != "played":
 							self.signalInterface.send("receipt_messageDelivered", (fromJid, msg_id))
+							groupNode = node.getChild("list")
+							if groupNode:
+								items = groupNode.getAllChildren("item");
+								for i in items:
+									msg_id = i.getAttributeValue("id")
+									self.signalInterface.send("receipt_messageDelivered", (fromJid, msg_id))
 
 					elif ProtocolTreeNode.tagEquals(node, "ack"):
 						ackClass = node.getAttributeValue("class")
@@ -1158,6 +1171,7 @@ class ReaderThread(threading.Thread):
 
 	def parseGroups(self,node):
 		children = node.getAllChildren("group");
+		groups = []
 		for groupNode in children:
 			jid = groupNode.getAttributeValue("id") + "@g.us"
 			owner = groupNode.getAttributeValue("owner")
@@ -1167,6 +1181,9 @@ class ReaderThread(threading.Thread):
 			creation = groupNode.getAttributeValue("creation")
 
 			self.signalInterface.send("group_gotInfo",(jid, owner, subject, subjectOwner, int(subjectT),int(creation)))
+			groups.append((jid, owner, subject, subjectOwner, int(subjectT),int(creation)))
+
+		self.signalInterface.send("group_gotGroups", (groups,))
 
 
 	def parseGroupInfo(self,node):
@@ -1301,18 +1318,19 @@ class ReaderThread(threading.Thread):
 	def parseGetPictureIds(self,node):
 		jid = node.getAttributeValue("from");
 		groupNode = node.getChild("list")
-		#self._d(groupNode.toString())
+		self._d(groupNode.toString())
 		children = groupNode.getAllChildren("user");
-		#pids = []
+		pids = []
 		for c in children:
 			if c.getAttributeValue("id") is not None:
-				#pids.append({"jid":c.getAttributeValue("jid"),"id":c.getAttributeValue("id")})
+				pids.append({"jid":c.getAttributeValue("jid"),"id":c.getAttributeValue("id")})
 				self.signalInterface.send("contact_gotProfilePictureId", (c.getAttributeValue("jid"), c.getAttributeValue("id")))
-		#self.signalInterface.send("contact_gotProfilePictureIds", (pids,))
+		self.signalInterface.send("contact_gotProfilePictureIds", (pids,))
 
 
 	def parseSetPicture(self,node):
 		jid = node.getAttributeValue("from");
+		idx = node.getAttributeValue("id");
 		picNode = node.getChild("picture")
 		
 		try:
@@ -1325,11 +1343,15 @@ class ReaderThread(threading.Thread):
 				self.signalInterface.send("group_setPictureSuccess", (jid, pictureId))
 		except ValueError:
 			if picNode is None:
-				self.signalInterface.send("profile_setPictureError", (0,)) #@@TODO SEND correct error code
+				self.signalInterface.send("profile_setPictureError", (idx, 0,)) #@@TODO SEND correct error code
 			else:
 				pictureId = int(picNode.getAttributeValue("id"))
-				self.signalInterface.send("profile_setPictureSuccess", (pictureId,))
-	
+				self.signalInterface.send("profile_setPictureSuccess", (idx, pictureId,))
+
+	def parseSetStatus(self,node):
+		jid = node.getAttributeValue("from");
+		idx = node.getAttributeValue("id");
+		self.signalInterface.send("profile_setStatusSuccess", (jid, idx,))
 	
 	def parseRequestUpload(self, iqNode, _hash):
 

@@ -40,13 +40,20 @@ class WhatsappBackClient:
     connectionManager.setAutoPong(keepAlive)
     self.signalsInterface = connectionManager.getSignalsInterface()
     self.methodsInterface = connectionManager.getMethodsInterface()
+    self.signalsInterface.registerListener("audio_received", self.onAudioReceived)
     self.signalsInterface.registerListener("auth_fail", self.onAuthFailed)
     self.signalsInterface.registerListener("auth_success", self.onAuthSuccess)
     self.signalsInterface.registerListener("disconnected", self.onDisconnected)
+    self.signalsInterface.registerListener("image_received", self.onImageReceived)
+    self.signalsInterface.registerListener("location_received", self.onLocationReceived)
     self.signalsInterface.registerListener("message_received", self.onMessageReceived)
     self.signalsInterface.registerListener("ping", self.onPing)
+    self.signalsInterface.registerListener("profile_setPictureError", self.onProfileSetPictureError)
+    self.signalsInterface.registerListener("profile_setPictureSuccess", self.onProfileSetPictureSuccess)
+    self.signalsInterface.registerListener("profile_setStatusSuccess", self.onProfileSetStatusSuccess)
     self.signalsInterface.registerListener("receipt_messageDelivered", self.onDeliveredAck)
     self.signalsInterface.registerListener("receipt_visible", self.onVisibleAck)
+    self.signalsInterface.registerListener("video_received", self.onVideoReceived)
     self.cm = connectionManager
     self.result = False
     self.done = False
@@ -64,7 +71,11 @@ class WhatsappBackClient:
     
   def logout(self):
     self.methodsInterface.call("disconnect")
-  
+
+  def onAudioReceived(self, messageId, jid, url, size, wantsReceipt, isBroadCast):
+    self.eventHandler["onMediaReceived"](self, messageId, jid, False, "audio", False, url, size, wantsReceipt, isBroadCast)
+    self.methodsInterface.call("message_ack", (jid, messageId))
+
   def onAuthSuccess(self, username):
     print("Authed %s" % username)
     self.methodsInterface.call("ready")
@@ -81,6 +92,14 @@ class WhatsappBackClient:
   def onDisconnected(self, reason):
     self.eventHandler["onDisconnected"](self, reason)
     print("Disconnected because %s" %reason)
+    
+  def onImageReceived(self, messageId, jid, preview, url, size, wantsReceipt, isBroadCast):
+    self.eventHandler["onMediaReceived"](self, messageId, jid, False, "image", preview, url, size, wantsReceipt, isBroadCast)
+    self.methodsInterface.call("message_ack", (jid, messageId))
+    
+  def onLocationReceived(self, messageId, jid, caption, preview, latitude, longitude, wantsReceipt, isBroadCast):
+    self.eventHandler["onMediaReceived"](self, messageId, jid, caption, "location", preview, latitude, longitude, wantsReceipt, isBroadCast)
+    self.methodsInterface.call("message_ack", (jid, messageId))
 
   def onMessageReceived(self, messageId, jid, messageContent, timestamp, wantsReceipt, pushName, isBroadCast):
     formattedDate = datetime.datetime.fromtimestamp(timestamp).strftime('%d-%m-%Y %H:%M')
@@ -91,6 +110,19 @@ class WhatsappBackClient:
   def onDeliveredAck(self, jid, messageId):
     self.eventHandler["onAck"](self, 'delivered', jid, messageId)
     
+  def onProfileSetPictureError(self, messageId, errorCode):
+    self.eventHandler["onProfileSetPictureError"](self, messageId, errorCode)
+  
+  def onProfileSetPictureSuccess(self, messageId, pictureId):
+    self.eventHandler["onProfileSetPictureSuccess"](self, messageId, pictureId)
+    
+  def onProfileSetStatusSuccess(self, jid, messageId):
+    self.eventHandler["onProfileSetStatusSuccess"](self, jid, messageId)
+
+  def onVideoReceived(self, messageId, jid, preview, url, size, wantsReceipt, isBroadCast):
+    self.eventHandler["onMediaReceived"](self, messageId, jid, False, "video", preview, url, size, wantsReceipt, isBroadCast)
+    self.methodsInterface.call("message_ack", (jid, messageId))
+
   def onVisibleAck(self, jid, messageId):
     self.eventHandler["onAck"](self, 'visible', jid, messageId)
     
@@ -99,4 +131,14 @@ class WhatsappBackClient:
     
   def say(self, to, body, ack = False):
     return self.methodsInterface.call("message_send", (to + "@s.whatsapp.net", body))
-  
+    
+  def presence_sendAvailableForChat(self, nickname):
+    print nickname
+    self.methodsInterface.call("presence_sendAvailableForChat", (nickname,))
+    
+  def profile_setPicture(self, path):
+    return self.methodsInterface.call("profile_setPicture", (path,))
+    
+  def profile_setStatus(self, message):
+    return self.methodsInterface.call("profile_setStatus", (message,))
+
