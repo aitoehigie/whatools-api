@@ -562,7 +562,7 @@ def nickname_post():
       token = filter(lambda e: e['key'] == key, line['tokens'])[0]
       if lineIsNotExpired(line):
         if token:
-          if "permissions" in token and "manage" in token["permissions"]:
+          if "permissions" in token and "write" in token["permissions"]:
             if nickname:
               if line["_id"] in running:
                 wa = running[line["_id"]]["yowsup"]
@@ -598,7 +598,7 @@ def status_post():
       token = filter(lambda e: e['key'] == key, line['tokens'])[0]
       if lineIsNotExpired(line):
         if token:
-          if "permissions" in token and "manage" in token["permissions"]:
+          if "permissions" in token and "write" in token["permissions"]:
             if message:
               if line["_id"] in running:
                 wa = running[line["_id"]]["yowsup"]
@@ -634,7 +634,7 @@ def nickname_post():
       token = filter(lambda e: e['key'] == key, line['tokens'])[0]
       if lineIsNotExpired(line):
         if token:
-          if "permissions" in token and "manage" in token["permissions"]:
+          if "permissions" in token and "write" in token["permissions"]:
             if src:
               if line["_id"] in running:
                 wa = running[line["_id"]]["yowsup"]

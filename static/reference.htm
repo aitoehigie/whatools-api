@@ -140,19 +140,64 @@
           <li><code class="error">{"error": "inactive-line"}</code>There's no active apps for this line. Please remember to subscribe before querying.</li>
         </ul>
       </article>
+      <article>
+        <header>
+          <h3>Status message setting</h3>
+        </header>
+        <p>You can set the status message for an account using this method.</p>
+        <span class="method">POST</span>
+        <a class="url">/<strong>status</strong>?<em>key</em>=<span class="value">&<em>message</em>=<span class="value"></a>
+        <ul class="params">
+          <li><strong>key</strong>the app key, similar to <em>"bedfcfae-6c45-40d5-c56f-125c572bae41"</em></li>
+          <li><strong>message</strong>the message to be set as status message</li>
+        </ul>
+        <ul class="results">
+          <li><code class="success">{"success": "true"}</code></li>
+          <li><code class="error">{"error": "no-key"}</code>No token was specified</li>
+          <li><code class="error">{"error": "no-token-matches-key"}</code>There's no token matching such app key</li>
+          <li><code class="error">{"error": "no-line-matches-key"}</code>There's no line matching such app key</li>
+          <li><code class="error">{"error": "line-is-expired"}</code>The line is expired. You'll need to pay for renovation</li>
+          <li><code class="error">{"error": "no-permission"}</code>This app is not authorized to perform this action</li>
+          <li><code class="error">{"error": "bad-param"}</code>The <em>message</em> field is empty</li>
+          <li><code class="error">{"error": "inactive-line"}</code>There's no active apps for this line. Please remember to subscribe before querying.</li>
+        </ul>
+      </article>
+      <article>
+        <header>
+          <h3>Avatar setting</h3>
+        </header>
+        <p>You can set the avatar (profile picture) for an account using this method.</p>
+        <span class="method">POST</span>
+        <a class="url">/<strong>avatar</strong>?<em>key</em>=<span class="value">&<em>src</em>=<span class="value"></a>
+        <ul class="params">
+          <li><strong>key</strong>the app key, similar to <em>"bedfcfae-6c45-40d5-c56f-125c572bae41"</em></li>
+          <li><strong>src</strong>the image to be set as avatar, encoded using base64. The picture must be square, JPG and weight less than 1.5MB.</li>
+        </ul>
+        <ul class="results">
+          <li><code class="success">{"success": "true"}</code></li>
+          <li><code class="error">{"error": "no-key"}</code>No token was specified</li>
+          <li><code class="error">{"error": "no-token-matches-key"}</code>There's no token matching such app key</li>
+          <li><code class="error">{"error": "no-line-matches-key"}</code>There's no line matching such app key</li>
+          <li><code class="error">{"error": "line-is-expired"}</code>The line is expired. You'll need to pay for renovation</li>
+          <li><code class="error">{"error": "no-permission"}</code>This app is not authorized to perform this action</li>
+          <li><code class="error">{"error": "bad-param"}</code>The <em>src</em> field is empty</li>
+          <li><code class="error">{"error": "inactive-line"}</code>There's no active apps for this line. Please remember to subscribe before querying.</li>
+          <li><code class="error">{"error": "wrong-file-type"}</code>The file is not a JPG image or is not encoded properly</li>
+        </ul>
+      </article>
     </section>
     <section>
       <header>
-        <h2>PUSH Methods</h2>
+        <h2>WebHook Methods</h2>
       </header>
-      <p>When a message or notification is received, a POST query is sent to every active apps' PUSH URL.</p>
-      <p>You can tell one method from another, by reading the <em>"_method"</em> parameter in the POST query. Currently the possible values are <em>"message"</em>, <em>"carbon"</em>, <em>"ack"</em> and <em>"ping"</em>.</p>
-      <p>In order to preserve your privacy, we encourage you to use HTTPS at the PUSH URL endpoint.</p>
+      <p>When a message or notification is received, a POST query is sent to every active apps' WebHook URL.</p>
+      <p>You can tell one method from another by reading the <em>"_method"</em> parameter in the POST query. Currently the possible values are <em>"message"</em>, <em>"carbon"</em>, <em>"media"</em>, <em>"ack"</em> and <em>"ping"</em>.</p>
+      <p>In order to preserve your privacy, we encourage you to use HTTPS at the WebHook URL endpoint.</p>
       <article>
         <header>
           <h3>message</h3>
         </header>
-        <p>A PUSH with type <em>"message"</em> is sent every time the WhatsApp receives a new message.</p>
+        <p>A POST with type <em>"message"</em> is sent every time the WhatsApp account receives a new message.</p>
         <ul class="params">
           <li><strong>messageId</strong>unique ID of the message</li>
           <li><strong>jid</strong>full JabberID of the message sender, like <em>('48668475723@s.whatsapp.net')</em></li>
@@ -167,7 +212,7 @@
         <header>
           <h3>carbon</h3>
         </header>
-        <p>For the sake of synchronization and consistency between apps, when you send a message and there are more active apps, a PUSH with type <em>"carbon"</em> is sent to all of them.</p>
+        <p>For the sake of synchronization and consistency between apps, when you send a message and there are more active apps, a POST with type <em>"carbon"</em> is sent to all of them.</p>
         <ul class="params">
           <li><strong>messageId</strong>unique ID of the message</li>
           <li><strong>jid</strong>full JabberID of the message addressee, like <em>('48668475723@s.whatsapp.net')</em></li>
@@ -179,9 +224,27 @@
       </article>
       <article>
         <header>
+          <h3>media</h3>
+        </header>
+        <p>A POST with type <em>"media"</em> is sent every time the WhatsApp account receives a new multimedia message.</p>
+        <p>Currently supported media types are <em>"image"</em>, <em>"audio"</em>, <em>"video"</em> and <em>"location"</em>.
+        <ul class="params">
+          <li><strong>messageId</strong>unique ID of the message</li>
+          <li><strong>jid</strong>full JabberID of the message sender, like <em>('48668475723@s.whatsapp.net')</em></li>
+          <li><strong>type</strong>the type of the attached media</li>
+          <li><strong>preview</strong>Thumbnail image encoded in base64 <em>(only with type=image/video/location)</em></li>
+          <li><strong>url</strong>URL of the file being sent <em>(only with type=image/audio/video)</em></li>
+          <li><strong>latitude</strong>Latitude of the location point being sent <em>(only with type=image/video/location)</em></li>
+          <li><strong>longitude</strong>Longitude of the location point being sent <em>(only with type=image/video/location)</em></li>
+          <li><strong>wantsReceipt</strong>whether the sender requests ACK in return</li>
+          <li><strong>isBroadCast</strong>whether it's a broadcast message</li>
+        </ul>
+      </article>
+      <article>
+        <header>
           <h3>ack</h3>
         </header>
-        <p>A PUSH with type <em>"ack"</em> is sent to every active app every time a WhatsApp <em>"delivery notification"</em> is received.</p>
+        <p>A POST with type <em>"ack"</em> is sent to every active app every time a WhatsApp <em>"delivery notification"</em> is received.</p>
         <ul class="params">
           <li><strong>messageId</strong>unique ID of the message to be acknowledged</li>
           <li><strong>jid</strong>full JabberID of the message sender, like <em>('48668475723@s.whatsapp.net')</em></li>
