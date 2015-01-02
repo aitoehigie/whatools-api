@@ -5,16 +5,11 @@ import json, base64, time, httplib, urllib
 from bottle import route, run, request, static_file, BaseRequest
 from pymongo import MongoClient
 from bson import objectid
-from Yowsup.Common.utilities import Utilities
-from Yowsup.Common.debugger import Debugger
-from Yowsup.Common.constants import Constants
-from Clients.TestClient import WhatsappTestClient
-from Clients.SimpleClient import WhatsappSimpleClient
-from Clients.BackClient import WhatsappBackClient
-from Yowsup.Contacts.contacts import WAContactsSyncRequest
+from yowsup.demos.backclient.stack import YowsupBackStack
+'''from Yowsup.Contacts.contacts import WAContactsSyncRequest
 from Yowsup.Registration.v2.coderequest import WACodeRequest
 from Yowsup.Registration.v2.existsrequest import WAExistsRequest
-from Yowsup.Registration.v2.regrequest import WARegRequest
+from Yowsup.Registration.v2.regrequest import WARegRequest'''
 
 BaseRequest.MEMFILE_MAX = 1.5 * 1024 * 1024 
 
@@ -408,9 +403,9 @@ def line_subscribe():
             Lines.update({"_id": lId, "tokens.key": token["key"]}, {"$set": {"valid": True, "active": True, "tokens.$.active": True}})
             res["success"] = True
           else:
-            wa = WhatsappBackClient(line, token, eventHandler, True, True)
+            user = line["cc"] + line["pn"]
+            wa = YowsupBackStack([user, line["pass"]], token, eventHandler)
             if wa:
-              user = line["cc"] + line["pn"]
               try:
                 pw = base64.b64decode(bytes(str(line["pass"])))
               except TypeError:
@@ -421,7 +416,7 @@ def line_subscribe():
                 "yowsup": wa,
                 "tokens": [token["key"]]
               }
-              loginRes = wa.login(user, pw)
+              loginRes = wa.login()
               if (loginRes == "success"):
                 res["success"] = True
                 if line["nickname"]:
