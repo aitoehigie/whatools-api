@@ -89,8 +89,12 @@ class AsyncLayer(YowInterfaceLayer):
     
     @ProtocolEntityCallback("receipt")
     def onReceipt(self, entity):
-        ack = OutgoingAckProtocolEntity(entity.getId(), "receipt", "delivery")
-        self.toLower(ack)
+        idx = entity.getId()
+        jid = entity.getFrom()
+        grade = "visible" if entity.getType() else "delivered"
+        if self.handle("onAck", [idx, jid, grade]):
+          ack = OutgoingAckProtocolEntity(entity.getId(), "receipt", "delivery")
+          self.toLower(ack)
         
     def onPing(self,entity):
         idx = entity.getId()

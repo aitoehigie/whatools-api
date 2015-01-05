@@ -76,21 +76,22 @@ def push(token, method, data):
     print "[PUSH] Connection refused while trying to " + method
   return res
 
-def onAck(wa, grade, jid, messageId):
-  print "ACK from " + jid + " to " + wa.line["cc"] + wa.line["pn"]
+def onAck(wa, idx, jid, grade):
+  print "ACK from " + jid + " to " + wa.line["cc"] + wa.line["pn"] + "type: " + grade
   if len(running):
     allTokens = Lines.find_one({"_id": wa.line["_id"]})["tokens"]
     runningTokens = running[wa.line["_id"]]["tokens"]
-    message = Chats.find_one({"from": wa.line["_id"], "to": jid.split("@")[0], 'messages.id': messageId}, {"messages.$": 1})["messages"][0]
+    message = Chats.find_one({"from": wa.line["_id"], "to": jid.split("@")[0], 'messages.id': idx}, {"messages.$": 1})["messages"][0]
     if "ack" in message and message["ack"] == "delivered":
       grade = "visible"
     for token in allTokens:
       if token["key"] in runningTokens:
         if token["push"]:
-          res = push(token, "ack", {"grade": grade, "jid": jid, "messageId": messageId})
+          res = push(token, "ack", {"grade": grade, "jid": jid, "messageId": idx})
           if res:
             print res.read()
-    Chats.update({"from": wa.line["_id"], "to": jid.split("@")[0], 'messages.id': messageId}, {"$set": {'messages.$.ack': grade}})
+    Chats.update({"from": wa.line["_id"], "to": jid.split("@")[0], 'messages.id': idx}, {"$set": {'messages.$.ack': grade}})
+    return True
 
 def onAuthFailed(wa):
   Lines.update({"_id": wa.line["_id"]}, {"$set": {"active": False, "reconnect": False, "valid": False}});
