@@ -1,5 +1,5 @@
-from yowsup.stacks import YowStack
-from .layer import BackLayer
+from yowsup.stacks import YowStack, YOWSUP_CORE_LAYERS, YOWSUP_PROTOCOL_LAYERS_FULL
+from .layer import AsyncLayer
 from yowsup.layers import YowLayerEvent
 from yowsup.layers.auth                        import YowCryptLayer, YowAuthenticationProtocolLayer, AuthError
 from yowsup.layers.coder                       import YowCoderLayer
@@ -13,13 +13,15 @@ from yowsup.layers.logger                      import YowLoggerLayer
 from yowsup.layers.axolotl                     import YowAxolotlLayer
 from yowsup.common import YowConstants
 from yowsup import env
+import logging
 
-class YowsupBackStack(object):
-    def __init__(self, credentials, token, eventHandlers,):
-        env.CURRENT_ENV = env.S40YowsupEnv()
+logging.basicConfig(level=logging.DEBUG)
+
+class YowsupAsyncStack(object):
+    def __init__(self, credentials, line, token, eventHandlers,):
         layers = (
-            BackLayer,
-            (YowAuthenticationProtocolLayer, YowMessagesProtocolLayer, YowReceiptProtocolLayer, YowAckProtocolLayer, YowMediaProtocolLayer),
+            AsyncLayer,
+            (YOWSUP_PROTOCOL_LAYERS_FULL),
             YowAxolotlLayer,
             YowLoggerLayer,
             YowCoderLayer,
@@ -28,21 +30,27 @@ class YowsupBackStack(object):
             YowNetworkLayer
         )
         self.stack = YowStack(layers)
-        #self.stack.setProp(BackLayer.HANDLERS, eventHandlers)
+        self.stack.setProp(AsyncLayer.LINE, line)
+        self.stack.setProp(AsyncLayer.TOKEN, token)
+        self.stack.setProp(AsyncLayer.HANDLERS, eventHandlers)
         self.stack.setProp(YowAuthenticationProtocolLayer.PROP_CREDENTIALS, credentials)
         self.stack.setProp(YowNetworkLayer.PROP_ENDPOINT, YowConstants.ENDPOINTS[0])
         self.stack.setProp(YowCoderLayer.PROP_DOMAIN, YowConstants.DOMAIN)
         self.stack.setProp(YowCoderLayer.PROP_RESOURCE, env.CURRENT_ENV.getResource())
-        self.token = token
-        self.eventHandlers = eventHandlers
+        self.layer = self.stack.getLayer(7)
+        
 
     def login(self):
         self.stack.broadcastEvent(YowLayerEvent(YowNetworkLayer.EVENT_STATE_CONNECT))
+        self.layer.init()
         try:
             self.stack.loop()
         except AuthError as e:
             print("Authentication Error: %s" % e.message)
+            return "auth-error"
+            
+    def logout(self):
+        return self.call("logout", [])
             
     def call(self, method, params):
-        layer = self.stack.getLayer(7)
-        layer.call(method, params)
+        return self.layer.call(method, params)

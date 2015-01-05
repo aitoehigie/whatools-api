@@ -5,11 +5,7 @@ import json, base64, time, httplib, urllib
 from bottle import route, run, request, static_file, BaseRequest
 from pymongo import MongoClient
 from bson import objectid
-from yowsup.demos.backclient.stack import YowsupBackStack
-'''from Yowsup.Contacts.contacts import WAContactsSyncRequest
-from Yowsup.Registration.v2.coderequest import WACodeRequest
-from Yowsup.Registration.v2.existsrequest import WAExistsRequest
-from Yowsup.Registration.v2.regrequest import WARegRequest'''
+from client.stack import YowsupAsyncStack
 
 BaseRequest.MEMFILE_MAX = 1.5 * 1024 * 1024 
 
@@ -33,11 +29,10 @@ def recover():
     token = line["tokens"][0]
     print "@@@ RECOVERING TOKEN {0} FOR LINE {1} @@@".format(token["key"], line["_id"])
     fullLine = Lines.find_one({"_id": line["_id"]})
-    wa = WhatsappBackClient(fullLine, token, eventHandler, True, True)
+    user = fullLine["cc"] + fullLine["pn"]
+    wa = YowsupAsyncStack([user, fullLine["pass"]], fullLine, token, eventHandler)
     if wa:
-      user = fullLine["cc"] + fullLine["pn"]
-      pw = base64.b64decode(bytes(fullLine["pass"].encode('utf-8')))
-      if wa.login(user, pw):
+      if wa.login() == "success":
         if fullLine["_id"] in running:
           running[fullLine["_id"]]["tokens"].append(token["key"])
         else:
@@ -163,7 +158,7 @@ def onMediaReceived(wa, messageId, jid, caption, type, preview, url, size, wants
       "alias": pushName or False
     })
 
-def onMessageReceived(wa, messageId, jid, messageContent, timestamp, wantsReceipt, pushName, isBroadCast):
+def onMessageReceived(wa, messageId, jid, messageContent, timestamp, pushName, isBroadCast):
   if len(running):
     allTokens = Lines.find_one({"_id": wa.line["_id"]})["tokens"]
     runningTokens = running[wa.line["_id"]]["tokens"]
@@ -237,7 +232,6 @@ def onProfileSetStatusSuccess(wa, jid, idx):
     if token["key"] in runningTokens and token["push"]:
         res = push(token, "success", {"type": "onProfileSetStatusSuccess", "idx": idx})
 
-
 eventHandler = {
   "onAck": onAck,
   "onAuthFailed": onAuthFailed,
@@ -258,7 +252,6 @@ def messages_post():
   key = request.params.key
   to = request.params.to
   body = request.params.body.encode('utf8','replace')
-  ack = request.params.ack
   broadcast = request.params.broadcast
   if key:
     line = Lines.find_one({"tokens": {"$elemMatch": {"key": key}}})
@@ -272,7 +265,7 @@ def messages_post():
               if line["_id"] in running:
                 signedBody = messageSign(body, line)
                 wa = running[line["_id"]]["yowsup"]
-                msgId = wa.say(to, signedBody, ack)
+                msgId = wa.call("message_send", [to, signedBody])
                 res["result"] = msgId
                 res["success"] = True
                 chat = Chats.find_one({"from": me, "to": to})
@@ -404,7 +397,7 @@ def line_subscribe():
             res["success"] = True
           else:
             user = line["cc"] + line["pn"]
-            wa = YowsupBackStack([user, line["pass"]], token, eventHandler)
+            wa = YowsupAsyncStack([user, line["pass"]], line, token, eventHandler)
             if wa:
               try:
                 pw = base64.b64decode(bytes(str(line["pass"])))
@@ -420,7 +413,7 @@ def line_subscribe():
               if (loginRes == "success"):
                 res["success"] = True
                 if line["nickname"]:
-                  wa.presence_sendAvailableForChat(line["nickname"])
+                  wa.call("presence_sendAvailable", [line["nickname"]])
                 Lines.update({"_id": lId, "tokens.key": token["key"]}, {"$set": {"valid": True, "active": True, "tokens.$.active": True}})
               else:
                 del running[lId]
@@ -561,7 +554,7 @@ def nickname_post():
             if nickname:
               if line["_id"] in running:
                 wa = running[line["_id"]]["yowsup"]
-                wa.presence_sendAvailableForChat(nickname)
+                wa.call("presence_sendAvailable", [nickname])
                 Lines.update({"_id": lId}, {"$set": {"nickname": nickname}})
                 res["success"] = True
               else:
