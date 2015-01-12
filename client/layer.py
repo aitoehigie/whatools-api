@@ -111,55 +111,45 @@ class AsyncLayer(YowInterfaceLayer):
         stamp = entity.getTimestamp()
         notify = entity.getNotify()
         broadcast = entity.isBroadcast()
-
         if entity.isGroupMessage():
             '''if self.handle("onGroupMessageReceived", (idx, participant, jid, body, stamp, notify)):
                 receipt = OutgoingReceiptProtocolEntity(idx, to)
                 self.toLower(receipt)'''
             receipt = OutgoingReceiptProtocolEntity(idx, jid)
             self.toLower(receipt)
-            
         else:
             if self.handle("onMessageReceived", [idx, jid, body, stamp, notify, broadcast]):
                 receipt = OutgoingReceiptProtocolEntity(idx, jid)
                 self.toLower(receipt) 
 
-
-    def onMediaMessage(self, messageProtocolEntity):
-        if messageProtocolEntity.getMediaType() == "image":
-            
-            receipt = OutgoingReceiptProtocolEntity(messageProtocolEntity.getId(), messageProtocolEntity.getFrom())
-
-            outImage = ImageDownloadableMediaMessageProtocolEntity(
-                messageProtocolEntity.getMimeType(), messageProtocolEntity.fileHash, messageProtocolEntity.url, messageProtocolEntity.ip,
-                messageProtocolEntity.size, messageProtocolEntity.fileName, messageProtocolEntity.encoding, messageProtocolEntity.width, messageProtocolEntity.height,
-                messageProtocolEntity.getCaption(),
-                to = messageProtocolEntity.getFrom(), preview = messageProtocolEntity.getPreview())
-
-            print("Echoing image %s to %s" % (messageProtocolEntity.url, messageProtocolEntity.getFrom(False)))
-
-            #send receipt otherwise we keep receiving the same message over and over
+    def onMediaMessage(self, entity):
+        idx = entity.getId()
+        jid = entity.getFrom()
+        broadcast = entity.isBroadcast()
+        if entity.getMediaType() == "image":
+            caption = entity.getCaption()
+            preview = entity.getPreview()
+            url = entity.getMediaUrl()
+            size = entity.getMediaSize()
+            receipt = OutgoingReceiptProtocolEntity(idx, jid)
+            if self.handle("onMediaReceived", [idx, jid, caption, "image", preview, url, size, broadcast]):
+                self.toLower(receipt)
+        elif entity.getMediaType() == "audio":
+            caption = entity.getCaption()
+            url = entity.getMediaUrl()
+            size = entity.getMediaSize()
+            receipt = OutgoingReceiptProtocolEntity(idx, jid)
+            if self.handle("onMediaReceived", [idx, jid, caption, "audio", None, url, size, broadcast]):
+                self.toLower(receipt)
+        elif entity.getMediaType() == "location":
+            receipt = OutgoingReceiptProtocolEntity(entity.getId(), entity.getFrom())
+            outLocation = LocationMediaentity(entity.getLatitude(),
+                entity.getLongitude(), entity.getLocationName(),
+                entity.getLocationURL(), entity.encoding,
+                to = entity.getFrom(), preview=entity.getPreview())
             self.toLower(receipt)
-            self.toLower(outImage)
-
-        elif messageProtocolEntity.getMediaType() == "location":
-
-            receipt = OutgoingReceiptProtocolEntity(messageProtocolEntity.getId(), messageProtocolEntity.getFrom())
-
-            outLocation = LocationMediaMessageProtocolEntity(messageProtocolEntity.getLatitude(),
-                messageProtocolEntity.getLongitude(), messageProtocolEntity.getLocationName(),
-                messageProtocolEntity.getLocationURL(), messageProtocolEntity.encoding,
-                to = messageProtocolEntity.getFrom(), preview=messageProtocolEntity.getPreview())
-
-            print("Echoing location (%s, %s) to %s" % (messageProtocolEntity.getLatitude(), messageProtocolEntity.getLongitude(), messageProtocolEntity.getFrom(False)))
-
-            #send receipt otherwise we keep receiving the same message over and over
-            self.toLower(outLocation)
+        elif entity.getMediaType() == "vcard":
+            receipt = OutgoingReceiptProtocolEntity(entity.getId(), entity.getFrom())
+            outVcard = VCardMediaentity(entity.getName(),entity.getCardData(),to = entity.getFrom())
             self.toLower(receipt)
-        elif messageProtocolEntity.getMediaType() == "vcard":
-            receipt = OutgoingReceiptProtocolEntity(messageProtocolEntity.getId(), messageProtocolEntity.getFrom())
-            outVcard = VCardMediaMessageProtocolEntity(messageProtocolEntity.getName(),messageProtocolEntity.getCardData(),to = messageProtocolEntity.getFrom())
-            print("Echoing vcard (%s, %s) to %s" % (messageProtocolEntity.getName(), messageProtocolEntity.getCardData(), messageProtocolEntity.getFrom(False)))
-            #send receipt otherwise we keep receiving the same message over and over
-            self.toLower(outVcard)
-            self.toLower(receipt)
+

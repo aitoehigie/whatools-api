@@ -111,7 +111,7 @@ def onDisconnected(wa, reason):
     Lines.update({"_id": wa.line["_id"]}, {"$set": {"active": False, "reconnect": False}});
     wa.errors = 0
     
-def onMediaReceived(wa, messageId, jid, caption, type, preview, url, size, wantsReceipt, isBroadCast):
+def onMediaReceived(wa, messageId, jid, caption, type, preview, url, size, isBroadCast):
   if len(running):
     allTokens = Lines.find_one({"_id": wa.line["_id"]})["tokens"]
     runningTokens = running[wa.line["_id"]]["tokens"]
@@ -133,12 +133,12 @@ def onMediaReceived(wa, messageId, jid, caption, type, preview, url, size, wants
     "stamp": stamp,
     "media": {
       "type": type,
-      "preview": preview,
+      "preview": base64.b64encode(preview) if preview else None,
       "latitude": url,
       "longitude": size
     } if type == "location" else {
       "type": type,
-      "preview": preview,
+      "preview": base64.b64encode(preview) if preview else None,
       "url": url,
       "size": size
     }
@@ -156,8 +156,9 @@ def onMediaReceived(wa, messageId, jid, caption, type, preview, url, size, wants
       "to": to,
       "messages": [msg],
       "lastStamp": stamp,
-      "alias": pushName or False
+      "alias": False
     })
+  return True;
 
 def onMessageReceived(wa, messageId, jid, messageContent, timestamp, pushName, isBroadCast):
   if len(running):
@@ -191,6 +192,7 @@ def onMessageReceived(wa, messageId, jid, messageContent, timestamp, pushName, i
       "lastStamp": stamp,
       "alias": pushName or False
     })
+  return True
   
 def onPing(wa, pingId):
   line = wa.line
