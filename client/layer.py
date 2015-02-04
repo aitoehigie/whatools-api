@@ -2,6 +2,7 @@ from yowsup.common import YowConstants
 from yowsup.layers                                     import YowLayerEvent
 from yowsup.layers.interface                           import YowInterfaceLayer, ProtocolEntityCallback
 from yowsup.layers.network                             import YowNetworkLayer
+from yowsup.layers.auth                                import YowAuthenticationProtocolLayer
 from yowsup.layers.protocol_acks.protocolentities      import *
 from yowsup.layers.protocol_ib.protocolentities        import *
 from yowsup.layers.protocol_iq.protocolentities        import *
@@ -16,19 +17,24 @@ class AsyncLayer(YowInterfaceLayer):
     LINE = "com.waalt.whatools.prop.line"
     TOKEN = "com.waalt.whatools.prop.token"
     HANDLERS = "com.waalt.whatools.prop.handlers"
+    LOGGER = "com.waalt.whatools.prop.logger"
+    CB = "com.waalt.whatools.prop.cb"
     
-    '''def onEvent(self, yowLayerEvent):
-        if yowLayerEvent.getName() == YowAuthenticationProtocolLayer.EVENT_STATE_CONNECTED:
-            self.handle("onAuthSuccess")
-        elif yowLayerEvent.getName() == YowNetworkLayer.EVENT_STATE_DISCONNECTED:
-            self.handle("onDisconnected")'''
+    def onEvent(self, yowLayerEvent):
+        if yowLayerEvent.getName() == YowAuthenticationProtocolLayer.EVENT_AUTHED:
+            self.cb("success");
+            ##return False;
+            #self.handle("onAuthSuccess")
     
     def init(self):
         self.line = self.getProp(self.__class__.LINE)
         self.token = self.getProp(self.__class__.TOKEN)
         self.handlers = self.getProp(self.__class__.HANDLERS)
+        self.log = self.getProp(self.__class__.LOGGER)
+        self.cb = self.getProp(self.__class__.CB)
     
-    def handle(self, event, data):
+    def handle(self, event, data = {}):
+        self.log(self.line["_id"], event, data);
         if event in self.handlers:
             return self.handlers[event](self, *data)
         else:
@@ -95,6 +101,18 @@ class AsyncLayer(YowInterfaceLayer):
         if self.handle("onAck", [idx, jid, grade]):
           ack = OutgoingAckProtocolEntity(entity.getId(), "receipt", "delivery")
           self.toLower(ack)
+
+    @ProtocolEntityCallback("success")
+    def onSuccess(self, entity):
+        payload = {
+          "status": entity.status,
+          "kind": entity.kind,
+          "creation": entity.creation,
+          "expiration": entity.expiration,
+          "props": entity.props,
+          "t": entity.t
+        }
+        self.cb("success", payload);
         
     def onPing(self,entity):
         idx = entity.getId()

@@ -1,8 +1,9 @@
 #!/usr/bin/python
 #  -*- coding: utf8 -*-
 
-import json, base64, time, httplib, urllib
-from bottle import route, run, request, static_file, BaseRequest
+import json, base64, time, httplib, urllib, gevent
+from gevent import Greenlet, queue, monkey; monkey.patch_all()
+from bottle import route, run, request, static_file, BaseRequest, FormsDict
 from pymongo import MongoClient
 from bson import objectid
 from client.stack import YowsupAsyncStack
@@ -19,19 +20,31 @@ db.authenticate('waapi', 'adventuretime')
 Lines = db.lines
 Chats = db.chats
 Avatars = db.avatars
+Logs = db.logs
 
 freePlanSignature = "\n\n[Message sent by using a WhaTools free account.\nIf it's SPAM, report it to https://wha.tools/report]"
 storage = "/var/waapi/storage/"
 
+def logger(lId, event, data={}):
+  if lId and event:
+    Logs.insert({"line": lId, "stamp": long(time.time())*1000, "event": event, "data": data});
+
+def unbottle(data):
+  dataDict = {}
+  for item in data:
+    dataDict[item] = data[item]
+  return dataDict
+
 def recover():
   activeLines = Lines.find({"tokens.active": True}, {"tokens.$": 1})
   for line in activeLines:
+    res = {"success": False}
     token = line["tokens"][0]
+    logger(line["_id"], "lineRecover");
     print "@@@ RECOVERING TOKEN {0} FOR LINE {1} @@@".format(token["key"], line["_id"])
     fullLine = Lines.find_one({"_id": line["_id"]})
     user = fullLine["cc"] + fullLine["pn"]
-    wa = YowsupAsyncStack([user, fullLine["pass"]], fullLine, token, eventHandler)
-    if wa:
+    def cb(loginRes, payload):
       if wa.login() == "success":
         if fullLine["_id"] in running:
           running[fullLine["_id"]]["tokens"].append(token["key"])
@@ -41,10 +54,17 @@ def recover():
             "tokens": [token["key"]]
           }
         print "@@@@ RECOVER SUCCESS @@@@"
+        res["success"] = True
       else:
         print "@@@@ RECOVER ERROR @@@@"
+        res["error"] = "auth-error"
+    wa = YowsupAsyncStack([user, fullLine["pass"]], fullLine, token, eventHandler, logger, cb)
+    if wa:
+      Greenlet.spawn(wa.login)
     else:
       print "@@@@ RECOVER ERROR @@@@"
+      res["error"] = "connect-error"
+    logger(line["_id"], "lineRecoverProgress", {"res": res});
   print "@@@@@@@@@@@@@"
   print running
   print "@@@@@@@@@@@@@"
@@ -259,7 +279,8 @@ def messages_post():
   if key:
     line = Lines.find_one({"tokens": {"$elemMatch": {"key": key}}})
     if line:
-      me = line["_id"]
+      lId = line["_id"]
+      logger(lId, "messagePost", unbottle(request.params));
       if lineIsNotExpired(line):
         token = filter(lambda e: e['key'] == key, line['tokens'])[0]
         if token:
@@ -268,10 +289,11 @@ def messages_post():
               if line["_id"] in running:
                 signedBody = messageSign(body, line)
                 wa = running[line["_id"]]["yowsup"]
-                msgId = wa.call("message_send", [to, signedBody])
+                data = [to, signedBody]
+                msgId = wa.call("message_send", data)
                 res["result"] = msgId
                 res["success"] = True
-                chat = Chats.find_one({"from": me, "to": to})
+                chat = Chats.find_one({"from": lId, "to": to})
                 stamp = long(time.time()*1000)
                 msg = {
                   "id": msgId,
@@ -282,12 +304,12 @@ def messages_post():
                 }
                 if chat:
                   # Push it
-                  Chats.update({"from": me, "to": to}, {"$push": {"messages": msg}, "$set": {"unread": 0}});
+                  Chats.update({"from": lId, "to": to}, {"$push": {"messages": msg}, "$set": {"unread": 0}});
                 else:
                   # Create new chat
                   Chats.insert({
                     "_id": str(objectid.ObjectId()),
-                    "from": me,
+                    "from": lId,
                     "to": to,
                     "messages": [msg],
                     "lastStamp": stamp
@@ -310,6 +332,7 @@ def messages_post():
       else:
         res["error"] = "line-is-expired"
         Lines.update({"_id": lId}, {"$set": {"valid": "wrong", "reconnect": False, "active": False}})
+      logger(lId, "messageSendProgress", {"params": unbottle(request.params), "msg": msg} if msgId else {"params": request.params, "res": res});
     else:
       res["error"] = "no-line-matches-key"
   else:
@@ -382,12 +405,14 @@ def line_validate():
   
 @route("/subscribe", method="GET")
 def line_subscribe():
+  body = queue.Queue()
   res = {"success": False}
   key = request.params.key
   if key:
     line = Lines.find_one({"tokens": {"$elemMatch": {"key": key}}})
     if line:
       lId = line["_id"]
+      logger(lId, "tokenSubscribe", unbottle(request.params));
       if lineIsNotExpired(line):
         token = filter(lambda e: e['key'] == key, line['tokens'])[0]
         if token:
@@ -400,7 +425,22 @@ def line_subscribe():
             res["success"] = True
           else:
             user = line["cc"] + line["pn"]
-            wa = YowsupAsyncStack([user, line["pass"]], line, token, eventHandler)
+            def cb(loginRes, payload):
+              if (loginRes == "success"):
+                res["success"] = True
+                if payload:
+                  res["result"] = payload;
+                if line["nickname"]:
+                  logger(lId, "presenceSendAvailable", {"nickname": line["nickname"]});
+                  wa.call("presence_sendAvailable", [line["nickname"]])
+                Lines.update({"_id": lId, "tokens.key": token["key"]}, {"$set": {"valid": True, "active": True, "tokens.$.active": True}})
+              else:
+                del running[lId]
+                res["error"] = "auth-failed"
+                Lines.update({"_id": lId, "tokens.key": token["key"]}, {"$set": {"valid": "wrong", "reconnect": False, "tokens.$.active": False}})
+              body.put(json.dumps(res))
+              body.put(StopIteration)
+            wa = YowsupAsyncStack([user, line["pass"]], line, token, eventHandler, logger, cb)
             if wa:
               try:
                 pw = base64.b64decode(bytes(str(line["pass"])))
@@ -412,16 +452,7 @@ def line_subscribe():
                 "yowsup": wa,
                 "tokens": [token["key"]]
               }
-              loginRes = wa.login()
-              if (loginRes == "success"):
-                res["success"] = True
-                if line["nickname"]:
-                  wa.call("presence_sendAvailable", [line["nickname"]])
-                Lines.update({"_id": lId, "tokens.key": token["key"]}, {"$set": {"valid": True, "active": True, "tokens.$.active": True}})
-              else:
-                del running[lId]
-                res["error"] = "auth-failed"
-                Lines.update({"_id": lId, "tokens.key": token["key"]}, {"$set": {"valid": "wrong", "reconnect": False, "tokens.$.active": False}})
+              Greenlet.spawn(wa.login)
             else:
               res["error"] = "could-not-connect"
         else:
@@ -429,6 +460,7 @@ def line_subscribe():
       else:
         res["error"] = "line-is-expired"
         Lines.update({"_id": lId}, {"$set": {"valid": "wrong", "reconnect": False, "active": False}})
+      logger(lId, "tokenSubscribeProgress", {"params": unbottle(request.params), "res": res});
     else:
       res["error"] = "no-line-matches-key"
   else:
@@ -436,7 +468,7 @@ def line_subscribe():
   print ">>>>>>>>>>>>>"
   print running
   print ">>>>>>>>>>>>>"
-  return res
+  return body
   
 @route("/unsubscribe", method="GET")
 def line_unsubscribe():
@@ -446,6 +478,7 @@ def line_unsubscribe():
     line = Lines.find_one({"tokens": {"$elemMatch": {"key": key}}})
     if line:
       lId = line["_id"]
+      logger(lId, "tokenUnsubscribe", unbottle(request.params));
       token = filter(lambda e: e['key'] == key, line['tokens'])[0]
       if token:
         if lId in running and token["key"] in running[lId]["tokens"]:
@@ -463,6 +496,7 @@ def line_unsubscribe():
           res["error"] = "token-was-not-subscribed"
       else:
         res["error"] = "no-token-matches-key"
+      logger(lId, "tokenUnsubscribeProgress", {"params": unbottle(request.params), "res": res});
     else:
       res["error"] = "no-line-matches-key"
   else:
@@ -483,6 +517,7 @@ def history():
     line = Lines.find_one({"tokens": {"$elemMatch": {"key": key}}})
     if line:
       lId = line["_id"]
+      logger(lId, "historyGet", unbottle(request.params));
       token = filter(lambda e: e['key'] == key, line['tokens'])[0]
       if token:
         if "permissions" in token and "manage" in token["permissions"]:
@@ -512,6 +547,7 @@ def history():
           res["error"] = "no-permission"
       else:
         res["error"] = "no-token-matches-key"
+      logger(lId, "historyGetProgress", {"params": unbottle(request.params), "res": res});
     else:
       res["error"] = "no-line-matches-key"
   else:
@@ -526,6 +562,7 @@ def nickname_get():
     line = Lines.find_one({"tokens": {"$elemMatch": {"key": key}}})
     if line:
       lId = line["_id"]
+      logger(lId, "nicknameGet", unbottle(request.params));
       token = filter(lambda e: e['key'] == key, line['tokens'])[0]
       if token:
         if "permissions" in token and "read" in token["permissions"]:
@@ -535,6 +572,7 @@ def nickname_get():
           res["error"] = "no-permission"
       else:
         res["error"] = "no-token-matches-key"
+      logger(lId, "nicknameGetProgress", {"params": unbottle(request.params), "res": res});
     else:
       res["error"] = "no-line-matches-key"
   else:
@@ -550,6 +588,7 @@ def nickname_post():
     line = Lines.find_one({"tokens": {"$elemMatch": {"key": key}}})
     if line:
       lId = line["_id"]
+      logger(lId, "nicknamePost", unbottle(request.params));
       token = filter(lambda e: e['key'] == key, line['tokens'])[0]
       if lineIsNotExpired(line):
         if token:
@@ -571,6 +610,7 @@ def nickname_post():
       else:
         res["error"] = "line-is-expired"
         Lines.update({"_id": lId}, {"$set": {"valid": "wrong", "reconnect": False, "active": False}})
+      logger(lId, "nicknamePostProgress", {"params": unbottle(request.params), "res": res});
     else:
       res["error"] = "no-line-matches-key"
   else:
@@ -586,6 +626,7 @@ def status_post():
     line = Lines.find_one({"tokens": {"$elemMatch": {"key": key}}})
     if line:
       lId = line["_id"]
+      logger(lId, "statusPost", unbottle(request.params));
       token = filter(lambda e: e['key'] == key, line['tokens'])[0]
       if lineIsNotExpired(line):
         if token:
@@ -607,6 +648,7 @@ def status_post():
       else:
         res["error"] = "line-is-expired"
         Lines.update({"_id": lId}, {"$set": {"valid": "wrong", "reconnect": False, "active": False}})
+      logger(lId, "statusPostProgress", {"params": unbottle(request.params), "res": res});
     else:
       res["error"] = "no-line-matches-key"
   else:
@@ -622,6 +664,7 @@ def nickname_post():
     line = Lines.find_one({"tokens": {"$elemMatch": {"key": key}}})
     if line:
       lId = line["_id"]
+      logger(lId, "avatarPost", unbottle(request.params));
       token = filter(lambda e: e['key'] == key, line['tokens'])[0]
       if lineIsNotExpired(line):
         if token:
@@ -654,6 +697,7 @@ def nickname_post():
       else:
         res["error"] = "line-is-expired"
         Lines.update({"_id": lId}, {"$set": {"valid": "wrong", "reconnect": False, "active": False}})
+      logger(lId, "avatarPostProgress", {"params": unbottle(request.params), "res": res});
     else:
       res["error"] = "no-line-matches-key"
   else:
@@ -671,4 +715,4 @@ def reference():
   return static_file('reference.htm', './static')
 
 recover()
-run(host="127.0.0.1", port="8080", server='paste')
+run(host="127.0.0.1", port="8080", server='gevent')

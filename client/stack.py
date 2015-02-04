@@ -18,7 +18,7 @@ import logging
 logging.basicConfig(level=logging.DEBUG)
 
 class YowsupAsyncStack(object):
-    def __init__(self, credentials, line, token, eventHandlers,):
+    def __init__(self, credentials, line, token, eventHandlers, logger, cb):
         layers = (
             AsyncLayer,
             (YOWSUP_PROTOCOL_LAYERS_FULL),
@@ -33,16 +33,17 @@ class YowsupAsyncStack(object):
         self.stack.setProp(AsyncLayer.LINE, line)
         self.stack.setProp(AsyncLayer.TOKEN, token)
         self.stack.setProp(AsyncLayer.HANDLERS, eventHandlers)
+        self.stack.setProp(AsyncLayer.LOGGER, logger)
+        self.stack.setProp(AsyncLayer.CB, cb)
         self.stack.setProp(YowAuthenticationProtocolLayer.PROP_CREDENTIALS, credentials)
         self.stack.setProp(YowNetworkLayer.PROP_ENDPOINT, YowConstants.ENDPOINTS[0])
         self.stack.setProp(YowCoderLayer.PROP_DOMAIN, YowConstants.DOMAIN)
         self.stack.setProp(YowCoderLayer.PROP_RESOURCE, env.CURRENT_ENV.getResource())
         self.layer = self.stack.getLayer(7)
-        
 
     def login(self):
-        self.stack.broadcastEvent(YowLayerEvent(YowNetworkLayer.EVENT_STATE_CONNECT))
         self.layer.init()
+        self.stack.broadcastEvent(YowLayerEvent(YowNetworkLayer.EVENT_STATE_CONNECT))
         try:
             self.stack.loop()
         except AuthError as e:
