@@ -19,13 +19,7 @@ class AsyncLayer(YowInterfaceLayer):
     HANDLERS = "com.waalt.whatools.prop.handlers"
     LOGGER = "com.waalt.whatools.prop.logger"
     CB = "com.waalt.whatools.prop.cb"
-    
-    def onEvent(self, yowLayerEvent):
-        if yowLayerEvent.getName() == YowAuthenticationProtocolLayer.EVENT_AUTHED:
-            self.cb("success");
-            ##return False;
-            #self.handle("onAuthSuccess")
-    
+
     def init(self):
         self.line = self.getProp(self.__class__.LINE)
         self.token = self.getProp(self.__class__.TOKEN)
@@ -35,7 +29,7 @@ class AsyncLayer(YowInterfaceLayer):
     
     def normalizeData(self, data):
         for (i, item) in enumerate(data):
-          if type(item) == str:
+          if type(item) == str and len(item) > 255:
             data[i] = "[File]"
         return data
 
@@ -45,14 +39,12 @@ class AsyncLayer(YowInterfaceLayer):
         return "%s@s.whatsapp.net" % number
 
     def handle(self, event, data = {}):
-        self.log(self.line["_id"], event, self.normalizeData(data));
+        self.log(self.line["_id"], event, self.normalizeData(data[:]));
         if event in self.handlers:
             return self.handlers[event](self, *data)
         else:
             print("unhandled '%s' event" % event)
             return False
-            
-        
             
     methods = {}
     
@@ -161,21 +153,26 @@ class AsyncLayer(YowInterfaceLayer):
             if self.handle("onMediaReceived", [idx, jid, caption, "image", preview, url, size, broadcast]):
                 self.toLower(receipt)
         elif entity.getMediaType() == "audio":
-            caption = entity.getCaption()
             url = entity.getMediaUrl()
             size = entity.getMediaSize()
             receipt = OutgoingReceiptProtocolEntity(idx, jid)
-            if self.handle("onMediaReceived", [idx, jid, caption, "audio", None, url, size, broadcast]):
+            if self.handle("onMediaReceived", [idx, jid, None, "audio", None, url, size, broadcast]):
+                self.toLower(receipt)
+        elif entity.getMediaType() == "video":
+            preview = entity.getPreview()
+            url = entity.getMediaUrl()
+            size = entity.getMediaSize()
+            receipt = OutgoingReceiptProtocolEntity(idx, jid)
+            if self.handle("onMediaReceived", [idx, jid, None, "video", preview, url, size, broadcast]):
                 self.toLower(receipt)
         elif entity.getMediaType() == "location":
+            preview = entity.getPreview()
+            latitude = entity.getLatitude()
+            longitude = entity.getLongitude()
             receipt = OutgoingReceiptProtocolEntity(entity.getId(), entity.getFrom())
-            outLocation = LocationMediaentity(entity.getLatitude(),
-                entity.getLongitude(), entity.getLocationName(),
-                entity.getLocationURL(), entity.encoding,
-                to = entity.getFrom(), preview=entity.getPreview())
-            self.toLower(receipt)
+            if self.handle("onMediaReceived", [idx, jid, None, "location", preview, latitude, longitude, broadcast]):
+                self.toLower(receipt)
         elif entity.getMediaType() == "vcard":
             receipt = OutgoingReceiptProtocolEntity(entity.getId(), entity.getFrom())
-            outVcard = VCardMediaentity(entity.getName(),entity.getCardData(),to = entity.getFrom())
             self.toLower(receipt)
 
