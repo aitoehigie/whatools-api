@@ -72,7 +72,7 @@ def recover():
 
 def lineIsNotExpired(line):
   now = long(time.time()*1000)
-  return now < line["expires"]
+  return now < int(line["expires"])
   
 def messageSign(text, line):
   if line["plan"] == "free":
@@ -424,6 +424,8 @@ def line_subscribe():
               running[lId]["tokens"].append(token["key"])
             Lines.update({"_id": lId, "tokens.key": token["key"]}, {"$set": {"valid": True, "active": True, "tokens.$.active": True}})
             res["success"] = True
+            body.put(res)
+            body.put(StopIteration)
           else:
             user = line["cc"] + line["pn"]
             def cb(loginRes, payload):
@@ -466,6 +468,9 @@ def line_subscribe():
       res["error"] = "no-line-matches-key"
   else:
     res["error"] = "no-key"
+  if "error" in res:
+    body.put(res)
+    body.put(StopIteration)
   print ">>>>>>>>>>>>>"
   print running
   print ">>>>>>>>>>>>>"
