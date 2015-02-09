@@ -424,7 +424,7 @@ def line_subscribe():
               running[lId]["tokens"].append(token["key"])
             Lines.update({"_id": lId, "tokens.key": token["key"]}, {"$set": {"valid": True, "active": True, "tokens.$.active": True}})
             res["success"] = True
-            body.put(res)
+            body.put(json.dumps(res))
             body.put(StopIteration)
           else:
             user = line["cc"] + line["pn"]
@@ -469,7 +469,7 @@ def line_subscribe():
   else:
     res["error"] = "no-key"
   if "error" in res:
-    body.put(res)
+    body.put(json.dumps(res))
     body.put(StopIteration)
   print ">>>>>>>>>>>>>"
   print running
