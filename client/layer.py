@@ -33,18 +33,26 @@ class AsyncLayer(YowInterfaceLayer):
         self.log = self.getProp(self.__class__.LOGGER)
         self.cb = self.getProp(self.__class__.CB)
     
+    def normalizeData(self, data):
+        for (i, item) in enumerate(data):
+          if type(item) == str:
+            data[i] = "[File]"
+        return data
+
+    def normalizeJid(self, number):
+        if '@' in number:
+            return number
+        return "%s@s.whatsapp.net" % number
+
     def handle(self, event, data = {}):
-        self.log(self.line["_id"], event, data);
+        self.log(self.line["_id"], event, self.normalizeData(data));
         if event in self.handlers:
             return self.handlers[event](self, *data)
         else:
             print("unhandled '%s' event" % event)
             return False
             
-    def normalizeJid(self, number):
-        if '@' in number:
-            return number
-        return "%s@s.whatsapp.net" % number
+        
             
     methods = {}
     

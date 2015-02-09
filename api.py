@@ -45,7 +45,7 @@ def recover():
     fullLine = Lines.find_one({"_id": line["_id"]})
     user = fullLine["cc"] + fullLine["pn"]
     def cb(loginRes, payload):
-      if wa.login() == "success":
+      if loginRes == "success":
         if fullLine["_id"] in running:
           running[fullLine["_id"]]["tokens"].append(token["key"])
         else:
@@ -58,13 +58,14 @@ def recover():
       else:
         print "@@@@ RECOVER ERROR @@@@"
         res["error"] = "auth-error"
+      logger(fullLine["_id"], "lineRecoverProgress", {"res": res});
     wa = YowsupAsyncStack([user, fullLine["pass"]], fullLine, token, eventHandler, logger, cb)
     if wa:
       Greenlet.spawn(wa.login)
     else:
       print "@@@@ RECOVER ERROR @@@@"
       res["error"] = "connect-error"
-    logger(line["_id"], "lineRecoverProgress", {"res": res});
+      logger(fullLine["_id"], "lineRecoverProgress", {"res": res});
   print "@@@@@@@@@@@@@"
   print running
   print "@@@@@@@@@@@@@"
