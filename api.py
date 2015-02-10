@@ -189,13 +189,16 @@ def onMediaReceived(wa, messageId, jid, caption, type, preview, url, size, isBro
 def onMessageReceived(wa, messageId, jid, messageContent, timestamp, pushName, isBroadCast):
   if len(running):
     allTokens = Lines.find_one({"_id": wa.line["_id"]})["tokens"]
-    runningTokens = running[wa.line["_id"]]["tokens"]
-    for token in allTokens:
-      if token["key"] in runningTokens:
-        if token["push"]:
-          res = push(wa.line["_id"], token, "message", {"messageId": messageId, "jid": jid, "messageContent": messageContent, "timestamp": timestamp, "wantsReceipt": wantsReceipt, "pushName": pushName, "isBroadCast": isBroadCast})
-          if res:
-            print res.read()
+    if wa.line["_id"] in running:
+      runningTokens = running[wa.line["_id"]]["tokens"]
+      for token in allTokens:
+        if token["key"] in runningTokens:
+          if token["push"]:
+            res = push(wa.line["_id"], token, "message", {"messageId": messageId, "jid": jid, "messageContent": messageContent, "timestamp": timestamp, "wantsReceipt": wantsReceipt, "pushName": pushName, "isBroadCast": isBroadCast})
+            if res:
+              print res.read()
+    else:
+      print "WEIRD ERROR, message received for line not running"
   to = jid.split("@")[0]
   chat = Chats.find_one({"from": wa.line["_id"], "to": to})
   stamp = long(timestamp)*1000
