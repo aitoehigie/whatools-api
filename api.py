@@ -53,10 +53,10 @@ def recover():
             "yowsup": wa,
             "tokens": [token["key"]]
           }
-        print "@@@@ RECOVER SUCCESS @@@@"
+        print "@@@@ RECOVER SUCCESS @@@@ {0} {1}".format(token["key"], line["_id"])
         res["success"] = True
       else:
-        print "@@@@ RECOVER ERROR @@@@"
+        print "@@@@ RECOVER ERROR @@@@ {0} {1}".format(token["key"], line["_id"])
         res["error"] = "auth-error"
       logger(fullLine["_id"], "lineRecoverProgress", {"res": res});
     wa = YowsupAsyncStack([user, fullLine["pass"]], fullLine, token, eventHandler, logger, cb)
