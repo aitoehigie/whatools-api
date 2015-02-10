@@ -437,6 +437,8 @@ def line_subscribe():
             res["success"] = True
             res["result"] = line["data"]
             logger(lId, "tokenSubscribeProgress", {"params": unbottle(request.params), "res": res})
+            logger(lId, "presenceSendAvailable", {"nickname": line["nickname" if "nickname" in line else None] });
+            wa.call("presence_sendAvailable", [line["nickname"] if "nickname" in line else None])
             body.put(json.dumps(res))
             body.put(StopIteration)
           else:
@@ -447,9 +449,8 @@ def line_subscribe():
                 if not payload:
                   payload = line["data"]
                 res["result"] = payload;
-                if line["nickname"]:
-                  logger(lId, "presenceSendAvailable", {"nickname": line["nickname"]});
-                  wa.call("presence_sendAvailable", [line["nickname"]])
+                logger(lId, "presenceSendAvailable", {"nickname": line["nickname" if "nickname" in line else None] });
+                wa.call("presence_sendAvailable", [line["nickname"] if "nickname" in line else None])
                 Lines.update({"_id": lId, "tokens.key": token["key"]}, {"$set": {"valid": True, "active": True, "tokens.$.active": True, "data": payload}})
               else:
                 del running[lId]
