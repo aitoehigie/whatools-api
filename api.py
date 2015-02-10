@@ -106,16 +106,19 @@ def onAck(wa, idx, jid, grade):
   print "ACK from " + jid + " to " + wa.line["cc"] + wa.line["pn"] + "type: " + grade
   if len(running):
     allTokens = Lines.find_one({"_id": wa.line["_id"]})["tokens"]
-    runningTokens = running[wa.line["_id"]]["tokens"]
-    message = Chats.find_one({"from": wa.line["_id"], "to": jid.split("@")[0], 'messages.id': idx}, {"messages.$": 1})["messages"][0]
-    if "ack" in message and message["ack"] == "delivered":
-      grade = "visible"
-    for token in allTokens:
-      if token["key"] in runningTokens:
-        if token["push"]:
-          res = push(wa.line["_id"], token, "ack", {"grade": grade, "jid": jid, "messageId": idx})
-          if res:
-            print res.read()
+    if wa.line["_id"] in running:
+      runningTokens = running[wa.line["_id"]]["tokens"]
+      message = Chats.find_one({"from": wa.line["_id"], "to": jid.split("@")[0], 'messages.id': idx}, {"messages.$": 1})["messages"][0]
+      if "ack" in message and message["ack"] == "delivered":
+        grade = "visible"
+      for token in allTokens:
+        if token["key"] in runningTokens:
+          if token["push"]:
+            res = push(wa.line["_id"], token, "ack", {"grade": grade, "jid": jid, "messageId": idx})
+            if res:
+              print res.read()
+    else:
+      print "WEIRD ERROR, message received for line not running"
     Chats.update({"from": wa.line["_id"], "to": jid.split("@")[0], 'messages.id': idx}, {"$set": {'messages.$.ack': grade}})
     return True
 
