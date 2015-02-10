@@ -435,6 +435,7 @@ def line_subscribe():
               running[lId]["tokens"].append(token["key"])
             Lines.update({"_id": lId, "tokens.key": token["key"]}, {"$set": {"valid": True, "active": True, "tokens.$.active": True}})
             res["success"] = True
+            res["result"] = line["data"]
             logger(lId, "tokenSubscribeProgress", {"params": unbottle(request.params), "res": res})
             body.put(json.dumps(res))
             body.put(StopIteration)
@@ -443,12 +444,13 @@ def line_subscribe():
             def cb(loginRes, payload):
               if (loginRes == "success"):
                 res["success"] = True
-                if payload:
-                  res["result"] = payload;
+                if not payload:
+                  payload = line["data"]
+                res["result"] = payload;
                 if line["nickname"]:
                   logger(lId, "presenceSendAvailable", {"nickname": line["nickname"]});
                   wa.call("presence_sendAvailable", [line["nickname"]])
-                Lines.update({"_id": lId, "tokens.key": token["key"]}, {"$set": {"valid": True, "active": True, "tokens.$.active": True}})
+                Lines.update({"_id": lId, "tokens.key": token["key"]}, {"$set": {"valid": True, "active": True, "tokens.$.active": True, "data": payload}})
               else:
                 del running[lId]
                 res["error"] = "auth-failed"
