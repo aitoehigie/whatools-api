@@ -79,11 +79,12 @@ def messageSign(text, line):
     text += freePlanSignature
   return text
 
-def push(token, method, data):
+def push(lId, token, method, data):
   res = False
   url = token["push"]
-  data["_method"] = method
+  data["_lineId"] = lId
   data["_tokenId"] = token["id"]
+  data["_method"] = method
   params = urllib.urlencode(data)
   headers = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/plain"}
   if url[0] == "https":
@@ -91,10 +92,14 @@ def push(token, method, data):
   else:
     conn = httplib.HTTPConnection(url[1], int(url[2]))
   try:
+    logger(lId, "hookPost", {url: url, params: params, headers: headers})
     conn.request("POST", '/' + url[3], params, headers)
     res = conn.getresponse()
   except:
+    logger(lId, "hookProgress", {success: False, url: url, params: params, headers: headers})
     print "[PUSH] Connection refused while trying to " + method
+  else:  
+    logger(lId, "hookProgress", {success: True, result: res, url: url, params: params, headers: headers})
   return res
 
 def onAck(wa, idx, jid, grade):
@@ -108,7 +113,7 @@ def onAck(wa, idx, jid, grade):
     for token in allTokens:
       if token["key"] in runningTokens:
         if token["push"]:
-          res = push(token, "ack", {"grade": grade, "jid": jid, "messageId": idx})
+          res = push(wa.line["_id"], token, "ack", {"grade": grade, "jid": jid, "messageId": idx})
           if res:
             print res.read()
     Chats.update({"from": wa.line["_id"], "to": jid.split("@")[0], 'messages.id': idx}, {"$set": {'messages.$.ack': grade}})
@@ -140,9 +145,9 @@ def onMediaReceived(wa, messageId, jid, caption, type, preview, url, size, isBro
       if token["key"] in runningTokens:
         if token["push"]:
           if type == "location":
-            res = push(token, "media", {"messageId": messageId, "jid": jid, "type": type, "preview": preview, "latitude": url, "longitude": size, "wantsReceipt": wantsReceipt, "isBroadCast": isBroadCast})
+            res = push(wa.line["_id"], token, "media", {"messageId": messageId, "jid": jid, "type": type, "preview": preview, "latitude": url, "longitude": size, "wantsReceipt": wantsReceipt, "isBroadCast": isBroadCast})
           else:
-            res = push(token, "media", {"messageId": messageId, "jid": jid, "type": type, "preview": preview, "url": url, "size": size, "wantsReceipt": wantsReceipt, "isBroadCast": isBroadCast})
+            res = push(wa.line["_id"], token, "media", {"messageId": messageId, "jid": jid, "type": type, "preview": preview, "url": url, "size": size, "wantsReceipt": wantsReceipt, "isBroadCast": isBroadCast})
           if res:
             print res.read()
   to = jid.split("@")[0]
@@ -188,7 +193,7 @@ def onMessageReceived(wa, messageId, jid, messageContent, timestamp, pushName, i
     for token in allTokens:
       if token["key"] in runningTokens:
         if token["push"]:
-          res = push(token, "message", {"messageId": messageId, "jid": jid, "messageContent": messageContent, "timestamp": timestamp, "wantsReceipt": wantsReceipt, "pushName": pushName, "isBroadCast": isBroadCast})
+          res = push(wa.line["_id"], token, "message", {"messageId": messageId, "jid": jid, "messageContent": messageContent, "timestamp": timestamp, "wantsReceipt": wantsReceipt, "pushName": pushName, "isBroadCast": isBroadCast})
           if res:
             print res.read()
   to = jid.split("@")[0]
@@ -230,7 +235,7 @@ def onProfileSetPictureError(wa, idx, errorCode):
     runningTokens = running[wa.line["_id"]]["tokens"]
     for token in allTokens:
       if token["key"] in runningTokens and token["key"] == uploads[idx]["token"] and token["push"]:
-        res = push(token, "error", {"type": "onProfileSetPictureError", "idx": idx})
+        res = push(wa.line["_id"], token, "error", {"type": "onProfileSetPictureError", "idx": idx})
     del uploads[idx]
 
 def onProfileSetPictureSuccess(wa, idx, pictureId):
@@ -246,7 +251,7 @@ def onProfileSetPictureSuccess(wa, idx, pictureId):
     runningTokens = running[wa.line["_id"]]["tokens"]
     for token in allTokens:
       if token["key"] in runningTokens and token["key"] == uploads[idx]["token"] and token["push"]:
-          res = push(token, "success", {"type": "onProfileSetPictureSuccess", "idx": idx, "pictureId": pictureId})
+          res = push(wa.line["_id"], token, "success", {"type": "onProfileSetPictureSuccess", "idx": idx, "pictureId": pictureId})
     del uploads[idx]
 
 def onProfileSetStatusSuccess(wa, jid, idx):
@@ -254,7 +259,7 @@ def onProfileSetStatusSuccess(wa, jid, idx):
   runningTokens = running[wa.line["_id"]]["tokens"]
   for token in allTokens:
     if token["key"] in runningTokens and token["push"]:
-        res = push(token, "success", {"type": "onProfileSetStatusSuccess", "idx": idx})
+        res = push(wa.line["_id"], token, "success", {"type": "onProfileSetStatusSuccess", "idx": idx})
 
 eventHandler = {
   "onAck": onAck,
@@ -319,7 +324,7 @@ def messages_post():
                 for token in line["tokens"]:
                   if token["key"] in runningTokens:
                     if token["push"] and token["key"] != key:
-                      pushRes = push(token, "carbon", {"messageId": msgId, "jid": to, "messageContent": body, "timestamp": stamp, "wantsReceipt": ack, "isBroadCast": broadcast})
+                      pushRes = push(lId, token, "carbon", {"messageId": msgId, "jid": to, "messageContent": body, "timestamp": stamp, "wantsReceipt": ack, "isBroadCast": broadcast})
                       if pushRes:
                         print pushRes.read()
               else:
