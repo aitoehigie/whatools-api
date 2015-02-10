@@ -26,6 +26,10 @@ class AsyncLayer(YowInterfaceLayer):
         self.handlers = self.getProp(self.__class__.HANDLERS)
         self.log = self.getProp(self.__class__.LOGGER)
         self.cb = self.getProp(self.__class__.CB)
+        
+    def onEvent(self, layerEvent):
+        if layerEvent.getName() == YowNetworkLayer.EVENT_STATE_DISCONNECTED:
+            self.handle("onDisconnected", [layerEvent.getArg("reason")])
     
     def normalizeData(self, data):
         for (i, item) in enumerate(data):
