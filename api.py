@@ -435,6 +435,7 @@ def line_subscribe():
               running[lId]["tokens"].append(token["key"])
             Lines.update({"_id": lId, "tokens.key": token["key"]}, {"$set": {"valid": True, "active": True, "tokens.$.active": True}})
             res["success"] = True
+            logger(lId, "tokenSubscribeProgress", {"params": unbottle(request.params), "res": res})
             body.put(json.dumps(res))
             body.put(StopIteration)
           else:
@@ -452,6 +453,7 @@ def line_subscribe():
                 del running[lId]
                 res["error"] = "auth-failed"
                 Lines.update({"_id": lId, "tokens.key": token["key"]}, {"$set": {"valid": "wrong", "reconnect": False, "tokens.$.active": False}})
+              logger(lId, "tokenSubscribeProgress", {"res": res})
               body.put(json.dumps(res))
               body.put(StopIteration)
             wa = YowsupAsyncStack([user, line["pass"]], line, token, eventHandler, logger, cb)
@@ -474,7 +476,7 @@ def line_subscribe():
       else:
         res["error"] = "line-is-expired"
         Lines.update({"_id": lId}, {"$set": {"valid": "wrong", "reconnect": False, "active": False}})
-      logger(lId, "tokenSubscribeProgress", {"params": unbottle(request.params), "res": res});
+        logger(lId, "tokenSubscribeProgress", {"params": unbottle(request.params), "res": res})
     else:
       res["error"] = "no-line-matches-key"
   else:
@@ -482,9 +484,6 @@ def line_subscribe():
   if "error" in res:
     body.put(json.dumps(res))
     body.put(StopIteration)
-  print ">>>>>>>>>>>>>"
-  print running
-  print ">>>>>>>>>>>>>"
   return body
   
 @route("/unsubscribe", method="GET")
