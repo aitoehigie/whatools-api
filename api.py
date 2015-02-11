@@ -43,7 +43,7 @@ def recover(lines=False):
     token = line["tokens"][0]
     fullLine = Lines.find_one({"_id": line["_id"]})
     user = fullLine["cc"] + fullLine["pn"]
-    logger(line["_id"], "lineRecover");
+    logger(line["_id"], "lineRecover", [token]);
     print "@@@ RECOVERING TOKEN {0} FOR LINE {1} @@@".format(token["key"], line["_id"])
     def cb(loginRes, payload):
         if loginRes == "success":
