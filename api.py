@@ -7,6 +7,7 @@ from bottle import route, run, request, static_file, BaseRequest, FormsDict
 from pymongo import MongoClient
 from bson import objectid
 from client.stack import YowsupAsyncStack
+from yowsup.registration import *
 
 BaseRequest.MEMFILE_MAX = 1.5 * 1024 * 1024 
 
@@ -35,40 +36,36 @@ def unbottle(data):
     dataDict[item] = data[item]
   return dataDict
 
-def recover():
-  activeLines = Lines.find({"tokens.active": True}, {"tokens.$": 1})
-  for line in activeLines:
+def recover(lines=False):
+  if lines:
     res = {"success": False}
+    line = lines.pop()
     token = line["tokens"][0]
-    logger(line["_id"], "lineRecover");
-    print "@@@ RECOVERING TOKEN {0} FOR LINE {1} @@@".format(token["key"], line["_id"])
     fullLine = Lines.find_one({"_id": line["_id"]})
     user = fullLine["cc"] + fullLine["pn"]
+    print "@@@ RECOVERING TOKEN {0} FOR LINE {1} @@@".format(token["key"], line["_id"])
     def cb(loginRes, payload):
-      if loginRes == "success":
-        if fullLine["_id"] in running:
-          running[fullLine["_id"]]["tokens"].append(token["key"])
+        if loginRes == "success":
+          if fullLine["_id"] in running:
+            running[fullLine["_id"]]["tokens"].append(token["key"])
+          else:
+            running[fullLine["_id"]] = {
+              "yowsup": wa,
+              "tokens": [token["key"]]
+            }
+          print "@@@@ RECOVER SUCCESS @@@@ {0} {1}".format(token["key"], line["_id"])
+          res["success"] = True
         else:
-          running[fullLine["_id"]] = {
-            "yowsup": wa,
-            "tokens": [token["key"]]
-          }
-        print "@@@@ RECOVER SUCCESS @@@@ {0} {1}".format(token["key"], line["_id"])
-        res["success"] = True
-      else:
-        print "@@@@ RECOVER ERROR @@@@ {0} {1}".format(token["key"], line["_id"])
-        res["error"] = "auth-error"
-      logger(fullLine["_id"], "lineRecoverProgress", {"res": res});
+          print "@@@@ RECOVER ERROR @@@@ {0} {1}".format(token["key"], line["_id"])
+          res["error"] = "auth-error"
+        recover(lines)
     wa = YowsupAsyncStack([user, fullLine["pass"]], fullLine, token, eventHandler, logger, cb)
     if wa:
       Greenlet.spawn(wa.login)
+      gevent.sleep(2)
     else:
       print "@@@@ RECOVER ERROR @@@@"
       res["error"] = "connect-error"
-      logger(fullLine["_id"], "lineRecoverProgress", {"res": res});
-  print "@@@@@@@@@@@@@"
-  print running
-  print "@@@@@@@@@@@@@"
 
 def lineIsNotExpired(line):
   now = long(time.time()*1000)
@@ -288,6 +285,7 @@ def messages_post():
   to = request.params.to
   body = request.params.body.encode('utf8','replace')
   broadcast = request.params.broadcast
+  msgId = False
   if key:
     line = Lines.find_one({"tokens": {"$elemMatch": {"key": key}}})
     if line:
@@ -344,7 +342,7 @@ def messages_post():
       else:
         res["error"] = "line-is-expired"
         Lines.update({"_id": lId}, {"$set": {"valid": "wrong", "reconnect": False, "active": False}})
-      logger(lId, "messageSendProgress", {"params": unbottle(request.params), "msg": msg} if msgId else {"params": request.params, "res": res});
+      logger(lId, "messageSendProgress", {"params": unbottle(request.params), "msg": msg} if msgId else {"params": unbottle(request.params), "res": res});
     else:
       res["error"] = "no-line-matches-key"
   else:
@@ -352,13 +350,13 @@ def messages_post():
   return res
 
 @route("/line/coderequest", method="GET")
-def line_validate():
+def line_coderequest():
   res = {"success": False}
   pn = request.params.pn
   cc = request.params.cc
   method = request.params.method
   if pn and cc:
-    wa = WACodeRequest(cc, pn, Utilities.processIdentity(""), method)
+    wa = WACodeRequest(cc, pn, method=method)
     if wa:
       res["success"] = True
       res["result"] = wa.send()
@@ -369,13 +367,13 @@ def line_validate():
   return res
 
 @route("/line/regrequest", method="GET")
-def line_validate():
+def line_regrequest():
   res = {"success": False}
   pn = request.params.pn
   cc = request.params.cc
   code = request.params.code
   if pn and cc and code:
-    wa = WARegRequest(cc, pn, code, Utilities.processIdentity(""))
+    wa = WARegRequest(cc, pn, code)
     if wa:
       res["success"] = True
       res["result"] = wa.register()
@@ -386,7 +384,7 @@ def line_validate():
   return res
   
 @route("/line/test", method="GET")
-def line_validate():
+def line_test():
   res = {"success": False}
   lId = request.params.id
   if lId:
@@ -416,7 +414,7 @@ def line_validate():
   return res
   
 @route("/subscribe", method="GET")
-def line_subscribe():
+def subscribe():
   body = queue.Queue()
   res = {"success": False}
   key = request.params.key
@@ -471,7 +469,7 @@ def line_subscribe():
                 "yowsup": wa,
                 "tokens": [token["key"]]
               }
-              Greenlet.spawn(wa.login)
+              gevent.spawn(wa.login)
             else:
               res["error"] = "could-not-connect"
         else:
@@ -490,7 +488,7 @@ def line_subscribe():
   return body
   
 @route("/unsubscribe", method="GET")
-def line_unsubscribe():
+def unsubscribe():
   res = {"success": False}
   key = request.params.key
   if key:
@@ -733,5 +731,5 @@ STATIC CONTENT
 def reference():
   return static_file('reference.htm', './static')
 
-recover()
+recover(list(Lines.find({"tokens.active": True}, {"tokens.$": 1})))
 run(host="127.0.0.1", port="8080", server='gevent')
