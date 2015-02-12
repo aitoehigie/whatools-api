@@ -38,6 +38,7 @@ def unbottle(data):
   
 def recover(lines=False):
   if lines:
+    done = False
     res = {"success": False}
     line = lines.pop()
     token = line["tokens"][0]
@@ -60,15 +61,18 @@ def recover(lines=False):
           print "@@@@ RECOVER ERROR @@@@ {0} {1}".format(token["key"], line["_id"])
           res["error"] = "auth-error"
         logger(fullLine["_id"], "lineRecoverProgress", {"res": res});
+        done = True
         recover(lines)
     wa = YowsupAsyncStack([user, fullLine["pass"]], fullLine, token, eventHandler, logger, cb)
     if wa:
       Greenlet.spawn(wa.login)
-      gevent.sleep(2)
+      while not done:
+        gevent.sleep(0)
     else:
       res["error"] = "connect-error"
       logger(fullLine["_id"], "lineRecoverProgress", {"res": res});
       print "@@@@ RECOVER ERROR @@@@"
+      recover(lines)
 
 def lineIsNotExpired(line):
   now = long(time.time()*1000)
