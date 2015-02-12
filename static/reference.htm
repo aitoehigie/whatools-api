@@ -1,10 +1,10 @@
 <html>
   <head>
-    <title>WAAPI Reference v0</title>
+    <title>WhaTools REST API v1 Reference</title>
   </head>
   <body>
     <header>
-      <h1>WAAPI Reference v0</h1>
+      <h1>WhaTools v1 REST API Reference</h1>
       <p>by Waaltcom</p>
     </header>
     <section>
@@ -12,7 +12,7 @@
         <h2>Base URL</h2>
       </header>
       <article>
-        <a class="url">https://waapi.waalt.com/v0</a>
+        <a class="url">https://api.wha.tools/v1</a>
         <p>(HTTPS is compulsory)</p>
       </article>
     </section>
@@ -31,10 +31,11 @@
           <li><strong>key</strong>the app key, similar to <em>"bedfcfae-6c45-40d5-c56f-125c572bae41"</em></li>
         </ul>
         <ul class="results">
-          <li><code class="success">{"success": "true"}</code></li>
+          <li><code class="success">{"success": "true", result: {...}}</code></li>
           <li><code class="error">{"error": "no-key"}</code>No token was specified</li>
           <li><code class="error">{"error": "no-token-matches-key"}</code>There's no token matching such app key</li>
           <li><code class="error">{"error": "no-line-matches-key"}</code>There's no line matching such app key</li>
+          <li><code class="error">{"error": "wrong-api-version"}</code>The line is configured to use a different API version</li>
           <li><code class="error">{"error": "line-is-expired"}</code>The line is expired. You'll need to pay for renovation</li>
           <li><code class="error">{"error": "could-not-connect"}</code>WhatsApp service is not currently available</li>
           <li><code class="error">{"error": "auth-failed"}</code>WhatsApp authentication failed. Your credentials are wrong or they've recently changed</li>
@@ -190,9 +191,10 @@
       <header>
         <h2>WebHook Methods</h2>
       </header>
-      <p>When a message or notification is received, a POST query is sent to every active apps' WebHook URL.</p>
-      <p>You can tell one method from another by reading the <em>"_method"</em> parameter in the POST query. Currently the possible values are <em>"message"</em>, <em>"carbon"</em>, <em>"media"</em>, <em>"ack"</em> and <em>"ping"</em>.</p>
+      <p>When a message or notification is received, a POST HTTP query is sent to every active access key's WebHook URL.</p>
       <p>In order to preserve your privacy, we encourage you to use HTTPS at the WebHook URL endpoint.</p>
+      <p>You can tell one method from another by reading the <em>"_method"</em> parameter in the POST query. Currently the possible values are <em>"message"</em>, <em>"carbon"</em>, <em>"media"</em>, <em>"ack"</em> and <em>"ping"</em>.</p>
+      <p>The corresponding line and token IDs are enclosed in the <em>"_lineId"</em> and <em>"_tokenId"</em> parameters in the POST query so that you can tell which line and token is calling the WebHook in case that you configure a single endpoint for several lines or tokens.</p>
       <article>
         <header>
           <h3>message</h3>
@@ -255,7 +257,7 @@
         <header>
           <h3>ping</h3>
         </header>
-        <p>WAAPI servers can send <em>"ping"</em> requests to apps in order to validate PUSH URLs and tell if they are still active. These requests MUST be always be answered with the <em>"pong"</em> text.</p>
+        <p>WAAPI servers can send <em>"ping"</em> requests to apps in order to validate PUSH URLs and tell if they are still active. These requests MUST be always answered with the <em>"pong"</em> text.</p>
         <ul class="params">
           <li>No parameters</li>
         </ul>
