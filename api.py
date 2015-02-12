@@ -23,6 +23,7 @@ Chats = db.chats
 Avatars = db.avatars
 Logs = db.logs
 
+v = "1"
 freePlanSignature = "\n\n[Message sent from a WhaTools free account.\nIf SPAM, please report to https://wha.tools/report]"
 storage = "/var/waapi/storage/"
 
@@ -428,63 +429,66 @@ def subscribe():
   if key:
     line = Lines.find_one({"tokens": {"$elemMatch": {"key": key}}})
     if line:
-      lId = line["_id"]
-      logger(lId, "tokenSubscribe", unbottle(request.params));
-      if lineIsNotExpired(line):
-        token = filter(lambda e: e['key'] == key, line['tokens'])[0]
-        if token:
-          if lId in running:
-            wa = running[lId]["yowsup"]
-            # TODO: Check if connected and reconnect if not
-            if token["key"] not in running[lId]["tokens"]:
-              running[lId]["tokens"].append(token["key"])
-            Lines.update({"_id": lId, "tokens.key": token["key"]}, {"$set": {"valid": True, "active": True, "tokens.$.active": True}})
-            res["success"] = True
-            res["result"] = line["data"]
-            logger(lId, "tokenSubscribeProgress", {"params": unbottle(request.params), "res": res})
-            logger(lId, "presenceSendAvailable", {"nickname": line["nickname" if "nickname" in line else None] });
-            wa.call("presence_sendAvailable", [line["nickname"] if "nickname" in line else None])
-            body.put(json.dumps(res))
-            body.put(StopIteration)
-          else:
-            user = line["cc"] + line["pn"]
-            def cb(loginRes, payload):
-              if (loginRes == "success"):
-                res["success"] = True
-                if not payload:
-                  payload = line["data"]
-                res["result"] = payload;
-                logger(lId, "presenceSendAvailable", {"nickname": line["nickname" if "nickname" in line else None] });
-                wa.call("presence_sendAvailable", [line["nickname"] if "nickname" in line else None])
-                Lines.update({"_id": lId, "tokens.key": token["key"]}, {"$set": {"valid": True, "active": True, "tokens.$.active": True, "data": payload}})
-              else:
-                del running[lId]
-                res["error"] = "auth-failed"
-                Lines.update({"_id": lId, "tokens.key": token["key"]}, {"$set": {"valid": "wrong", "reconnect": False, "tokens.$.active": False}})
-              logger(lId, "tokenSubscribeProgress", {"res": res})
+      if "api" in line and line["api"] == v:
+        lId = line["_id"]
+        logger(lId, "tokenSubscribe", unbottle(request.params));
+        if lineIsNotExpired(line):
+          token = filter(lambda e: e['key'] == key, line['tokens'])[0]
+          if token:
+            if lId in running:
+              wa = running[lId]["yowsup"]
+              # TODO: Check if connected and reconnect if not
+              if token["key"] not in running[lId]["tokens"]:
+                running[lId]["tokens"].append(token["key"])
+              Lines.update({"_id": lId, "tokens.key": token["key"]}, {"$set": {"valid": True, "active": True, "tokens.$.active": True}})
+              res["success"] = True
+              res["result"] = line["data"]
+              logger(lId, "tokenSubscribeProgress", {"params": unbottle(request.params), "res": res})
+              logger(lId, "presenceSendAvailable", {"nickname": line["nickname" if "nickname" in line else None] });
+              wa.call("presence_sendAvailable", [line["nickname"] if "nickname" in line else None])
               body.put(json.dumps(res))
               body.put(StopIteration)
-            wa = YowsupAsyncStack([user, line["pass"]], line, token, eventHandler, logger, cb)
-            if wa:
-              try:
-                pw = base64.b64decode(bytes(str(line["pass"])))
-              except TypeError:
-                res["error"] = "password-type-error"
-                Lines.update({"_id": lId, "tokens.key": token["key"]}, {"$set": {"valid": "wrong", "reconnect": False, "tokens.$.active": False}})
-                return res
-              running[lId] = {
-                "yowsup": wa,
-                "tokens": [token["key"]]
-              }
-              gevent.spawn(wa.login)
             else:
-              res["error"] = "could-not-connect"
+              user = line["cc"] + line["pn"]
+              def cb(loginRes, payload):
+                if (loginRes == "success"):
+                  res["success"] = True
+                  if not payload:
+                    payload = line["data"]
+                  res["result"] = payload;
+                  logger(lId, "presenceSendAvailable", {"nickname": line["nickname" if "nickname" in line else None] });
+                  wa.call("presence_sendAvailable", [line["nickname"] if "nickname" in line else None])
+                  Lines.update({"_id": lId, "tokens.key": token["key"]}, {"$set": {"valid": True, "active": True, "tokens.$.active": True, "data": payload}})
+                else:
+                  del running[lId]
+                  res["error"] = "auth-failed"
+                  Lines.update({"_id": lId, "tokens.key": token["key"]}, {"$set": {"valid": "wrong", "reconnect": False, "tokens.$.active": False}})
+                logger(lId, "tokenSubscribeProgress", {"res": res})
+                body.put(json.dumps(res))
+                body.put(StopIteration)
+              wa = YowsupAsyncStack([user, line["pass"]], line, token, eventHandler, logger, cb)
+              if wa:
+                try:
+                  pw = base64.b64decode(bytes(str(line["pass"])))
+                except TypeError:
+                  res["error"] = "password-type-error"
+                  Lines.update({"_id": lId, "tokens.key": token["key"]}, {"$set": {"valid": "wrong", "reconnect": False, "tokens.$.active": False}})
+                  return res
+                running[lId] = {
+                  "yowsup": wa,
+                  "tokens": [token["key"]]
+                }
+                gevent.spawn(wa.login)
+              else:
+                res["error"] = "could-not-connect"
+          else:
+            res["error"] = "no-token-matches-key"
         else:
-          res["error"] = "no-token-matches-key"
+          res["error"] = "line-is-expired"
+          Lines.update({"_id": lId}, {"$set": {"valid": "wrong", "reconnect": False, "active": False}})
+          logger(lId, "tokenSubscribeProgress", {"params": unbottle(request.params), "res": res})
       else:
-        res["error"] = "line-is-expired"
-        Lines.update({"_id": lId}, {"$set": {"valid": "wrong", "reconnect": False, "active": False}})
-        logger(lId, "tokenSubscribeProgress", {"params": unbottle(request.params), "res": res})
+        res["error"] = "wrong-api-version"
     else:
       res["error"] = "no-line-matches-key"
   else:
@@ -738,6 +742,6 @@ STATIC CONTENT
 def reference():
   return static_file('reference.htm', './static')
 
-recover(list(Lines.find({"tokens.active": True}, {"tokens.$": 1})))
+recover(list(Lines.find({"tokens.active": True, "api": v}, {"tokens.$": 1})))
 run(host="127.0.0.1", port="8080", server='gevent')
 
