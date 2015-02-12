@@ -36,7 +36,7 @@ def unbottle(data):
     dataDict[item] = data[item]
   return dataDict
   
-def recover(lines=False):
+'''def recover(lines=False):
   if lines:
     done = False
     res = {"success": False}
@@ -67,12 +67,52 @@ def recover(lines=False):
     if wa:
       Greenlet.spawn(wa.login)
       while not done:
-        gevent.sleep(0)
+        gevent.sleep(.5)
     else:
       res["error"] = "connect-error"
       logger(fullLine["_id"], "lineRecoverProgress", {"res": res});
       print "@@@@ RECOVER ERROR @@@@"
-      recover(lines)
+  else:
+    print "@@@@ LINES EXHAUSTION"
+    return'''
+    
+def recover(lines=False):
+  if lines:
+    for line in lines:
+      done = [False]
+      res = {"success": False}
+      token = line["tokens"][0]
+      fullLine = Lines.find_one({"_id": line["_id"]})
+      user = fullLine["cc"] + fullLine["pn"]
+      logger(line["_id"], "lineRecover", [token]);
+      print "@@@ RECOVERING TOKEN {0} FOR LINE {1} @@@".format(token["key"], line["_id"])
+      def cb(loginRes, payload):
+          if loginRes == "success":
+            if fullLine["_id"] in running:
+              running[fullLine["_id"]]["tokens"].append(token["key"])
+            else:
+              running[fullLine["_id"]] = {
+                "yowsup": wa,
+                "tokens": [token["key"]]
+              }
+            print "@@@@ RECOVER SUCCESS @@@@ {0} {1}".format(token["key"], line["_id"])
+            res["success"] = True
+          else:
+            print "@@@@ RECOVER ERROR @@@@ {0} {1}".format(token["key"], line["_id"])
+            res["error"] = "auth-error"
+          logger(fullLine["_id"], "lineRecoverProgress", {"res": res});
+          done[0] = True
+      wa = YowsupAsyncStack([user, fullLine["pass"]], fullLine, token, eventHandler, logger, cb)
+      if wa:
+        Greenlet.spawn(wa.login)
+      else:
+        res["error"] = "connect-error"
+        logger(fullLine["_id"], "lineRecoverProgress", {"res": res});
+        print "@@@@ RECOVER ERROR @@@@"
+      while not done[0]:
+        gevent.sleep(.2)
+        print done[0]
+  return
 
 def lineIsNotExpired(line):
   now = long(time.time()*1000)
@@ -740,3 +780,4 @@ def reference():
 
 recover(list(Lines.find({"tokens.active": True}, {"tokens.$": 1})))
 run(host="127.0.0.1", port="8080", server='gevent')
+
