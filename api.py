@@ -35,47 +35,7 @@ def unbottle(data):
   for item in data:
     dataDict[item] = data[item]
   return dataDict
-  
-'''def recover(lines=False):
-  if lines:
-    done = False
-    res = {"success": False}
-    line = lines.pop()
-    token = line["tokens"][0]
-    fullLine = Lines.find_one({"_id": line["_id"]})
-    user = fullLine["cc"] + fullLine["pn"]
-    logger(line["_id"], "lineRecover", [token]);
-    print "@@@ RECOVERING TOKEN {0} FOR LINE {1} @@@".format(token["key"], line["_id"])
-    def cb(loginRes, payload):
-        if loginRes == "success":
-          if fullLine["_id"] in running:
-            running[fullLine["_id"]]["tokens"].append(token["key"])
-          else:
-            running[fullLine["_id"]] = {
-              "yowsup": wa,
-              "tokens": [token["key"]]
-            }
-          print "@@@@ RECOVER SUCCESS @@@@ {0} {1}".format(token["key"], line["_id"])
-          res["success"] = True
-        else:
-          print "@@@@ RECOVER ERROR @@@@ {0} {1}".format(token["key"], line["_id"])
-          res["error"] = "auth-error"
-        logger(fullLine["_id"], "lineRecoverProgress", {"res": res});
-        done = True
-        recover(lines)
-    wa = YowsupAsyncStack([user, fullLine["pass"]], fullLine, token, eventHandler, logger, cb)
-    if wa:
-      Greenlet.spawn(wa.login)
-      while not done:
-        gevent.sleep(.5)
-    else:
-      res["error"] = "connect-error"
-      logger(fullLine["_id"], "lineRecoverProgress", {"res": res});
-      print "@@@@ RECOVER ERROR @@@@"
-  else:
-    print "@@@@ LINES EXHAUSTION"
-    return'''
-    
+ 
 def recover(lines=False):
   if lines:
     for line in lines:
