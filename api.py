@@ -145,44 +145,6 @@ def onDisconnected(wa, reason):
     Lines.update({"_id": wa.line["_id"]}, {"$set": {"active": False, "reconnect": False}});
     wa.errors = 0
     
-def onGroupMessageReceived(wa, messageId, participant, jid, messageContent, timestamp, pushName, isBroadCast):
-  if len(running):
-    allTokens = Lines.find_one({"_id": wa.line["_id"]})["tokens"]
-    if wa.line["_id"] in running:
-      runningTokens = running[wa.line["_id"]]["tokens"]
-      for token in allTokens:
-        if token["key"] in runningTokens:
-          if token["push"]:
-            res = push(wa.line["_id"], token, "message", {"messageId": messageId, "jid": jid, "participant": participant, "messageContent": messageContent, "timestamp": timestamp, "wantsReceipt": wantsReceipt, "pushName": pushName})
-            if res:
-              print res.read()
-    else:
-      print "WEIRD ERROR, message received for line not running"
-  to = jid.split("@")[0]
-  chat = Chats.find_one({"from": wa.line["_id"], "to": to})
-  stamp = long(timestamp)*1000
-  msg = {
-    "id": messageId,
-    "mine": False,
-    "body": messageContent,
-    "stamp": stamp,
-    "participant": participant
-  }
-  if chat:
-    # Push it to db
-    Chats.update({"from": wa.line["_id"], "to": to}, {"$push": {"messages": msg}, "$set": {"lastStamp": stamp}, "$inc": {"unread": 1}});
-  else:
-    # Create new chat
-    Chats.insert({
-      "_id": str(objectid.ObjectId()),
-      "from": wa.line["_id"],
-      "to": to,
-      "messages": [msg],
-      "lastStamp": stamp,
-      "alias": pushName or False
-    })
-  return True
-    
 def onMediaReceived(wa, messageId, jid, caption, type, preview, url, size, isBroadCast):
   if len(running):
     allTokens = Lines.find_one({"_id": wa.line["_id"]})["tokens"]
@@ -234,7 +196,7 @@ def onMediaReceived(wa, messageId, jid, caption, type, preview, url, size, isBro
     })
   return True;
 
-def onMessageReceived(wa, messageId, jid, messageContent, timestamp, pushName, isBroadCast):
+def onMessageReceived(wa, messageId, jid, participant, messageContent, timestamp, pushName, isBroadCast):
   if len(running):
     allTokens = Lines.find_one({"_id": wa.line["_id"]})["tokens"]
     if wa.line["_id"] in running:
@@ -242,7 +204,12 @@ def onMessageReceived(wa, messageId, jid, messageContent, timestamp, pushName, i
       for token in allTokens:
         if token["key"] in runningTokens:
           if token["push"]:
-            res = push(wa.line["_id"], token, "message", {"messageId": messageId, "jid": jid, "messageContent": messageContent, "timestamp": timestamp, "wantsReceipt": wantsReceipt, "pushName": pushName, "isBroadCast": isBroadCast})
+            pushData = {"messageId": messageId, "jid": jid, "messageContent": messageContent, "timestamp": timestamp, "wantsReceipt": wantsReceipt}
+            if participant:
+              pushData["participant"] = participant
+            if isBroadCast:
+              pushData["broadcast"] = broadcast
+            res = push(wa.line["_id"], token, "message", pushData)
             if res:
               print res.read()
     else:
@@ -256,10 +223,16 @@ def onMessageReceived(wa, messageId, jid, messageContent, timestamp, pushName, i
     "body": messageContent,
     "stamp": stamp
   }
+  if participant:
+    msg["participant"] = participant
+    msg["pushName"] = pushName
+  if isBroadCast:
+    msg["broadcast"] = broadcast
   if chat:
     # Push it to db
     Chats.update({"from": wa.line["_id"], "to": to}, {"$push": {"messages": msg}, "$set": {"lastStamp": stamp}, "$inc": {"unread": 1}});
   else:
+    alias = False if participant else (pushName or False)
     # Create new chat
     Chats.insert({
       "_id": str(objectid.ObjectId()),
@@ -267,7 +240,7 @@ def onMessageReceived(wa, messageId, jid, messageContent, timestamp, pushName, i
       "to": to,
       "messages": [msg],
       "lastStamp": stamp,
-      "alias": pushName or False
+      "alias": alias
     })
   return True
   
