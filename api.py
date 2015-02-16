@@ -252,6 +252,8 @@ def onPing(wa, pingId):
     wa.logout()
     # TODO: Notify expiracy to active tokens
     del running[line["_id"]]
+  else:
+    logger(line["_id"], "onPing", [pingId])
   
 def onProfileSetPictureError(wa, idx, errorCode):
   if idx in uploads:
@@ -311,7 +313,7 @@ def messages_post():
     line = Lines.find_one({"tokens": {"$elemMatch": {"key": key}}})
     if line:
       lId = line["_id"]
-      logger(lId, "messagePost", unbottle(request.params));
+      logger(lId, "messagePost", unbottle(request.params))
       if lineIsNotExpired(line):
         token = filter(lambda e: e['key'] == key, line['tokens'])[0]
         if token:
