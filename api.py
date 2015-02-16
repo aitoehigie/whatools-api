@@ -230,7 +230,7 @@ def onMessageReceived(wa, messageId, jid, participant, messageContent, timestamp
     msg["broadcast"] = broadcast
   if chat:
     # Push it to db
-    Chats.update({"from": wa.line["_id"], "to": to}, {"$push": {"messages": msg}, "$set": {"lastStamp": stamp}, "$inc": {"unread": 1}});
+    Chats.update({"from": wa.line["_id"], "to": to}, {"$push": {"messages": msg}, "$set": {"lastStamp": stamp}, "$inc": {"unread": 1}})
   else:
     alias = False if participant else (pushName or False)
     # Create new chat
@@ -335,7 +335,7 @@ def messages_post():
                 }
                 if chat:
                   # Push it
-                  Chats.update({"from": lId, "to": to}, {"$push": {"messages": msg}, "$set": {"unread": 0}});
+                  Chats.update({"from": lId, "to": to}, {"$push": {"messages": msg}, "$set": {"lastStamp": stamp, "unread": 0}});
                 else:
                   # Create new chat
                   Chats.insert({
