@@ -39,8 +39,12 @@ class AsyncLayer(YowInterfaceLayer):
 
     def normalizeJid(self, number):
         if '@' in number:
-            return number
-        return "%s@s.whatsapp.net" % number
+            jid = number
+        elif '-' in number:
+            jid = "%s@g.us" % number
+        else:
+            jid = "%s@s.whatsapp.net" % number
+        return jid
 
     def handle(self, event, data = {}):
         self.log(self.line["_id"], event, self.normalizeData(data[:]));
