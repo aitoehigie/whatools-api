@@ -138,11 +138,9 @@ class AsyncLayer(YowInterfaceLayer):
         notify = entity.getNotify()
         broadcast = entity.isBroadcast()
         if entity.isGroupMessage():
-            '''if self.handle("onGroupMessageReceived", (idx, participant, jid, body, stamp, notify)):
-                receipt = OutgoingReceiptProtocolEntity(idx, to)
-                self.toLower(receipt)'''
-            receipt = OutgoingReceiptProtocolEntity(idx, jid)
-            self.toLower(receipt)
+            if self.handle("onGroupMessageReceived", (idx, participant, jid, body, stamp, notify)):
+                receipt = OutgoingReceiptProtocolEntity(idx, jid)
+                self.toLower(receipt)
         else:
             if self.handle("onMessageReceived", [idx, jid, body, stamp, notify, broadcast]):
                 receipt = OutgoingReceiptProtocolEntity(idx, jid)
