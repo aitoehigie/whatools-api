@@ -3,6 +3,7 @@ from yowsup.layers                                     import YowLayerEvent
 from yowsup.layers.interface                           import YowInterfaceLayer, ProtocolEntityCallback
 from yowsup.layers.network                             import YowNetworkLayer
 from yowsup.layers.auth                                import YowAuthenticationProtocolLayer
+from yowsup.layers.axolotl                             import YowAxolotlLayer
 from yowsup.layers.protocol_acks.protocolentities      import *
 from yowsup.layers.protocol_ib.protocolentities        import *
 from yowsup.layers.protocol_iq.protocolentities        import *
@@ -28,8 +29,13 @@ class AsyncLayer(YowInterfaceLayer):
         self.cb = self.getProp(self.__class__.CB)
         
     def onEvent(self, layerEvent):
+        print("$$$$ '%s'" % layerEvent.getName())
         if layerEvent.getName() == YowNetworkLayer.EVENT_STATE_DISCONNECTED:
             self.handle("onDisconnected", [layerEvent.getArg("reason")])
+        elif layerEvent.getName() == YowAuthenticationProtocolLayer.EVENT_AUTHED:
+            self.handle("onAuthSuccess")
+        elif layerEvent.getName() == YowAxolotlLayer.EVENT_READY:
+            self.handle("onAxolotlReady")
     
     def normalizeData(self, data):
         for (i, item) in enumerate(data):
@@ -46,7 +52,7 @@ class AsyncLayer(YowInterfaceLayer):
             jid = "%s@s.whatsapp.net" % number
         return jid
 
-    def handle(self, event, data = {}):
+    def handle(self, event, data = []):
         self.log(self.line["_id"], event, self.normalizeData(data[:]));
         if event in self.handlers:
             return self.handlers[event](self, *data)
@@ -120,7 +126,7 @@ class AsyncLayer(YowInterfaceLayer):
           "props": entity.props,
           "t": entity.t
         }
-        self.cb("success", payload);
+        self.cb(self, "success", payload);
         
     def onPing(self,entity):
         idx = entity.getId()

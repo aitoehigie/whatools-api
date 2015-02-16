@@ -8,6 +8,7 @@ from pymongo import MongoClient
 from bson import objectid
 from client.stack import YowsupAsyncStack
 from yowsup.registration import *
+from yowsup.layers import *
 
 BaseRequest.MEMFILE_MAX = 1.5 * 1024 * 1024 
 
@@ -41,13 +42,14 @@ def recover(lines=False):
   if lines:
     for line in lines:
       done = [False]
+      count = 0
       res = {"success": False}
       token = line["tokens"][0]
       fullLine = Lines.find_one({"_id": line["_id"]})
       user = fullLine["cc"] + fullLine["pn"]
       logger(line["_id"], "lineRecover", [token]);
       print "@@@ RECOVERING TOKEN {0} FOR LINE {1} @@@".format(token["key"], line["_id"])
-      def cb(loginRes, payload):
+      def cb(wa, loginRes, payload):
           if loginRes == "success":
             if fullLine["_id"] in running:
               running[fullLine["_id"]]["tokens"].append(token["key"])
@@ -70,9 +72,10 @@ def recover(lines=False):
         res["error"] = "connect-error"
         logger(fullLine["_id"], "lineRecoverProgress", {"res": res});
         print "@@@@ RECOVER ERROR @@@@"
-      while not done[0]:
-        gevent.sleep(.2)
-        print done[0]
+      while not done[0] and count < 20:
+        gevent.sleep(.5)
+        print count, line["_id"], done[0]
+        count += 1
   return
 
 def lineIsNotExpired(line):
@@ -132,18 +135,18 @@ def onAuthFailed(wa):
 
 def onAuthSuccess(wa):
   Lines.update({"_id": wa.line["_id"]}, {"$set": {"active": True, "reconnect": True, "valid": True}});
-  wa.errors = 0
+
+def onAxolotlReady(wa):
+  line = Lines.find_one({"_id": wa.line["_id"]})
+  def cb(wa, loginRes, payload):
+    if line["_id"] in running:
+      running[line["_id"]]["yowsup"] = wa
+  newWa = YowsupAsyncStack([line["cc"] + line["pn"], line["pass"]], line, line["tokens"][0], eventHandler, logger, cb)
+  if newWa:
+    gevent.spawn(newWa.login)
 
 def onDisconnected(wa, reason):
-  line = Lines.find_one({"_id": wa.line["_id"]});
-  if wa.errors < 3:
-    Lines.update({"_id": wa.line["_id"]}, {"$set": {"active": False}});
-    wa.errors += 1
-    if line["reconnect"]:
-      wa.login(wa.username, wa.password);
-  else:
-    Lines.update({"_id": wa.line["_id"]}, {"$set": {"active": False, "reconnect": False}});
-    wa.errors = 0
+  print "???? DISCONNECTION", reason, line["active"], line["reconnect"], line["_id"]
     
 def onMediaReceived(wa, messageId, jid, caption, type, preview, url, size, isBroadCast):
   if len(running):
@@ -291,6 +294,7 @@ eventHandler = {
   "onAck": onAck,
   "onAuthFailed": onAuthFailed,
   "onAuthSuccess": onAuthSuccess,
+  "onAxolotlReady": onAxolotlReady,
   "onDisconnected": onDisconnected,
   "onMediaReceived": onMediaReceived,
   "onMessageReceived": onMessageReceived,
@@ -465,7 +469,7 @@ def subscribe():
               body.put(StopIteration)
             else:
               user = line["cc"] + line["pn"]
-              def cb(loginRes, payload):
+              def cb(wa, loginRes, payload):
                 if (loginRes == "success"):
                   res["success"] = True
                   if not payload:
