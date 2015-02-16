@@ -1,6 +1,6 @@
 from yowsup.stacks import YowStack, YOWSUP_CORE_LAYERS, YOWSUP_PROTOCOL_LAYERS_FULL
 from .layer import AsyncLayer
-from yowsup.layers import YowLayerEvent
+from yowsup.layers import YowLayerEvent, YowParallelLayer
 from yowsup.layers.auth                        import YowCryptLayer, YowAuthenticationProtocolLayer, AuthError
 from yowsup.layers.coder                       import YowCoderLayer
 from yowsup.layers.network                     import YowNetworkLayer
@@ -21,7 +21,7 @@ class YowsupAsyncStack(object):
     def __init__(self, credentials, line, token, eventHandlers, logger, cb):
         layers = (
             AsyncLayer,
-            (YOWSUP_PROTOCOL_LAYERS_FULL),
+            YowParallelLayer(YOWSUP_PROTOCOL_LAYERS_FULL),
             YowAxolotlLayer,
             YowLoggerLayer,
             YowCoderLayer,
