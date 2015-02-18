@@ -148,7 +148,7 @@ def onAxolotlReady(wa):
 def onDisconnected(wa, reason):
   print "???? DISCONNECTION", reason, line["active"], line["reconnect"], line["_id"]
     
-def onMediaReceived(wa, messageId, jid, caption, type, preview, url, size, isBroadCast):
+def onMediaReceived(wa, messageId, jid, participant, caption, type, preview, url, size, isBroadCast):
   if len(running):
     allTokens = Lines.find_one({"_id": wa.line["_id"]})["tokens"]
     runningTokens = running[wa.line["_id"]]["tokens"]
