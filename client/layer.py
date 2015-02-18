@@ -151,33 +151,34 @@ class AsyncLayer(YowInterfaceLayer):
         idx = entity.getId()
         jid = entity.getFrom()
         broadcast = entity.isBroadcast()
+        participant = entity.getParticipant()
         if entity.getMediaType() == "image":
             caption = entity.getCaption()
             preview = entity.getPreview()
             url = entity.getMediaUrl()
             size = entity.getMediaSize()
             receipt = OutgoingReceiptProtocolEntity(idx, jid)
-            if self.handle("onMediaReceived", [idx, jid, caption, "image", preview, url, size, broadcast]):
+            if self.handle("onMediaReceived", [idx, jid, participant, caption, "image", preview, url, size, broadcast]):
                 self.toLower(receipt)
         elif entity.getMediaType() == "audio":
             url = entity.getMediaUrl()
             size = entity.getMediaSize()
             receipt = OutgoingReceiptProtocolEntity(idx, jid)
-            if self.handle("onMediaReceived", [idx, jid, None, "audio", None, url, size, broadcast]):
+            if self.handle("onMediaReceived", [idx, jid, participant, None, "audio", None, url, size, broadcast]):
                 self.toLower(receipt)
         elif entity.getMediaType() == "video":
             preview = entity.getPreview()
             url = entity.getMediaUrl()
             size = entity.getMediaSize()
             receipt = OutgoingReceiptProtocolEntity(idx, jid)
-            if self.handle("onMediaReceived", [idx, jid, None, "video", preview, url, size, broadcast]):
+            if self.handle("onMediaReceived", [idx, jid, participant, None, "video", preview, url, size, broadcast]):
                 self.toLower(receipt)
         elif entity.getMediaType() == "location":
             preview = entity.getPreview()
             latitude = entity.getLatitude()
             longitude = entity.getLongitude()
             receipt = OutgoingReceiptProtocolEntity(entity.getId(), entity.getFrom())
-            if self.handle("onMediaReceived", [idx, jid, None, "location", preview, latitude, longitude, broadcast]):
+            if self.handle("onMediaReceived", [idx, jid, participant, None, "location", preview, latitude, longitude, broadcast]):
                 self.toLower(receipt)
         elif entity.getMediaType() == "vcard":
             receipt = OutgoingReceiptProtocolEntity(entity.getId(), entity.getFrom())
