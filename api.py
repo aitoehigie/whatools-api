@@ -681,7 +681,7 @@ def status_post():
             if message:
               if line["_id"] in running:
                 wa = running[line["_id"]]["yowsup"]
-                wa.profile_setStatus(message.encode('utf-8').strip())
+                wa.call("profile_setStatus", [message.encode('utf-8').strip()])
                 Lines.update({"_id": lId}, {"$set": {"statusMessage": message}})
                 res["success"] = True
               else:
