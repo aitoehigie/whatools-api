@@ -1,4 +1,5 @@
 from yowsup.common import YowConstants
+from yowsup.structs.protocoltreenode                   import ProtocolTreeNode
 from yowsup.layers                                     import YowLayerEvent
 from yowsup.layers.interface                           import YowInterfaceLayer, ProtocolEntityCallback
 from yowsup.layers.network                             import YowNetworkLayer
@@ -79,7 +80,9 @@ class AsyncLayer(YowInterfaceLayer):
 
     def profile_setStatus(self, status):
         iq = IqProtocolEntity(xmlns="status", _type="set", to=YowConstants.DOMAIN)
-        self.toLower(iq)
+        tree = iq.toProtocolTreeNode()
+        tree.addChild(ProtocolTreeNode("status", {}, [], status))
+        self.toLower(tree)
         return iq.getId()
     methods['profile_setStatus'] = profile_setStatus
 
