@@ -8,7 +8,7 @@ class SetStatusIqProtocolEntity(IqProtocolEntity):
     </notification>
     '''
 
-    def __init__(self, _id, msg):
+    def __init__(self, _id=None, msg=None):
         super(SetStatusIqProtocolEntity, self).__init__(_id, _type = "set", to = "s.whatsapp.net")
         self.setData(msg)
         
