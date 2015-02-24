@@ -11,6 +11,7 @@ from yowsup.layers.protocol_iq.protocolentities        import *
 from yowsup.layers.protocol_media.protocolentities     import *
 from yowsup.layers.protocol_messages.protocolentities  import *
 from yowsup.layers.protocol_presence.protocolentities  import *
+from yowsup.layers.protocol_profiles.protocolentities  import *
 from yowsup.layers.protocol_receipts.protocolentities  import *
 
 
