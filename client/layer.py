@@ -1,4 +1,5 @@
 from yowsup.common import YowConstants
+from yowsup.structs.protocoltreenode                   import ProtocolTreeNode
 from yowsup.layers                                     import YowLayerEvent
 from yowsup.layers.interface                           import YowInterfaceLayer, ProtocolEntityCallback
 from yowsup.layers.network                             import YowNetworkLayer
