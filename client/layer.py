@@ -11,6 +11,7 @@ from yowsup.layers.protocol_iq.protocolentities        import *
 from yowsup.layers.protocol_media.protocolentities     import *
 from yowsup.layers.protocol_messages.protocolentities  import *
 from yowsup.layers.protocol_presence.protocolentities  import *
+from yowsup.layers.protocol_profiles.protocolentities  import *
 from yowsup.layers.protocol_receipts.protocolentities  import *
 
 
@@ -79,10 +80,8 @@ class AsyncLayer(YowInterfaceLayer):
     methods['presence_sendAvailable'] = presence_sendAvailable
 
     def profile_setStatus(self, status):
-        iq = IqProtocolEntity(xmlns="status", _type="set", to=YowConstants.DOMAIN)
-        tree = iq.toProtocolTreeNode()
-        tree.addChild(ProtocolTreeNode("status", {}, [], status))
-        self.toLower(tree)
+        iq = SetStatusIqProtocolEntity(msg=status)
+        self.toLower(iq)
         return iq.getId()
     methods['profile_setStatus'] = profile_setStatus
 
