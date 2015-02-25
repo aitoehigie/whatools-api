@@ -80,7 +80,7 @@ class AsyncLayer(YowInterfaceLayer):
     methods['presence_sendAvailable'] = presence_sendAvailable
 
     def profile_setStatus(self, status):
-        iq = SetStatusIqProtocolEntity(msg=status)
+        iq = SetStatusIqProtocolEntity(status)
         self.toLower(iq)
         return iq.getId()
     methods['profile_setStatus'] = profile_setStatus
