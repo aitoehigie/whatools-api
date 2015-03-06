@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #  -*- coding: utf8 -*-
 
-import json, base64, time, httplib, urllib, gevent
+import json, base64, time, httplib, urllib, gevent, phonenumbers
 from gevent import Greenlet, queue, monkey; monkey.patch_all()
 from bottle import route, run, request, static_file, BaseRequest, FormsDict
 from pymongo import MongoClient
@@ -37,6 +37,13 @@ def unbottle(data):
   for item in data:
     dataDict[item] = data[item]
   return dataDict
+  
+def phoneFormat(cc, pn):
+  region = phonenumbers.region_code_for_country_code(int(cc))
+  parsed = phonenumbers.parse(pn, region)
+  formatted = phonenumbers.format_number(parsed, phonenumbers.PhoneNumberFormat.E164)
+  clean = formatted.replace("+", "")
+  return clean
  
 def recover(lines=False):
   if lines:
@@ -328,6 +335,7 @@ def messages_post():
               if line["_id"] in running:
                 signedBody = messageSign(body, line)
                 wa = running[line["_id"]]["yowsup"]
+                to = phoneFormat(line["cc"], to)
                 data = [to, signedBody]
                 msgId = wa.call("message_send", data)
                 res["result"] = msgId
