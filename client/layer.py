@@ -40,10 +40,11 @@ class AsyncLayer(YowInterfaceLayer):
             self.handle("onAxolotlReady")
     
     def normalizeData(self, data):
+	data = list(data)
         for (i, item) in enumerate(data):
           if type(item) == str and len(item) > 255:
             data[i] = "[File]"
-        return data
+        return tuple(data)
 
     def normalizeJid(self, number):
         if '@' in number:
