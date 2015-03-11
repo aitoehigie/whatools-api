@@ -9,6 +9,7 @@ from bson import objectid
 from client.stack import YowsupAsyncStack
 from yowsup.registration import *
 from yowsup.layers import *
+import Bot
 
 BaseRequest.MEMFILE_MAX = 1.5 * 1024 * 1024 
 
@@ -28,9 +29,10 @@ v = "1"
 freePlanSignature = "\n\n[Message sent from a WhaTools free account.\nIf SPAM, please report to https://wha.tools/report]"
 storage = "/var/waapi/storage/"
 
+
 def logger(lId, event, data={}):
   if lId and event:
-    Logs.insert({"line": lId, "stamp": long(time.time())*1000, "event": event, "data": data});
+    Logs.insert({"line": lId, "stamp": long(time.time())*1000, "event": event, "data": data})
 
 def unbottle(data):
   dataDict = {}
@@ -44,6 +46,37 @@ def phoneFormat(cc, pn):
   formatted = phonenumbers.format_number(parsed, phonenumbers.PhoneNumberFormat.E164)
   clean = formatted.replace("+", "")
   return clean
+  
+def botify(wa, msg, pn):
+  def action_answer(msg, payload):
+    to = msg["from"]
+    body = payload.encode('utf8','replace')
+    stamp = long(time.time()*1000)
+    chat = Chats.find_one({"from": wa.line["_id"], "to": to})
+    msgId = wa.call("message_send", (msg["from"], body))
+    msg = {
+      "id": msgId,
+      "mine": True,
+      "body": body,
+      "stamp": stamp,
+      "ack": "sent"
+    }
+    Chats.update({"from": wa.line["_id"], "to": to}, {"$push": {"messages": msg}});
+    
+  actions = {
+    'answer': action_answer
+  }
+  line = wa.line
+  region = phonenumbers.region_code_for_country_code(int(wa.line["cc"]))
+  parsed = phonenumbers.parse(pn, region)
+  msg["from"] = pn
+  msg["cc"] = str(parsed.country_code)
+  msg["pn"] = str(parsed.national_number)
+  if "bots" in line:
+    for bot in line["bots"]:
+      if (bot["enabled"]):
+        Bot.run(msg, bot["cond"], bot["cons"], actions)
+        logger(line["_id"], "botProcess", msg)
  
 def recover(lines=False):
   if lines:
@@ -254,6 +287,7 @@ def onMessageReceived(wa, messageId, jid, participant, messageContent, timestamp
       "lastStamp": stamp,
       "alias": alias
     })
+  botify(wa, msg, to)
   return True
   
 def onPing(wa, pingId):
