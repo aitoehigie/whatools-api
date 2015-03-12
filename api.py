@@ -470,8 +470,13 @@ def subscribe():
               if token["key"] not in running[lId]["tokens"]:
                 running[lId]["tokens"].append(token["key"])
               Lines.update({"_id": lId, "tokens.key": token["key"]}, {"$set": {"valid": True, "active": True, "tokens.$.active": True}})
-              res["success"] = True
               res["result"] = line["data"]
+              res["result"]["cc"] = line["cc"]
+              res["result"]["pn"] = line["pn"]
+              res["result"]["api_expiration"] = int(line["expires"] / 1000)
+              if "props" in res["result"]:
+                del res["result"]["props"]
+              res["success"] = True
               logger(lId, "tokenSubscribeProgress", {"params": unbottle(request.params), "res": res})
               logger(lId, "presenceSendAvailable", {"nickname": line["nickname" if "nickname" in line else None] });
               wa.call("presence_sendAvailable", [line["nickname"] if "nickname" in line else None])
@@ -484,7 +489,13 @@ def subscribe():
                   res["success"] = True
                   if not payload:
                     payload = line["data"]
-                  res["result"] = payload;
+                  res["result"] = payload
+                  res["result"]["cc"] = line["cc"]
+                  res["result"]["pn"] = line["pn"]
+                  res["result"]["api_expiration"] = int(line["expires"] / 1000)
+                  if "props" in res["result"]:
+                    del res["result"]["props"]
+                  res["success"] = True
                   logger(lId, "presenceSendAvailable", {"nickname": line["nickname" if "nickname" in line else None] });
                   wa.call("presence_sendAvailable", [line["nickname"] if "nickname" in line else None])
                   Lines.update({"_id": lId, "tokens.key": token["key"]}, {"$set": {"valid": True, "active": True, "tokens.$.active": True, "data": payload}})
