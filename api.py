@@ -470,6 +470,9 @@ def subscribe():
               if token["key"] not in running[lId]["tokens"]:
                 running[lId]["tokens"].append(token["key"])
               Lines.update({"_id": lId, "tokens.key": token["key"]}, {"$set": {"valid": True, "active": True, "tokens.$.active": True}})
+              line["data"]["cc"] = line["cc"]
+              line["data"]["pn"] = line["pn"]
+              line["data"]["api_expiration"] = int(line["expires"] / 1000)
               res["success"] = True
               res["result"] = line["data"]
               logger(lId, "tokenSubscribeProgress", {"params": unbottle(request.params), "res": res})
