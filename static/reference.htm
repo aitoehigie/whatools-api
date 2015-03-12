@@ -31,7 +31,19 @@
           <li><strong>key</strong>the app key, similar to <em>"bedfcfae-6c45-40d5-c56f-125c572bae41"</em></li>
         </ul>
         <ul class="results">
-          <li><code class="success">{"success": "true", result: {...}}</code></li>
+          <li><code class="success">{"success": "true", result: {...}} > </code>Subscription succeeded. These are "result" attributes:
+            <ul>
+              <li><code>api_expiration</code> > Whatools service expiration date for this line</li>
+              <li><code>cc</code> > Country code</li>
+              <li><code>creation</code> > WhatsApp registration date</li>
+              <li><code>expiration</code> > WhatsApp expiration date</li>
+              <li><code>kind</code> > [free/paid] WhatsApp payment status</li>
+              <li><code>pn</code> > National phone number</li>
+              <li><code>props</code> > Internal WhatsApp properties count</li>
+              <li><code>status</code> > [active/existing/new] WhatsApp registration status</li>
+              <li><code>t</code> > Last WhatsApp login</li>
+            </ul>
+          </li>
           <li><code class="error">{"error": "no-key"}</code>No token was specified</li>
           <li><code class="error">{"error": "no-token-matches-key"}</code>There's no token matching such app key</li>
           <li><code class="error">{"error": "no-line-matches-key"}</code>There's no line matching such app key</li>
