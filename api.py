@@ -355,6 +355,7 @@ def messages_post():
   to = request.params.to
   body = request.params.body.encode('utf8','replace')
   broadcast = request.params.broadcast
+  honor = request.params.honor
   msgId = False
   if key:
     line = Lines.find_one({"tokens": {"$elemMatch": {"key": key}}})
@@ -369,7 +370,8 @@ def messages_post():
               if line["_id"] in running:
                 signedBody = messageSign(body, line)
                 wa = running[line["_id"]]["yowsup"]
-                to = phoneFormat(line["cc"], to)
+                if honor:
+                  to = phoneFormat(line["cc"], to)
                 data = [to, signedBody]
                 msgId = wa.call("message_send", data)
                 res["result"] = msgId
@@ -504,8 +506,13 @@ def subscribe():
               if token["key"] not in running[lId]["tokens"]:
                 running[lId]["tokens"].append(token["key"])
               Lines.update({"_id": lId, "tokens.key": token["key"]}, {"$set": {"valid": True, "active": True, "tokens.$.active": True}})
-              res["success"] = True
               res["result"] = line["data"]
+              res["result"]["cc"] = line["cc"]
+              res["result"]["pn"] = line["pn"]
+              res["result"]["api_expiration"] = int(line["expires"] / 1000)
+              if "props" in res["result"]:
+                del res["result"]["props"]
+              res["success"] = True
               logger(lId, "tokenSubscribeProgress", {"params": unbottle(request.params), "res": res})
               logger(lId, "presenceSendAvailable", {"nickname": line["nickname" if "nickname" in line else None] });
               wa.call("presence_sendAvailable", [line["nickname"] if "nickname" in line else None])
@@ -518,7 +525,13 @@ def subscribe():
                   res["success"] = True
                   if not payload:
                     payload = line["data"]
-                  res["result"] = payload;
+                  res["result"] = payload
+                  res["result"]["cc"] = line["cc"]
+                  res["result"]["pn"] = line["pn"]
+                  res["result"]["api_expiration"] = int(line["expires"] / 1000)
+                  if "props" in res["result"]:
+                    del res["result"]["props"]
+                  res["success"] = True
                   logger(lId, "presenceSendAvailable", {"nickname": line["nickname" if "nickname" in line else None] });
                   wa.call("presence_sendAvailable", [line["nickname"] if "nickname" in line else None])
                   Lines.update({"_id": lId, "tokens.key": token["key"]}, {"$set": {"valid": True, "active": True, "tokens.$.active": True, "data": payload}})
