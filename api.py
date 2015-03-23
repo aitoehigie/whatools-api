@@ -63,8 +63,24 @@ def botify(wa, msg, pn):
     }
     Chats.update({"from": wa.line["_id"], "to": to}, {"$push": {"messages": msg}});
     
+  def action_canned(msg, payload):
+    to = msg["from"]
+    body = next((x for x in wa.line["bots"] if x["id"] == payload), "")["body"]
+    stamp = long(time.time()*1000)
+    chat = Chats.find_one({"from": wa.line["_id"], "to": to})
+    msgId = wa.call("message_send", (msg["from"], body))
+    msg = {
+      "id": msgId,
+      "mine": True,
+      "body": body,
+      "stamp": stamp,
+      "ack": "sent"
+    }
+    Chats.update({"from": wa.line["_id"], "to": to}, {"$push": {"messages": msg}});
+    
   actions = {
-    'answer': action_answer
+    'answer': action_answer,
+    'canned': action_canned
   }
   line = wa.line
   chat = Chats.findOne({"from": line["_id"],  "to": msg['from']})
