@@ -67,11 +67,17 @@ def botify(wa, msg, pn):
     'answer': action_answer
   }
   line = wa.line
+  chat = Chats.findOne({"from": line["_id"],  "to": msg['from']})
   region = phonenumbers.region_code_for_country_code(int(wa.line["cc"]))
   parsed = phonenumbers.parse(pn, region)
   msg["from"] = pn
   msg["cc"] = str(parsed.country_code)
   msg["pn"] = str(parsed.national_number)
+  gmtime = time.gmtime(msg["stamp"])
+  msg["mday"] = gmtime[2]
+  msg["hour"] = gmtime[3]
+  msg["wday"] = gmtime[6]
+  msg["chat_status"] =  (("archived" if ("archived" in chat and chat["archived"]) else "open") if len(chat["messages"]) > 0 else "new") if chat else "new"
   if "bots" in line:
     for bot in line["bots"]:
       if (bot["enabled"]):

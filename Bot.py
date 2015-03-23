@@ -23,6 +23,6 @@ def evaluate(msg, conditions):
   return reduce(lambda prev, cur: ops[cur["op"]](prev, cur["sign"] == (cur["verb"] in verbs and cur["subj"] in msg and verbs[cur["verb"]](msg[cur["subj"]], cur["obj"]))), conditions, 0)
 
 def run(message, conditions, consequences, actions):
-  if evaluate(message, conditions):
+  if conditions == False or evaluate(message, conditions):
     for consequence in consequences:
       actions[consequence["action"]](message, consequence["payload"])
