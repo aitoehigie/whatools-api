@@ -321,6 +321,7 @@ def messages_post():
   to = request.params.to
   body = request.params.body.encode('utf8','replace')
   broadcast = request.params.broadcast
+  honor = request.params.honor
   msgId = False
   if key:
     line = Lines.find_one({"tokens": {"$elemMatch": {"key": key}}})
@@ -335,7 +336,8 @@ def messages_post():
               if line["_id"] in running:
                 signedBody = messageSign(body, line)
                 wa = running[line["_id"]]["yowsup"]
-                to = phoneFormat(line["cc"], to)
+                if honor:
+                  to = phoneFormat(line["cc"], to)
                 data = [to, signedBody]
                 msgId = wa.call("message_send", data)
                 res["result"] = msgId
