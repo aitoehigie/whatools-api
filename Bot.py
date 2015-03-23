@@ -25,4 +25,4 @@ def evaluate(msg, conditions):
 def run(message, conditions, consequences, actions):
   if conditions == False or evaluate(message, conditions):
     for consequence in consequences:
-      actions[consequence["action"]](message, consequence["payload"])
+      actions[consequence["action"]](message, consequence[consequence["action"]])
