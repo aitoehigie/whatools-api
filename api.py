@@ -53,7 +53,7 @@ def botify(wa, msg, pn):
     body = payload.encode('utf8','replace')
     stamp = long(time.time()*1000)
     chat = Chats.find_one({"from": wa.line["_id"], "to": to})
-    msgId = wa.call("message_send", (msg["from"], body))
+    msgId = wa.call("message_send", (msg["from"], messageSign(body, wa.line)))
     msg = {
       "id": msgId,
       "mine": True,
@@ -65,35 +65,37 @@ def botify(wa, msg, pn):
     
   def action_canned(msg, payload):
     to = msg["from"]
-    body = next((x for x in wa.line["bots"] if x["id"] == payload), "")["body"]
-    stamp = long(time.time()*1000)
-    chat = Chats.find_one({"from": wa.line["_id"], "to": to})
-    msgId = wa.call("message_send", (msg["from"], body))
-    msg = {
-      "id": msgId,
-      "mine": True,
-      "body": body,
-      "stamp": stamp,
-      "ack": "sent"
-    }
-    Chats.update({"from": wa.line["_id"], "to": to}, {"$push": {"messages": msg}});
+    canned = next((x for x in wa.line["canned"] if x["id"] == payload), "")
+    if canned and len(canned):
+      body = canned["body"].encode('utf8','replace')
+      stamp = long(time.time()*1000)
+      chat = Chats.find_one({"from": wa.line["_id"], "to": to})
+      msgId = wa.call("message_send", (msg["from"], messageSign(body, line)))
+      msg = {
+        "id": msgId,
+        "mine": True,
+        "body": body,
+        "stamp": stamp,
+        "ack": "sent"
+      }
+      Chats.update({"from": wa.line["_id"], "to": to}, {"$push": {"messages": msg}});
     
   actions = {
     'answer': action_answer,
     'canned': action_canned
   }
-  line = wa.line
-  chat = Chats.findOne({"from": line["_id"],  "to": msg['from']})
+  line = Lines.find_one({"_id": wa.line["_id"]})
+  chat = Chats.find_one({"from": wa.line["_id"],  "to": pn})
   region = phonenumbers.region_code_for_country_code(int(wa.line["cc"]))
   parsed = phonenumbers.parse(pn, region)
   msg["from"] = pn
   msg["cc"] = str(parsed.country_code)
   msg["pn"] = str(parsed.national_number)
-  gmtime = time.gmtime(msg["stamp"])
+  gmtime = time.gmtime(msg["stamp"]/1000)
   msg["mday"] = gmtime[2]
   msg["hour"] = gmtime[3]
   msg["wday"] = gmtime[6]
-  msg["chat_status"] =  (("archived" if ("archived" in chat and chat["archived"]) else "open") if len(chat["messages"]) > 0 else "new") if chat else "new"
+  msg["chatStatus"] =  (("archived" if ("archived" in chat and chat["archived"]) else "open") if len(chat["messages"]) > 1 else "new") if chat else "new"
   if "bots" in line:
     for bot in line["bots"]:
       if (bot["enabled"]):
@@ -371,7 +373,7 @@ eventHandler = {
 
 
 @route("/message", method="POST")
-def messages_post():
+def message_post():
   res = {"success": False}
   key = request.params.key
   to = request.params.to

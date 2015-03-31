@@ -12,9 +12,9 @@ verbs = {
   'yes': lambda subj, obj: True,
   'exists': lambda subj, obj: subj is not None,
   'is': lambda subj, obj: str(subj) == str(obj),
-  'starts': lambda subj, obj: re.compile('^%s' % str(obj)).match(str(subj)),
-  'ends': lambda subj, obj: re.compile('%s$' % str(obj)).match(str(subj)),
-  'contains': lambda subj, obj: re.compile(str(obj)).match(str(subj)),
+  'starts': lambda subj, obj: re.compile('^%s' % str(obj)).search(str(subj)) is not None,
+  'ends': lambda subj, obj: re.compile('%s$' % str(obj)).search(str(subj)) is not None,
+  'contains': lambda subj, obj: re.compile(str(obj)).search(str(subj)) is not None,
   'lt': lambda subj, obj: subj < obj,
   'gt': lambda subj, obj: subj > obj
 }
