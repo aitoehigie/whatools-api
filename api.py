@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #  -*- coding: utf8 -*-
 
-import json, base64, time, httplib, urllib, gevent, phonenumbers
+import sys, json, base64, time, httplib, urllib, gevent, phonenumbers
 from gevent import Greenlet, queue, monkey; monkey.patch_all()
 from bottle import route, run, request, static_file, BaseRequest, FormsDict
 from pymongo import MongoClient
@@ -10,6 +10,9 @@ from client.stack import YowsupAsyncStack
 from yowsup.registration import *
 from yowsup.layers import *
 import Bot
+
+reload(sys)
+sys.setdefaultencoding('utf8')
 
 BaseRequest.MEMFILE_MAX = 1.5 * 1024 * 1024 
 
@@ -86,9 +89,9 @@ def botify(wa, msg, pn):
   }
   line = Lines.find_one({"_id": wa.line["_id"]})
   chat = Chats.find_one({"from": wa.line["_id"],  "to": pn})
+  msg["from"] = msg["participant"].split("@")[0] if "participant" in msg else pn
   region = phonenumbers.region_code_for_country_code(int(wa.line["cc"]))
-  parsed = phonenumbers.parse(pn, region)
-  msg["from"] = pn
+  parsed = phonenumbers.parse(msg["from"], region)
   msg["cc"] = str(parsed.country_code)
   msg["pn"] = str(parsed.national_number)
   gmtime = time.gmtime(msg["stamp"]/1000)

@@ -1,6 +1,9 @@
 #!/usr/bin/python
 #  -*- coding: utf8 -*-
-import re
+import sys, re
+
+reload(sys)
+sys.setdefaultencoding('utf8')
 
 ops = {
   'or': lambda a, b: a or b,
