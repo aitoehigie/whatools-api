@@ -397,7 +397,7 @@ def message_post():
               if line["_id"] in running:
                 signedBody = messageSign(body, line)
                 wa = running[line["_id"]]["yowsup"]
-                if honor:
+                if not honor:
                   to = phoneFormat(line["cc"], to)
                 data = [to, signedBody]
                 msgId = wa.call("message_send", data)
