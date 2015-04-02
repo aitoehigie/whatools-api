@@ -225,9 +225,9 @@ def onMediaReceived(wa, messageId, jid, participant, caption, type, preview, url
       if token["key"] in runningTokens:
         if token["push"]:
           if type == "location":
-            res = push(wa.line["_id"], token, "media", {"messageId": messageId, "jid": jid, "type": type, "preview": preview, "latitude": url, "longitude": size, "wantsReceipt": wantsReceipt, "isBroadCast": isBroadCast})
+            res = push(wa.line["_id"], token, "media", {"messageId": messageId, "jid": jid, "type": type, "preview": preview, "latitude": url, "longitude": size, "isBroadCast": isBroadCast})
           else:
-            res = push(wa.line["_id"], token, "media", {"messageId": messageId, "jid": jid, "type": type, "preview": preview, "url": url, "size": size, "wantsReceipt": wantsReceipt, "isBroadCast": isBroadCast})
+            res = push(wa.line["_id"], token, "media", {"messageId": messageId, "jid": jid, "type": type, "preview": preview, "url": url, "size": size, "isBroadCast": isBroadCast})
           if res:
             print res.read()
   to = jid.split("@")[0]
@@ -428,7 +428,7 @@ def message_post():
                 for token in line["tokens"]:
                   if token["key"] in runningTokens:
                     if token["push"] and token["key"] != key:
-                      pushRes = push(lId, token, "carbon", {"messageId": msgId, "jid": to, "messageContent": body, "timestamp": stamp, "wantsReceipt": ack, "isBroadCast": broadcast})
+                      pushRes = push(lId, token, "carbon", {"messageId": msgId, "jid": to, "messageContent": body, "timestamp": stamp, "isBroadCast": broadcast})
                       if pushRes:
                         print pushRes.read()
               else:
