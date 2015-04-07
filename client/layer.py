@@ -190,6 +190,9 @@ class AsyncLayer(YowInterfaceLayer):
             if self.handle("onMediaReceived", [idx, jid, participant, None, "location", preview, latitude, longitude, broadcast]):
                 self.toLower(receipt)
         elif entity.getMediaType() == "vcard":
+            caption = entity.getName()
+            card_data = entity.getCardData()
             receipt = OutgoingReceiptProtocolEntity(entity.getId(), entity.getFrom())
-            self.toLower(receipt)
+            if self.handle("onMediaReceived", [idx, jid, participant, caption, "vcard", card_data, None, None, broadcast]):            
+                self.toLower(receipt)
 

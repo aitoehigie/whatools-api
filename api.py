@@ -3,7 +3,7 @@
 
 import sys, json, base64, time, httplib, urllib, gevent, phonenumbers
 from gevent import Greenlet, queue, monkey; monkey.patch_all()
-from bottle import route, run, request, static_file, BaseRequest, FormsDict
+from bottle import route, run, request, response, static_file, BaseRequest, FormsDict
 from pymongo import MongoClient
 from bson import objectid
 from client.stack import YowsupAsyncStack
@@ -238,16 +238,22 @@ def onMediaReceived(wa, messageId, jid, participant, caption, type, preview, url
     "mine": False,
     "stamp": stamp,
     "media": {
-      "type": type,
-      "preview": base64.b64encode(preview) if preview else None,
-      "latitude": url,
-      "longitude": size
-    } if type == "location" else {
+      "location": {
+        "type": "location",
+        "preview": base64.b64encode(preview) if preview else None,
+        "latitude": url,
+        "longitude": size
+      },
+      "vcard": {
+        "type": "vcard",
+        "card": preview
+      }
+    }.get(type, {
       "type": type,
       "preview": base64.b64encode(preview) if preview else None,
       "url": url,
       "size": size
-    }
+    })
   }
   if caption:
     msg["body"] = caption
@@ -834,6 +840,17 @@ def nickname_post():
   else:
     res["error"] = "no-key"
   return res
+  
+@route("/media/vCard", method="GET")
+def media_vCard_get():
+  cId = request.params.cId
+  mId = request.params.mId
+  chat = Chats.find_one({"_id": cId, "messages": {"$elemMatch": {"id": mId}}}, {"messages.$": 1})
+  card = chat["messages"][0]["media"]["card"]
+  caption = chat["messages"][0]["body"]
+  response.set_header("Content-Type", "text/x-vcard; charset=UTF-8")
+  response.set_header("Content-Disposition", "attachment; filename=%s.vcf" % urllib.quote_plus(caption.encode('utf8','replace')))
+  return card
   
 '''
 
