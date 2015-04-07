@@ -846,11 +846,12 @@ def media_vCard_get():
   cId = request.params.cId
   mId = request.params.mId
   chat = Chats.find_one({"_id": cId, "messages": {"$elemMatch": {"id": mId}}}, {"messages.$": 1})
-  card = chat["messages"][0]["media"]["card"]
-  caption = chat["messages"][0]["body"]
-  response.set_header("Content-Type", "text/x-vcard; charset=UTF-8")
-  response.set_header("Content-Disposition", "attachment; filename=%s.vcf" % urllib.quote_plus(caption.encode('utf8','replace')))
-  return card
+  if chat:
+    card = chat["messages"][0]["media"]["card"]
+    caption = chat["messages"][0]["body"]
+    response.set_header("Content-Type", "text/x-vcard; charset=UTF-8")
+    response.set_header("Content-Disposition", "attachment; filename=%s.vcf" % urllib.quote_plus(caption.encode('utf8','replace')))
+    return card
   
 '''
 
