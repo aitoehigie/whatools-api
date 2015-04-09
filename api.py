@@ -852,6 +852,50 @@ def media_vCard_get():
     response.set_header("Content-Type", "text/x-vcard; charset=UTF-8")
     response.set_header("Content-Disposition", "attachment; filename=%s.vcf" % urllib.quote_plus(caption.encode('utf8','replace')))
     return card
+    
+@route("/media/vCard", method="POST")
+def media_vCard_post():
+  res = {"success": False}
+  key = request.params.key
+  name = request.params.name
+  src = request.params.src
+  to = request.params.to
+  honor = request.params.honor
+  if key:
+    line = Lines.find_one({"tokens": {"$elemMatch": {"key": key}}})
+    if line:
+      lId = line["_id"]
+      logger(lId, "avatarPost", unbottle(request.params));
+      token = filter(lambda e: e['key'] == key, line['tokens'])[0]
+      if lineIsNotExpired(line):
+        if token:
+          if "permissions" in token and "write" in token["permissions"]:
+            if name and src and to:
+              if line["_id"] in running:
+                wa = running[line["_id"]]["yowsup"]
+                card_data = base64.b64decode(src)
+                if not honor:
+                  to = phoneFormat(line["cc"], to)
+                idx = wa.media_vcard_send(name, card_data, to)
+                if idx:
+                  res["success"] = True
+              else:
+                res["error"] = "inactive-line"
+            else:
+              res["error"] = "bad-param"
+          else:
+            res["error"] = "no-permission"
+        else:
+          res["error"] = "no-token-matches-key"
+      else:
+        res["error"] = "line-is-expired"
+        Lines.update({"_id": lId}, {"$set": {"valid": "wrong", "reconnect": False, "active": False}})
+      logger(lId, "avatarPostProgress", {"params": unbottle(request.params), "res": res});
+    else:
+      res["error"] = "no-line-matches-key"
+  else:
+    res["error"] = "no-key"
+  return res
   
 '''
 

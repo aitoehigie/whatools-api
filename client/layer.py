@@ -40,7 +40,7 @@ class AsyncLayer(YowInterfaceLayer):
             self.handle("onAxolotlReady")
     
     def normalizeData(self, data):
-	data = list(data)
+        data = list(data)
         for (i, item) in enumerate(data):
           if type(item) == str and len(item) > 255:
             data[i] = "[File]"
@@ -85,6 +85,11 @@ class AsyncLayer(YowInterfaceLayer):
         self.toLower(iq)
         return iq.getId()
     methods['profile_setStatus'] = profile_setStatus
+    
+    def media_vcard_send(self, name, card_data, to):
+        media = VCardMediaMessageProtocolEntity(name, card_data, to="%s@s.whatsapp.net" % to)
+        self.toLower(media)
+        return media.getId()
 
     def call(self, method, params):
         if method in self.methods:
