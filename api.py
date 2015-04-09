@@ -841,7 +841,7 @@ def nickname_post():
     res["error"] = "no-key"
   return res
   
-@route("/media/vCard", method="GET")
+@route("/media/vcard", method="GET")
 def media_vCard_get():
   cId = request.params.cId
   mId = request.params.mId
@@ -853,7 +853,7 @@ def media_vCard_get():
     response.set_header("Content-Disposition", "attachment; filename=%s.vcf" % urllib.quote_plus(caption.encode('utf8','replace')))
     return card
     
-@route("/media/vCard", method="POST")
+@route("/media/vcard", method="POST")
 def media_vCard_post():
   res = {"success": False}
   key = request.params.key
