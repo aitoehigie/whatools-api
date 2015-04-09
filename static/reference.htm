@@ -198,6 +198,30 @@
           <li><code class="error">{"error": "wrong-file-type"}</code>The file is not a JPG image or is not encoded properly</li>
         </ul>
       </article>
+      <article>
+        <header>
+          <h3>vCard sending</h3>
+        </header>
+        <p>You can send contacts in vCard format (.vcf) using this method.</p>
+        <span class="method">POST</span>
+        <a class="url">/<strong>media/vcard</strong>?<em>key</em>=<span class="value">&<em>to</em>=<span class="value">&<em>name</em>=<span class="value">&<em>src</em>=<span class="value"></a>
+        <ul class="params">
+          <li><strong>key</strong>the app key, similar to <em>"bedfcfae-6c45-40d5-c56f-125c572bae41"</em></li>
+          <li><strong>to</strong>the message's addressee's phone number in international format, like <em>34663163375</em> (no <em>+</em> or <em>00</em>)</li>
+          <li><strong>name</strong>the contact's preview name.</li>
+          <li><strong>src</strong>the vCard file, encoded using base64. It must weight less than 1.5MB.</li>
+        </ul>
+        <ul class="results">
+          <li><code class="success">{"success": "true"}</code></li>
+          <li><code class="error">{"error": "no-key"}</code>No token was specified</li>
+          <li><code class="error">{"error": "no-token-matches-key"}</code>There's no token matching such app key</li>
+          <li><code class="error">{"error": "no-line-matches-key"}</code>There's no line matching such app key</li>
+          <li><code class="error">{"error": "line-is-expired"}</code>The line is expired. You'll need to pay for renovation</li>
+          <li><code class="error">{"error": "no-permission"}</code>This app is not authorized to perform this action</li>
+          <li><code class="error">{"error": "bad-param"}</code>The <em>src</em> field is empty</li>
+          <li><code class="error">{"error": "inactive-line"}</code>There's no active apps for this line. Please remember to subscribe before querying.</li>
+        </ul>
+      </article>
     </section>
     <section>
       <header>
@@ -278,7 +302,7 @@
       }
       body {
         margin: 30px auto;
-        max-width: 700px;
+        max-width: 800px;
         background-color: #FFF;
         padding: 50px;
       }
