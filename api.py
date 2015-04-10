@@ -218,18 +218,6 @@ def onDisconnected(wa, reason):
   print "???? DISCONNECTION", reason, line["active"], line["reconnect"], line["_id"]
     
 def onMediaReceived(wa, messageId, jid, participant, caption, type, preview, url, size, isBroadCast):
-  if len(running):
-    allTokens = Lines.find_one({"_id": wa.line["_id"]})["tokens"]
-    runningTokens = running[wa.line["_id"]]["tokens"]
-    for token in allTokens:
-      if token["key"] in runningTokens:
-        if token["push"]:
-          if type == "location":
-            res = push(wa.line["_id"], token, "media", {"messageId": messageId, "jid": jid, "type": type, "preview": preview, "latitude": url, "longitude": size, "isBroadCast": isBroadCast})
-          else:
-            res = push(wa.line["_id"], token, "media", {"messageId": messageId, "jid": jid, "type": type, "preview": preview, "url": url, "size": size, "isBroadCast": isBroadCast})
-          if res:
-            print res.read()
   to = jid.split("@")[0]
   chat = Chats.find_one({"from": wa.line["_id"], "to": to})
   stamp = long(time.time())*1000
@@ -272,26 +260,30 @@ def onMediaReceived(wa, messageId, jid, participant, caption, type, preview, url
       "lastStamp": stamp,
       "alias": False
     })
+  botify(wa, msg, to)
+  if len(running):
+    allTokens = Lines.find_one({"_id": wa.line["_id"]})["tokens"]
+    runningTokens = running[wa.line["_id"]]["tokens"]
+    for token in allTokens:
+      if token["key"] in runningTokens:
+        if token["push"]:
+          if type == "location":
+            pushData = {"messageId": messageId, "jid": jid, "type": type, "preview": preview, "latitude": url, "longitude": size, "timestamp": stamp}
+          elif type == "vcard":
+            url = "https://api.wha.tools/v%s/?cId=%s&mId=%s" % (v, chat["_id"], msg["id"])
+            pushData = {"messageId": messageId, "jid": jid, "type": type, "name": caption, "url": url, "timestamp": stamp}
+          else:
+            pushData = {"messageId": messageId, "jid": jid, "type": type, "preview": preview, "url": url, "size": size, "timestamp": stamp}
+          if participant:
+            pushData["participant"] = participant
+          if isBroadCast:
+            pushData["broadcast"] = broadcast
+          pushRes = push(wa.line["_id"], token, "media", pushData)
+          if pushRes:
+            print pushRes.read()
   return True;
 
 def onMessageReceived(wa, messageId, jid, participant, messageContent, timestamp, pushName, isBroadCast):
-  if len(running):
-    allTokens = Lines.find_one({"_id": wa.line["_id"]})["tokens"]
-    if wa.line["_id"] in running:
-      runningTokens = running[wa.line["_id"]]["tokens"]
-      for token in allTokens:
-        if token["key"] in runningTokens:
-          if token["push"]:
-            pushData = {"messageId": messageId, "jid": jid, "messageContent": messageContent, "timestamp": timestamp}
-            if participant:
-              pushData["participant"] = participant
-            if isBroadCast:
-              pushData["broadcast"] = broadcast
-            res = push(wa.line["_id"], token, "message", pushData)
-            if res:
-              print res.read()
-    else:
-      print "WEIRD ERROR, message received for line not running"
   to = jid.split("@")[0]
   chat = Chats.find_one({"from": wa.line["_id"], "to": to})
   stamp = long(timestamp)*1000
@@ -321,6 +313,23 @@ def onMessageReceived(wa, messageId, jid, participant, messageContent, timestamp
       "alias": alias
     })
   botify(wa, msg, to)
+  if len(running):
+    allTokens = Lines.find_one({"_id": wa.line["_id"]})["tokens"]
+    if wa.line["_id"] in running:
+      runningTokens = running[wa.line["_id"]]["tokens"]
+      for token in allTokens:
+        if token["key"] in runningTokens:
+          if token["push"]:
+            pushData = {"messageId": messageId, "jid": jid, "messageContent": messageContent, "timestamp": timestamp}
+            if participant:
+              pushData["participant"] = participant
+            if isBroadCast:
+              pushData["broadcast"] = broadcast
+            res = push(wa.line["_id"], token, "message", pushData)
+            if res:
+              print res.read()
+    else:
+      print "WEIRD ERROR, message received for line not running"
   return True
   
 def onPing(wa, pingId):
@@ -407,36 +416,37 @@ def message_post():
                   to = phoneFormat(line["cc"], to)
                 data = [to, signedBody]
                 msgId = wa.call("message_send", data)
-                res["result"] = msgId
-                res["success"] = True
-                chat = Chats.find_one({"from": lId, "to": to})
-                stamp = long(time.time()*1000)
-                msg = {
-                  "id": msgId,
-                  "mine": True,
-                  "body": body,
-                  "stamp": stamp,
-                  "ack": "sent"
-                }
-                if chat:
-                  # Push it
-                  Chats.update({"from": lId, "to": to}, {"$push": {"messages": msg}, "$set": {"lastStamp": stamp, "unread": 0}});
-                else:
-                  # Create new chat
-                  Chats.insert({
-                    "_id": str(objectid.ObjectId()),
-                    "from": lId,
-                    "to": to,
-                    "messages": [msg],
-                    "lastStamp": stamp
-                  })
-                runningTokens = running[line["_id"]]["tokens"]
-                for token in line["tokens"]:
-                  if token["key"] in runningTokens:
-                    if token["push"] and token["key"] != key:
-                      pushRes = push(lId, token, "carbon", {"messageId": msgId, "jid": to, "messageContent": body, "timestamp": stamp, "isBroadCast": broadcast})
-                      if pushRes:
-                        print pushRes.read()
+                if msgId:
+                  res["result"] = msgId
+                  res["success"] = True
+                  chat = Chats.find_one({"from": lId, "to": to})
+                  stamp = long(time.time()*1000)
+                  msg = {
+                    "id": msgId,
+                    "mine": True,
+                    "body": body,
+                    "stamp": stamp,
+                    "ack": "sent"
+                  }
+                  if chat:
+                    # Push it
+                    Chats.update({"from": lId, "to": to}, {"$push": {"messages": msg}, "$set": {"lastStamp": stamp, "unread": 0}});
+                  else:
+                    # Create new chat
+                    Chats.insert({
+                      "_id": str(objectid.ObjectId()),
+                      "from": lId,
+                      "to": to,
+                      "messages": [msg],
+                      "lastStamp": stamp
+                    })
+                  runningTokens = running[line["_id"]]["tokens"]
+                  for token in line["tokens"]:
+                    if token["key"] in runningTokens:
+                      if token["push"] and token["key"] != key:
+                        pushRes = push(lId, token, "carbon", {"messageId": msgId, "jid": to, "messageContent": body, "timestamp": stamp, "isBroadCast": broadcast})
+                        if pushRes:
+                          print pushRes.read()
               else:
                 res["error"] = "inactive-line"
             else:
@@ -857,7 +867,7 @@ def media_vCard_get():
 def media_vCard_post():
   res = {"success": False}
   key = request.params.key
-  name = request.params.name
+  name = request.params.name.encode('utf8','replace')
   src = request.params.src
   to = request.params.to
   honor = request.params.honor
@@ -878,7 +888,41 @@ def media_vCard_post():
                   to = phoneFormat(line["cc"], to)
                 idx = wa.media_vcard_send(name, card_data, to)
                 if idx:
+                  res["result"] = idx
                   res["success"] = True
+                  chat = Chats.find_one({"from": lId, "to": to})
+                  stamp = long(time.time()*1000)
+                  msg = {
+                    "id": idx,
+                    "mine": True,
+                    "body": name,
+                    "stamp": stamp,
+                    "ack": "sent",
+                    "media": {
+                      "type": "vcard",
+                      "card": card_data
+                    }
+                  }
+                  if chat:
+                    # Push it
+                    Chats.update({"from": lId, "to": to}, {"$push": {"messages": msg}, "$set": {"lastStamp": stamp, "unread": 0}});
+                  else:
+                    # Create new chat
+                    Chats.insert({
+                      "_id": str(objectid.ObjectId()),
+                      "from": lId,
+                      "to": to,
+                      "messages": [msg],
+                      "lastStamp": stamp
+                    })
+                  runningTokens = running[line["_id"]]["tokens"]
+                  for token in line["tokens"]:
+                    if token["key"] in runningTokens:
+                      if token["push"] and token["key"] != key:
+                        url = "https://api.wha.tools/v%s/?cId=%s&mId=%s" % (v, chat["_id"], msg["id"])
+                        pushRes = push(lId, token, "media_carbon", {"messageId": idx, "jid": to, "type": type, "name": name, "url": url, "timestamp": stamp})
+                        if pushRes:
+                          print pushRes.read()
               else:
                 res["error"] = "inactive-line"
             else:
