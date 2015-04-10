@@ -192,8 +192,9 @@ class AsyncLayer(YowInterfaceLayer):
             preview = entity.getPreview()
             latitude = entity.getLatitude()
             longitude = entity.getLongitude()
+            name = entity.getLocationName()
             receipt = OutgoingReceiptProtocolEntity(entity.getId(), entity.getFrom())
-            if self.handle("onMediaReceived", [idx, jid, participant, None, "location", preview, latitude, longitude, broadcast]):
+            if self.handle("onMediaReceived", [idx, jid, participant, name, "location", preview, latitude, longitude, broadcast]):
                 self.toLower(receipt)
         elif entity.getMediaType() == "vcard":
             caption = entity.getName()
