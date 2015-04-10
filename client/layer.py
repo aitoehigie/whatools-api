@@ -90,6 +90,7 @@ class AsyncLayer(YowInterfaceLayer):
         media = VCardMediaMessageProtocolEntity(name, card_data, to="%s@s.whatsapp.net" % to)
         self.toLower(media)
         return media.getId()
+    methods['media_vcard_send'] = media_vcard_send
 
     def call(self, method, params):
         if method in self.methods:
