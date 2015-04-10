@@ -886,7 +886,7 @@ def media_vCard_post():
                 card_data = base64.b64decode(src)
                 if not honor:
                   to = phoneFormat(line["cc"], to)
-                idx = wa.media_vcard_send(name, card_data, to)
+                idx = wa.call("media_vcard_send", (name, card_data, to))
                 if idx:
                   res["result"] = idx
                   res["success"] = True
