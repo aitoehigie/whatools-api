@@ -115,6 +115,7 @@ class YowProtocolLayer(YowLayer):
 
     def raiseErrorForNode(self, node):
         #logger.warn("Unimplemented notification type %s " % node)
+        pass
 
 
     def _sendIq(self, iqEntity, onSuccess = None, onError = None):
