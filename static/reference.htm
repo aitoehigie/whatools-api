@@ -77,7 +77,7 @@
         </header>
         <p>You can send messages to any WhatsApp user by using this POST method. Note that the token MUST be subscribed in order to work properly.</p>
         <span class="method">POST</span>
-        <a class="url">/<strong>message</strong>?<em>key</em>=<span class="value">&<em>to</em>=<span class="value">&<em>body</em>=<span class="value">&<em>ack</em>=<span class="value"></span></a>
+        <a class="url">/<strong>message</strong>?<em>key</em>=<span class="value">&<em>to</em>=<span class="value">&<em>body</em>=<span class="value">&<em>honor</em>=<span class="value"></span></a>
         <ul class="params">
           <li><strong>key</strong>the app key, similar to <em>"bedfcfae-6c45-40d5-c56f-125c572bae41"</em></li>
           <li><strong>to</strong>the message's addressee's phone number in international format (no <em>+</em> or <em>00</em>)</li>
@@ -204,7 +204,7 @@
         </header>
         <p>You can send contacts in vCard format (.vcf) using this method.</p>
         <span class="method">POST</span>
-        <a class="url">/<strong>media/vcard</strong>?<em>key</em>=<span class="value">&<em>to</em>=<span class="value">&<em>name</em>=<span class="value">&<em>src</em>=<span class="value"></a>
+        <a class="url">/<strong>media/vcard</strong>?<em>key</em>=<span class="value">&<em>to</em>=<span class="value">&<em>name</em>=<span class="value">&<em>src</em>=<span class="value">&<em>honor</em>=<span class="value"</a>
         <ul class="params">
           <li><strong>key</strong>the app key, similar to <em>"bedfcfae-6c45-40d5-c56f-125c572bae41"</em></li>
           <li><strong>to</strong>the message's addressee's phone number (no <em>+</em> or <em>00</em>)</li>
@@ -230,7 +230,7 @@
       </header>
       <p>When a message or notification is received, a POST HTTP query is sent to every active access key's WebHook URL.</p>
       <p>In order to preserve your privacy, we encourage you to use HTTPS at the WebHook URL endpoint.</p>
-      <p>You can tell one method from another by reading the <em>"_method"</em> parameter in the POST query. Currently the possible values are <em>"message"</em>, <em>"carbon"</em>, <em>"media"</em>, <em>"ack"</em> and <em>"ping"</em>.</p>
+      <p>You can tell one method from another by reading the <em>"_method"</em> parameter in the POST query. Currently the possible values are <em>"message"</em>, <em>"carbon"</em>, <em>"media"</em>,  <em>"media_carbon"</em>, <em>"ack"</em> and <em>"ping"</em>.</p>
       <p>The corresponding line and token IDs are enclosed in the <em>"_lineId"</em> and <em>"_tokenId"</em> parameters in the POST query so that you can tell which line and token is calling the WebHook in case that you configure a single endpoint for several lines or tokens.</p>
       <article>
         <header>
