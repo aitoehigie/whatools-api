@@ -175,7 +175,7 @@ def push(lId, token, method, data):
     logger(lId, "hookProgress", {"success": False, "url": url, "params": params, "headers": headers})
     print "[PUSH] Connection refused while trying to " + method
   else:  
-    logger(lId, "hookProgress", {"success": True, "result": res, "url": url, "params": params, "headers": headers})
+    logger(lId, "hookProgress", {"success": True, "result": res.read(), "url": url, "params": params, "headers": headers})
   return res
 
 def onAck(wa, idx, jid, grade):
