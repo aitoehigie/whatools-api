@@ -86,6 +86,13 @@ class AsyncLayer(YowInterfaceLayer):
         return iq.getId()
     methods['profile_setStatus'] = profile_setStatus
     
+    def profile_setPicture(self, pictureData):
+        iq = PictureIqProtocolEntity(self.normalizeJid("%s%s" % (self.line["cc"], self.line["pn"])))
+        iq.setPictureData(pictureData)
+        self.toLower(iq)
+        return iq.getId()
+    methods['profile_setPicture'] = profile_setPicture
+    
     def media_vcard_send(self, name, card_data, to):
         media = VCardMediaMessageProtocolEntity(name, card_data, to="%s@s.whatsapp.net" % to)
         self.toLower(media)
