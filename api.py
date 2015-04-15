@@ -825,7 +825,7 @@ def nickname_post():
                 f = open(path, "wb")
                 f.write(src.decode('base64'))
                 f.close()
-                idx = wa.profile_setPicture(path)
+                idx = wa.call("profile_setPicture", [path])
                 if idx:
                   uploads[idx] = {
                     "src": name,
