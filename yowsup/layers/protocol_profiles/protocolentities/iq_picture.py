@@ -25,8 +25,8 @@ class PictureIqProtocolEntity(IqProtocolEntity):
     '''
     XMLNS = "w:profile:picture"
 
-    def __init__(self, jid):
-        super(PictureIqProtocolEntity, self).__init__(self.__class__.XMLNS, _type="get", to = jid)
+    def __init__(self, jid, type = "get"):
+        super(PictureIqProtocolEntity, self).__init__(self.__class__.XMLNS, _type=type, to = jid)
         self.pictureId = None
         self.pictureData = None
 
