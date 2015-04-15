@@ -116,6 +116,8 @@ class AsyncLayer(YowInterfaceLayer):
         if entity.getType() == 'get':
             if entity.getXmlns() == 'urn:xmpp:ping':
               self.onPing(entity)
+        elif entity.getType() == 'result':
+            self.onResult(entity)
 
     @ProtocolEntityCallback("message")
     def onMessage(self, entity):
@@ -210,3 +212,10 @@ class AsyncLayer(YowInterfaceLayer):
             if self.handle("onMediaReceived", [idx, jid, participant, caption, "vcard", card_data, None, None, broadcast]):            
                 self.toLower(receipt)
 
+    def onResult(self, entity):
+        idx = entity.getId()
+        node = entity.toProtocolTreeNode()
+        pictureNode = node.getChild("picture")
+        if pictureNode is not None:
+            pictureId = entity.getPictureId()
+            self.handle("onProfileSetPictureSuccess", [idx, pictureId])
