@@ -251,7 +251,7 @@ def onMediaReceived(wa, messageId, jid, participant, caption, type, preview, url
     msg["participant"] = participant
   if chat:
     # Push it to db
-    Chats.update({"from": wa.line["_id"], "to": to}, {"$push": {"messages": msg}, "$set": {"lastStamp": stamp}, "$inc": {"unread": 1}});
+    Chats.update({"from": wa.line["_id"], "to": to}, {"$set": {"folder": "inbox"}, "$push": {"messages": msg}, "$set": {"lastStamp": stamp}, "$inc": {"unread": 1}});
   else:
     # Create new chat
     Chats.insert({
@@ -302,7 +302,7 @@ def onMessageReceived(wa, messageId, jid, participant, messageContent, timestamp
     msg["broadcast"] = broadcast
   if chat:
     # Push it to db
-    Chats.update({"from": wa.line["_id"], "to": to}, {"$push": {"messages": msg}, "$set": {"lastStamp": stamp}, "$inc": {"unread": 1}})
+    Chats.update({"from": wa.line["_id"], "to": to}, {"$set": {"folder": "inbox"}, "$push": {"messages": msg}, "$set": {"lastStamp": stamp}, "$inc": {"unread": 1}})
   else:
     alias = False if participant else (pushName or False)
     # Create new chat
