@@ -10,6 +10,7 @@ from client.stack import YowsupAsyncStack
 from yowsup.registration import *
 from yowsup.layers import *
 from lxml import etree
+from PIL import Image
 import Bot
 
 reload(sys)
@@ -368,6 +369,9 @@ def onProfileSetPictureSuccess(wa, idx, pictureId):
       if token["key"] in runningTokens and token["key"] == uploads[idx]["token"] and token["push"]:
           res = push(wa.line["_id"], token, "success", {"type": "onProfileSetPictureSuccess", "idx": idx, "pictureId": pictureId})
     del uploads[idx]
+  else:
+    print "COULD NOT RECOVER idx %s" % idx
+    print uploads
 
 def onProfileSetStatusSuccess(wa, jid, idx):
   allTokens = Lines.find_one({"_id": wa.line["_id"]})["tokens"]
@@ -825,7 +829,10 @@ def nickname_post():
                 f = open(path, "wb")
                 f.write(src.decode('base64'))
                 f.close()
-                idx = wa.call("profile_setPicture", [src])
+                src = Image.open(path)
+                pictureData = bytearray(src.resize((640, 640)).tostring("jpeg", "RGB"))
+                previewData = bytearray(src.resize((96, 96)).tostring("jpeg", "RGB"))
+                idx = wa.call("profile_setPicture", [pictureData, previewData])
                 if idx:
                   uploads[idx] = {
                     "src": name,

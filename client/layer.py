@@ -86,9 +86,10 @@ class AsyncLayer(YowInterfaceLayer):
         return iq.getId()
     methods['profile_setStatus'] = profile_setStatus
     
-    def profile_setPicture(self, pictureData):
-        iq = PictureIqProtocolEntity(self.normalizeJid("%s%s" % (self.line["cc"], self.line["pn"])), "set")
+    def profile_setPicture(self, pictureData, previewData):
+        iq = PictureIqProtocolEntity(self.normalizeJid("%s%s" % (self.line["cc"], self.line["pn"])), type="set")
         iq.setPictureData(pictureData)
+        iq.setPreviewData(previewData)
         self.toLower(iq)
         return iq.getId()
     methods['profile_setPicture'] = profile_setPicture
@@ -113,11 +114,12 @@ class AsyncLayer(YowInterfaceLayer):
             
     @ProtocolEntityCallback("iq")
     def onIq(self, entity):
-        if entity.getType() == 'get':
-            if entity.getXmlns() == 'urn:xmpp:ping':
+        if entity.getType() == "get":
+            if entity.getXmlns() == "urn:xmpp:ping":
               self.onPing(entity)
-        elif entity.getType() == 'result':
-            self.onResult(entity)
+        elif entity.getType() == "result":
+            if entity.getXmlns() in ["w:profile:picture"]:
+              self.onResult(entity)
 
     @ProtocolEntityCallback("message")
     def onMessage(self, entity):
@@ -214,8 +216,6 @@ class AsyncLayer(YowInterfaceLayer):
 
     def onResult(self, entity):
         idx = entity.getId()
-        node = entity.toProtocolTreeNode()
-        pictureNode = node.getChild("picture")
-        if pictureNode is not None:
-            pictureId = entity.getPictureId()
-            self.handle("onProfileSetPictureSuccess", [idx, pictureId])
+        print "idx %s" % idx
+        pictureId = entity.getPictureId()
+        self.handle("onProfileSetPictureSuccess", [idx, pictureId])
