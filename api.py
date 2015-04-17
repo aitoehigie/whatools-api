@@ -312,7 +312,8 @@ def onMessageReceived(wa, messageId, jid, participant, messageContent, timestamp
       "to": to,
       "messages": [msg],
       "lastStamp": stamp,
-      "alias": alias
+      "alias": alias,
+      "folder": "inbox"
     })
   botify(wa, msg, to)
   if len(running):
@@ -443,7 +444,8 @@ def message_post():
                       "from": lId,
                       "to": to,
                       "messages": [msg],
-                      "lastStamp": stamp
+                      "lastStamp": stamp,
+                      "folder": "inbox"
                     })
                   runningTokens = running[line["_id"]]["tokens"]
                   for token in line["tokens"]:
