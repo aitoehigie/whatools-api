@@ -66,7 +66,14 @@ def botify(wa, msg, pn):
       "stamp": stamp,
       "ack": "sent"
     }
-    Chats.update({"from": wa.line["_id"], "to": to}, {"$push": {"messages": msg}});
+    Chats.update({"from": wa.line["_id"], "to": to}, {"$push": {"messages": msg}})
+    runningTokens = running[wa.line["_id"]]["tokens"]
+      for token in wa.line["tokens"]:
+        if token["key"] in runningTokens:
+          if token["push"]:
+            pushRes = push(wa.line["_id"], token, "carbon", {"messageId": msgId, "jid": to, "messageContent": body, "timestamp": stamp})
+            if pushRes:
+              print pushRes.read()
     
   def action_canned(msg, payload):
     to = msg["from"]
@@ -83,7 +90,14 @@ def botify(wa, msg, pn):
         "stamp": stamp,
         "ack": "sent"
       }
-      Chats.update({"from": wa.line["_id"], "to": to}, {"$push": {"messages": msg}});
+      Chats.update({"from": wa.line["_id"], "to": to}, {"$push": {"messages": msg}})
+      runningTokens = running[wa.line["_id"]]["tokens"]
+      for token in wa.line["tokens"]:
+        if token["key"] in runningTokens:
+          if token["push"]:
+            pushRes = push(wa.line["_id"], token, "carbon", {"messageId": msgId, "jid": to, "messageContent": body, "timestamp": stamp})
+            if pushRes:
+              print pushRes.read()
     
   actions = {
     'answer': action_answer,
