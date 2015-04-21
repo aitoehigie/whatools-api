@@ -98,10 +98,44 @@ def botify(wa, msg, pn):
             pushRes = push(wa.line["_id"], token, "carbon", {"messageId": msgId, "jid": to, "messageContent": body, "timestamp": stamp})
             if pushRes:
               print pushRes.read()
+              
+  def action_forward(msg, payload):
+    to = payload
+    body = "♻ +%s:\n%s" % (msg["from"], msg["body"])
+    stamp = msg["stamp"]
+    chat = Chats.find_one({"from": wa.line["_id"], "to": to})
+    msgId = wa.call("message_send", (to, messageSign(body, wa.line)))
+    msg = {
+      "id": msgId,
+      "mine": True,
+      "body": body,
+      "stamp": stamp,
+      "ack": "sent"
+    }
+    if chat:
+      Chats.update({"from": wa.line["_id"], "to": to}, {"$set": {"folder": "inbox"}, "$push": {"messages": msg}, "$set": {"lastStamp": stamp}})
+    else:
+      Chats.insert({
+        "_id": str(objectid.ObjectId()),
+        "from": wa.line["_id"],
+        "to": to,
+        "messages": [msg],
+        "lastStamp": stamp,
+        "alias": False
+      })
+    runningTokens = running[wa.line["_id"]]["tokens"]
+      for token in wa.line["tokens"]:
+        if token["key"] in runningTokens:
+          if token["push"]:
+            pushRes = push(wa.line["_id"], token, "carbon", {"messageId": msgId, "jid": to, "messageContent": body, "timestamp": stamp})
+            if pushRes:
+              print pushRes.read()
+      
     
   actions = {
     'answer': action_answer,
-    'canned': action_canned
+    'canned': action_canned,
+    'forward': action_forward
   }
   line = Lines.find_one({"_id": wa.line["_id"]})
   chat = Chats.find_one({"from": wa.line["_id"],  "to": pn})
