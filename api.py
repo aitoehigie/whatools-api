@@ -1002,5 +1002,5 @@ def reference():
 def index():
   return static_file('reference.htm', './static')
 
-recover(list(Lines.find({"tokens.active": True, "api": v}, {"tokens.$": 1})))
+recover(list(Lines.find({"tokens.active": True, "api": v, "deleted": {"$in": [None, False]}}, {"tokens.$": 1})))
 run(host="127.0.0.1", port="8081", server='gevent')
