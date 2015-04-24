@@ -177,6 +177,7 @@ class YowAxolotlLayer(YowProtocolLayer):
         except InvalidMessageException:
             logger.error("Invalid message from %s!! Your axololtl database data might be inconsistent with WhatsApp, or with what that contact has" % node["from"])
             sys.exit(1)
+
     def handlePreKeyWhisperMessage(self, node):
         pkMessageProtocolEntity = EncryptedMessageProtocolEntity.fromProtocolTreeNode(node)
 
@@ -193,11 +194,15 @@ class YowAxolotlLayer(YowProtocolLayer):
 
         whisperMessage = WhisperMessage(serialized=encMessageProtocolEntity.getEncData())
         sessionCipher = self.getSessionCipher(encMessageProtocolEntity.getFrom(False))
-        plaintext = sessionCipher.decryptMsg(whisperMessage)
-
-        bodyNode = ProtocolTreeNode("body", data = plaintext)
-        node.addChild(bodyNode)
-        self.toUpper(node)
+        try:
+            plaintext = sessionCipher.decryptMsg(whisperMessage)
+        except NoSessionException:
+            logger.error("No session for: %s" % node["from"])
+        
+        if plaintext:
+          bodyNode = ProtocolTreeNode("body", data = plaintext)
+          node.addChild(bodyNode)
+          self.toUpper(node)
     ####
 
     ### keys set and get
