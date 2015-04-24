@@ -200,8 +200,8 @@ class YowAxolotlLayer(YowProtocolLayer):
             bodyNode = ProtocolTreeNode("body", data = plaintext)
             node.addChild(bodyNode)
             self.toUpper(node)
-        except NoSessionException:
-            logger.error("No session for: %s" % node["from"])
+        except Exception as e:
+            logger.error("Axolotl %s while decrypting message from %s" % (type(e).__name__, node["from"]))
 
     ####
 
