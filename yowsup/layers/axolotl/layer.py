@@ -197,13 +197,12 @@ class YowAxolotlLayer(YowProtocolLayer):
         sessionCipher = self.getSessionCipher(encMessageProtocolEntity.getFrom(False))
         try:
             plaintext = sessionCipher.decryptMsg(whisperMessage)
+            bodyNode = ProtocolTreeNode("body", data = plaintext)
+            node.addChild(bodyNode)
+            self.toUpper(node)
         except NoSessionException:
             logger.error("No session for: %s" % node["from"])
-        
-        if plaintext:
-          bodyNode = ProtocolTreeNode("body", data = plaintext)
-          node.addChild(bodyNode)
-          self.toUpper(node)
+
     ####
 
     ### keys set and get
