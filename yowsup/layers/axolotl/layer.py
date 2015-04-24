@@ -17,6 +17,7 @@ from .protocolentities import GetKeysIqProtocolEntity, ResultGetKeysIqProtocolEn
 from axolotl.util.hexutil import HexUtil
 from yowsup.env import CURRENT_ENV
 from axolotl.invalidmessageexception import InvalidMessageException
+from axolotl.nosessionexception import NoSessionException
 from .protocolentities import EncryptNotification
 from yowsup.layers.protocol_acks.protocolentities import OutgoingAckProtocolEntity
 import binascii
