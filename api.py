@@ -188,8 +188,6 @@ def onAck(wa, idx, jid, grade):
       message = Chats.find_one({"from": wa.line["_id"], "to": jid.split("@")[0], 'messages.id': idx}, {"messages.$": 1})
       if message:
         message = ["messages"][0]
-        if "ack" in message and message["ack"] == "delivered":
-          grade = "visible"
         for token in allTokens:
           if token["key"] in runningTokens:
             if token["push"]:
