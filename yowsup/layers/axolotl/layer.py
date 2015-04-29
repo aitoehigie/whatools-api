@@ -17,6 +17,7 @@ from .protocolentities import GetKeysIqProtocolEntity, ResultGetKeysIqProtocolEn
 from axolotl.util.hexutil import HexUtil
 from yowsup.env import CURRENT_ENV
 from axolotl.invalidmessageexception import InvalidMessageException
+from axolotl.nosessionexception import NoSessionException
 from .protocolentities import EncryptNotification
 from yowsup.layers.protocol_acks.protocolentities import OutgoingAckProtocolEntity
 import binascii
@@ -177,6 +178,7 @@ class YowAxolotlLayer(YowProtocolLayer):
         except InvalidMessageException:
             logger.error("Invalid message from %s!! Your axololtl database data might be inconsistent with WhatsApp, or with what that contact has" % node["from"])
             sys.exit(1)
+
     def handlePreKeyWhisperMessage(self, node):
         pkMessageProtocolEntity = EncryptedMessageProtocolEntity.fromProtocolTreeNode(node)
 
@@ -193,11 +195,16 @@ class YowAxolotlLayer(YowProtocolLayer):
 
         whisperMessage = WhisperMessage(serialized=encMessageProtocolEntity.getEncData())
         sessionCipher = self.getSessionCipher(encMessageProtocolEntity.getFrom(False))
-        plaintext = sessionCipher.decryptMsg(whisperMessage)
+        plaintext = "[Could not decrypt]"
+        try:
+            plaintext = sessionCipher.decryptMsg(whisperMessage)
+        except Exception as e:
+            logger.error("Axolotl %s while decrypting message from %s" % (type(e).__name__, node["from"]))
 
         bodyNode = ProtocolTreeNode("body", data = plaintext)
         node.addChild(bodyNode)
         self.toUpper(node)
+
     ####
 
     ### keys set and get

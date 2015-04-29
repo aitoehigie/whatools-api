@@ -236,8 +236,6 @@ def onAck(wa, idx, jid, grade):
       message = Chats.find_one({"from": wa.line["_id"], "to": jid.split("@")[0], 'messages.id': idx}, {"messages.$": 1})
       if message:
         message = ["messages"][0]
-        if "ack" in message and message["ack"] == "delivered":
-          grade = "visible"
         for token in allTokens:
           if token["key"] in runningTokens:
             if token["push"]:
@@ -350,7 +348,7 @@ def onMessageReceived(wa, messageId, jid, participant, messageContent, timestamp
     msg["broadcast"] = broadcast
   if chat:
     # Push it to db
-    Chats.update({"from": wa.line["_id"], "to": to}, {"$set": {"folder": "inbox"}, "$push": {"messages": msg}, "$set": {"lastStamp": stamp}, "$inc": {"unread": 1}})
+    Chats.update({"from": wa.line["_id"], "to": to}, {"$push": {"messages": msg}, "$set": {"lastStamp": stamp, "folder": "inbox"}, "$inc": {"unread": 1}})
   else:
     alias = False if participant else (pushName or False)
     # Create new chat
@@ -1050,5 +1048,5 @@ def reference():
 def index():
   return static_file('reference.htm', './static')
 
-recover(list(Lines.find({"tokens.active": True, "api": v}, {"tokens.$": 1})))
+recover(list(Lines.find({"tokens.active": True, "api": v, "deleted": {"$in": [None, False]}}, {"tokens.$": 1})))
 run(host="127.0.0.1", port="8081", server='gevent')
