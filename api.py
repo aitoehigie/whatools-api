@@ -1033,6 +1033,43 @@ def media_location_get():
       wpt.append(wpt_name)
       root.append(wpt)
     return etree.tostring(root, pretty_print = True, xml_declaration = True, encoding='UTF-8')
+    
+@route("/media/picture", method="GET")
+def media_picture_get():
+  res = {"success": False}
+  key = request.params.key
+  hash = request.params.hash
+  size = request.params.size
+  if key:
+    line = Lines.find_one({"tokens": {"$elemMatch": {"key": key}}})
+    if line:
+      lId = line["_id"]
+      logger(lId, "mediaPictureGet", unbottle(request.params));
+      token = filter(lambda e: e['key'] == key, line['tokens'])[0]
+      if lineIsNotExpired(line):
+        if token:
+          if "permissions" in token and "write" in token["permissions"]:
+            if hash and size:
+              if line["_id"] in running:
+                wa = running[line["_id"]]["yowsup"]
+                
+              else:
+                res["error"] = "inactive-line"
+            else:
+              res["error"] = "bad-param"
+          else:
+            res["error"] = "no-permission"
+        else:
+          res["error"] = "no-token-matches-key"
+      else:
+        res["error"] = "line-is-expired"
+        Lines.update({"_id": lId}, {"$set": {"valid": "wrong", "reconnect": False, "active": False}})
+      logger(lId, "avatarPostProgress", {"params": unbottle(request.params), "res": res});
+    else:
+      res["error"] = "no-line-matches-key"
+  else:
+    res["error"] = "no-key"
+  return res
   
 '''
 
