@@ -61,7 +61,7 @@ class IncomingReceiptProtocolEntity(ReceiptProtocolEntity):
         list_node = node.getChild("list")
         if list_node is not None:
             for item_node in list_node.getAllChildren("item"):
-                receipt_items.append(item_mode.getAttributeValue("id"))
+                receipt_items.append(item_node.getAttributeValue("id"))
         return IncomingReceiptProtocolEntity(
             node.getAttributeValue("id"),
             node.getAttributeValue("from"),
