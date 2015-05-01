@@ -24,7 +24,7 @@ class OutgoingAckProtocolEntity(AckProtocolEntity):
         if self._to is not None:
             node.setAttribute("to", self._to)
         if self._t is not None:
-            node.setAttribute("t", self._t)
+            pass#node.setAttribute("t", self._t)
         return node
 
     def __str__(self):
