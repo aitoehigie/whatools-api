@@ -22,8 +22,8 @@ class YowsupAsyncStack(object):
         layers = (
             AsyncLayer,
             YowParallelLayer(YOWSUP_PROTOCOL_LAYERS_FULL),
-            YowAxolotlLayer,
             YowLoggerLayer,
+            YowAxolotlLayer,
             YowCoderLayer,
             YowCryptLayer,
             YowStanzaRegulator,

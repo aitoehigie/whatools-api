@@ -184,18 +184,20 @@ class YowAxolotlLayer(YowProtocolLayer):
 
         preKeyWhisperMessage = PreKeyWhisperMessage(serialized=pkMessageProtocolEntity.getEncData())
         sessionCipher = self.getSessionCipher(pkMessageProtocolEntity.getFrom(False))
-        plaintext = sessionCipher.decryptPkmsg(preKeyWhisperMessage)
-
-        bodyNode = ProtocolTreeNode("body", data = plaintext)
-        node.addChild(bodyNode)
-        self.toUpper(node)
+        try:
+            plaintext = sessionCipher.decryptPkmsg(preKeyWhisperMessage)
+            bodyNode = ProtocolTreeNode("body", data = plaintext)
+            node.addChild(bodyNode)
+            self.toUpper(node)
+        except Exception as e:
+            logger.error("Axolotl %s while decrypting PreKey from %s" % (type(e).__name__, node["from"]))
 
     def handleWhisperMessage(self, node):
         encMessageProtocolEntity = EncryptedMessageProtocolEntity.fromProtocolTreeNode(node)
 
         whisperMessage = WhisperMessage(serialized=encMessageProtocolEntity.getEncData())
         sessionCipher = self.getSessionCipher(encMessageProtocolEntity.getFrom(False))
-        plaintext = "[Could not decrypt]"
+        plaintext = "[Could not decrypt message]"
         try:
             plaintext = sessionCipher.decryptMsg(whisperMessage)
         except Exception as e:
