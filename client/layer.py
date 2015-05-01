@@ -130,6 +130,7 @@ class AsyncLayer(YowInterfaceLayer):
             
     @ProtocolEntityCallback("notification")
     def onNotification(self, entity):
+        pass
         '''ack = OutgoingAckProtocolEntity(entity.getId(), "notification", entity.getType())
         self.toLower(ack)'''
     
@@ -140,11 +141,11 @@ class AsyncLayer(YowInterfaceLayer):
         type = entity.getType()
         grade = "visible" if type == "read" else "delivered"
         if self.handle("onAck", [idx, jid, grade]):
-            ack = OutgoingAckProtocolEntity(idx, "receipt", "delivery")
+            ack = OutgoingAckProtocolEntity(idx, "receipt", "read" if type == "read" else "delivery", jid)
             self.toLower(ack)
             if entity.ids:
                 for idx in entity.ids:
-                    ack = OutgoingAckProtocolEntity(idx, "receipt", "delivery")
+                    ack = OutgoingAckProtocolEntity(idx, "receipt", "read" if type == "read" else "delivery", jid)
                     self.toLower(ack)
 
     @ProtocolEntityCallback("success")
