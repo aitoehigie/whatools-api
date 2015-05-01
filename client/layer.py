@@ -139,13 +139,16 @@ class AsyncLayer(YowInterfaceLayer):
         idx = entity.getId()
         jid = entity.getFrom()
         type = entity.getType()
-        grade = "visible" if type == "read" else "delivered"
+        grade = {
+          "read": "visible",
+          "error": "error"
+        }.get(type, "delivered")
         if self.handle("onAck", [idx, jid, grade]):
-            ack = OutgoingAckProtocolEntity(idx, "receipt", "read" if type == "read" else "delivery", jid)
+            ack = OutgoingAckProtocolEntity(idx, "receipt", type or "delivery", jid)
             self.toLower(ack)
             if entity.ids:
                 for idx in entity.ids:
-                    ack = OutgoingAckProtocolEntity(idx, "receipt", "read" if type == "read" else "delivery", jid)
+                    ack = OutgoingAckProtocolEntity(idx, "receipt", type or "delivery", jid)
                     self.toLower(ack)
 
     @ProtocolEntityCallback("success")
