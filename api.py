@@ -1036,9 +1036,11 @@ def media_location_get():
     
 @route("/media/picture", method="GET")
 def media_picture_get():
+  body = queue.Queue()
   res = {"success": False}
   key = request.params.key
-  hash = request.params.hash
+  hash = request.params.hash.replace(" ", "")
+  origHash = request.params.origHash
   size = request.params.size
   if key:
     line = Lines.find_one({"tokens": {"$elemMatch": {"key": key}}})
@@ -1052,7 +1054,15 @@ def media_picture_get():
             if hash and size:
               if line["_id"] in running:
                 wa = running[line["_id"]]["yowsup"]
-                
+                def success(entity, originalIq):
+                    res["result"] = {
+                      "url": entity.getUrl(),
+                      "isDuplicate": entity.isDuplicate()
+                    }
+                    res["success"] = True
+                    body.put(json.dumps(res))
+                    body.put(StopIteration)
+                idx = wa.call("media_upload_request", ["image", hash, size, origHash, success])
               else:
                 res["error"] = "inactive-line"
             else:
@@ -1069,7 +1079,10 @@ def media_picture_get():
       res["error"] = "no-line-matches-key"
   else:
     res["error"] = "no-key"
-  return res
+  if "error" in res:
+    body.put(json.dumps(res))
+    body.put(StopIteration)
+  return body
   
 '''
 

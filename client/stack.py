@@ -21,8 +21,8 @@ class YowsupAsyncStack(object):
     def __init__(self, credentials, line, token, eventHandlers, logger, cb):
         layers = (
             AsyncLayer,
-            YowParallelLayer(YOWSUP_PROTOCOL_LAYERS_FULL),
             YowLoggerLayer,
+            YowParallelLayer(YOWSUP_PROTOCOL_LAYERS_FULL),
             YowAxolotlLayer,
             YowCoderLayer,
             YowCryptLayer,
