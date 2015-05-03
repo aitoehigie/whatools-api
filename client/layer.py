@@ -73,7 +73,14 @@ class AsyncLayer(YowInterfaceLayer):
         outgoingMessage = TextMessageProtocolEntity(body, to=self.normalizeJid(pn))
         self.toLower(outgoingMessage)
         return outgoingMessage.getId()
-    methods['message_send'] = message_send;
+    methods['message_send'] = message_send
+
+    def media_picture_send(self, to, url, ip, path, caption = None):
+        outgoingMessage = ImageDownloadableMediaMessageProtocolEntity.fromFilePath(path, url, ip, self.normalizeJid(to))
+        print outgoingMessage
+        self.toLower(outgoingMessage)
+        return outgoingMessage.getId()
+    methods['media_picture_send'] = media_picture_send
     
     def presence_sendAvailable(self, nickname):
         presence = PresenceProtocolEntity("available", nickname)

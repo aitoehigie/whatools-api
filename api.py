@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #  -*- coding: utf8 -*-
 
-import sys, json, base64, time, httplib, urllib, gevent, phonenumbers
+import sys, json, base64, time, httplib, urllib, gevent, phonenumbers, socket
 from gevent import Greenlet, queue, monkey; monkey.patch_all()
 from bottle import route, run, request, response, static_file, BaseRequest, FormsDict
 from pymongo import MongoClient
@@ -201,7 +201,10 @@ def lineIsNotExpired(line):
   
 def messageSign(text, line):
   if line["plan"] == "free":
-    text += freePlanSignature
+    if len(text) > 0:
+      text += freePlanSignature
+    else:
+      text = freePlanSignature
   return text
 
 def push(lId, token, method, data):
@@ -1083,6 +1086,95 @@ def media_picture_get():
     body.put(json.dumps(res))
     body.put(StopIteration)
   return body
+  
+@route("/media/picture", method="POST")
+def media_picture_post():
+  res = {"success": False}
+  key = request.params.key
+  to = request.params.to
+  body = request.params.caption.encode('utf8','replace') if request.params.caption else None
+  broadcast = request.params.broadcast
+  honor = request.params.honor
+  url = request.params.url
+  preview = request.params.preview
+  msgId = False
+  if key:
+    line = Lines.find_one({"tokens": {"$elemMatch": {"key": key}}})
+    if line:
+      lId = line["_id"]
+      logger(lId, "messagePost", unbottle(request.params))
+      if lineIsNotExpired(line):
+        token = filter(lambda e: e['key'] == key, line['tokens'])[0]
+        if token:
+          if "permissions" in token and "write" in token["permissions"]:
+            if to and url:
+              if line["_id"] in running:
+                signedBody = messageSign(body, line)
+                wa = running[line["_id"]]["yowsup"]
+                if not honor:
+                  to = phoneFormat(line["cc"], to)
+                name = url.split("/")[-1]
+                path =  "%stemp/%s-%s" % (storage, to, name)
+                file = urllib.URLopener()
+                file.retrieve(url, path)
+                ip = socket.gethostbyname(url.split("/")[2])
+                msgId = wa.call("media_picture_send", [to, url, ip, path, signedBody])
+                '''if msgId:
+                  res["result"] = msgId
+                  res["success"] = True
+                  chat = Chats.find_one({"from": lId, "to": to})
+                  stamp = long(time.time()*1000)
+                  msg = {
+                    "id": msgId,
+                    "mine": True,
+                    "stamp": stamp,
+                    "ack": "sent",
+                    "media": {
+                      "type": "image",
+                      "url": url
+                    }
+                  }
+                  if preview:
+                    msg["media"]["preview"] = preview
+                  if body:
+                    msg["body"] = body
+                  if chat:
+                    # Push it
+                    Chats.update({"from": lId, "to": to}, {"$push": {"messages": msg}, "$set": {"lastStamp": stamp, "unread": 0}});
+                  else:
+                    # Create new chat
+                    Chats.insert({
+                      "_id": str(objectid.ObjectId()),
+                      "from": lId,
+                      "to": to,
+                      "messages": [msg],
+                      "lastStamp": stamp,
+                      "folder": "inbox"
+                    })
+                  runningTokens = running[line["_id"]]["tokens"]
+                  for token in line["tokens"]:
+                    if token["key"] in runningTokens:
+                      if token["push"] and token["key"] != key:
+                        pushRes = push(lId, token, "carbon", {"messageId": msgId, "jid": to, "messageContent": body, "timestamp": stamp, "isBroadCast": broadcast})
+                        if pushRes:
+                          print pushRes.read()'''
+              else:
+                res["error"] = "inactive-line"
+            else:
+              res["error"] = "bad-param"
+          else:
+            res["error"] = "no-permission"
+        else:
+          res["error"] = "no-token-matches-key"
+      else:
+        res["error"] = "line-is-expired"
+        Lines.update({"_id": lId}, {"$set": {"valid": "wrong", "reconnect": False, "active": False}})
+      #logger(lId, "messageSendProgress", {"params": unbottle(request.params), "msg": msg} if msgId else {"params": unbottle(request.params), "res": res});
+    else:
+      res["error"] = "no-line-matches-key"
+  else:
+    res["error"] = "no-key"
+  return res
   
 '''
 
