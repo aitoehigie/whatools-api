@@ -1086,10 +1086,8 @@ def media_picture_post():
                                       resultEntity.getUrl(), resultEntity.getResumeOffset(),
                                       uploadSuccess, uploadError, uploadProgress, async=False)
                     mediaUploader.start()
-                  pass
                 def error(errorEntity, requestEntity):
                   logger(lId, "mediaPicturePostProgress", {"success": False, "error": "request-error"})
-                  pass
                 msgId = wa.call("media_upload_request", ["image", path, success, error])
               else:
                 res["error"] = "inactive-line"
