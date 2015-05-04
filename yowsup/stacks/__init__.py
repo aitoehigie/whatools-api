@@ -18,6 +18,7 @@ from yowsup.layers.protocol_contacts           import YowContactsIqProtocolLayer
 from yowsup.layers.protocol_chatstate          import YowChatstateProtocolLayer
 from yowsup.layers.protocol_privacy            import YowPrivacyProtocolLayer
 from yowsup.layers.protocol_profiles           import YowProfilesProtocolLayer
+from yowsup.layers.protocol_calls           import YowCallsProtocolLayer
 
 
 
@@ -34,14 +35,15 @@ YOWSUP_PROTOCOL_LAYERS_BASIC = (
     YowAuthenticationProtocolLayer, YowMessagesProtocolLayer,
     YowReceiptProtocolLayer, YowAckProtocolLayer, YowPresenceProtocolLayer,
     YowIbProtocolLayer, YowIqProtocolLayer, YowNotificationsProtocolLayer,
-    YowContactsIqProtocolLayer, YowChatstateProtocolLayer
+    YowContactsIqProtocolLayer, YowChatstateProtocolLayer 
 
 )
 
 YOWSUP_PROTOCOL_LAYERS_GROUPS = (YowGroupsProtocolLayer,) + YOWSUP_PROTOCOL_LAYERS_BASIC
 YOWSUP_PROTOCOL_LAYERS_MEDIA  = (YowMediaProtocolLayer,) + YOWSUP_PROTOCOL_LAYERS_BASIC
 YOWSUP_PROTOCOL_LAYERS_PROFILES  = (YowProfilesProtocolLayer,) + YOWSUP_PROTOCOL_LAYERS_BASIC
-YOWSUP_PROTOCOL_LAYERS_FULL = (YowGroupsProtocolLayer, YowMediaProtocolLayer, YowPrivacyProtocolLayer, YowProfilesProtocolLayer)\
+YOWSUP_PROTOCOL_LAYERS_CALLS  = (YowCallsProtocolLayer,) + YOWSUP_PROTOCOL_LAYERS_BASIC
+YOWSUP_PROTOCOL_LAYERS_FULL = (YowGroupsProtocolLayer, YowMediaProtocolLayer, YowPrivacyProtocolLayer, YowProfilesProtocolLayer, YowCallsProtocolLayer)\
                               + YOWSUP_PROTOCOL_LAYERS_BASIC
 
 

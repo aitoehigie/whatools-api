@@ -21,8 +21,7 @@ class IncomingReceiptProtocolEntity(ReceiptProtocolEntity):
         self._from = _from
         self.timestamp = timestamp
         self._type = type
-        if offline is not None:
-            self.offline = True if offline == "1" else False
+        self.offline = offline == "1" or None
         self.ids = ids
 
     def toProtocolTreeNode(self):

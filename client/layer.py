@@ -13,7 +13,8 @@ from yowsup.layers.protocol_messages.protocolentities  import *
 from yowsup.layers.protocol_presence.protocolentities  import *
 from yowsup.layers.protocol_profiles.protocolentities  import *
 from yowsup.layers.protocol_receipts.protocolentities  import *
-
+from yowsup.layers.protocol_calls.protocolentities  import *
+import time
 
 class AsyncLayer(YowInterfaceLayer):
 
@@ -162,6 +163,12 @@ class AsyncLayer(YowInterfaceLayer):
           "t": entity.t
         }
         self.cb(self, "success", payload);
+        
+    @ProtocolEntityCallback("call")
+    def onCall(self, entity):
+        if entity.getType() == "offer":
+          call = CallProtocolEntity(None, "reject", int(time.time()), _to = entity.getFrom(), callId = entity.getCallId())
+          self.toLower(call)
         
     def onPing(self,entity):
         idx = entity.getId()
