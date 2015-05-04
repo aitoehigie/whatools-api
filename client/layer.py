@@ -74,13 +74,21 @@ class AsyncLayer(YowInterfaceLayer):
         self.toLower(outgoingMessage)
         return outgoingMessage.getId()
     methods['message_send'] = message_send
+    
+    def media_upload_request(self, type, path, success, error):
+        entity = RequestUploadIqProtocolEntity(type, filePath=path)
+        self._sendIq(entity, success, error)
+        return entity.getId()
+    methods['media_upload_request'] = media_upload_request
 
-    def media_picture_send(self, to, url, ip, path, caption = None):
-        outgoingMessage = ImageDownloadableMediaMessageProtocolEntity.fromFilePath(path, url, ip, self.normalizeJid(to))
-        print outgoingMessage
-        self.toLower(outgoingMessage)
-        return outgoingMessage.getId()
-    methods['media_picture_send'] = media_picture_send
+    def media_send(self, type, path, to, url, ip = None, caption = None):
+        to = self.normalizeJid(to)
+        if type == "image":
+          entity = ImageDownloadableMediaMessageProtocolEntity.fromFilePath(path, url, ip, to, caption = caption)
+        print entity
+        self.toLower(entity)
+        return entity.getId()
+    methods['media_send'] = media_send
     
     def presence_sendAvailable(self, nickname):
         presence = PresenceProtocolEntity("available", nickname)
@@ -106,12 +114,6 @@ class AsyncLayer(YowInterfaceLayer):
         self.toLower(media)
         return media.getId()
     methods['media_vcard_send'] = media_vcard_send
-    
-    def media_upload_request(self, type, hash, size, origHash = None, success = None, error = None):
-        media = RequestUploadIqProtocolEntity(type, hash, size, origHash)
-        self._sendIq(media, success, error)
-        return media.getId()
-    methods['media_upload_request'] = media_upload_request
 
     def call(self, method, params):
         if method in self.methods:
