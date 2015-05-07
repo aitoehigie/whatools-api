@@ -211,6 +211,7 @@ def messageSign(text, line):
 def push(lId, token, method, data):
   res = False
   url = token["push"]
+  line = Lines.find_one({"_id": lId})
   data["_lineId"] = "%s%s" % (line["cc"], line["pn"])
   data["_tokenId"] = token["id"]
   data["_method"] = method
