@@ -23,7 +23,7 @@ class AsyncLayer(YowInterfaceLayer):
     HANDLERS = "com.waalt.whatools.prop.handlers"
     LOGGER = "com.waalt.whatools.prop.logger"
     CB = "com.waalt.whatools.prop.cb"
-
+    
     def init(self):
         self.line = self.getProp(self.__class__.LINE)
         self.token = self.getProp(self.__class__.TOKEN)
@@ -74,7 +74,29 @@ class AsyncLayer(YowInterfaceLayer):
         outgoingMessage = TextMessageProtocolEntity(body, to=self.normalizeJid(pn))
         self.toLower(outgoingMessage)
         return outgoingMessage.getId()
-    methods['message_send'] = message_send;
+    methods['message_send'] = message_send
+    
+    def media_upload_request(self, type, path, success, error):
+        entity = RequestUploadIqProtocolEntity(type, filePath=path)
+        self._sendIq(entity, success, error)
+        return entity.getId()
+    methods['media_upload_request'] = media_upload_request
+
+    def media_send(self, type, path, to, url, ip = None, caption = None):
+        media = {"type": type}
+        to = self.normalizeJid(to)
+        if type in ["image"]:
+          if type == "image":
+            entity = ImageDownloadableMediaMessageProtocolEntity.fromFilePath(path, url, ip, to, caption = caption)
+            media["preview"] = entity.getPreview()
+          media["size"] = entity.getMediaSize()
+          media["url"] = entity.getMediaUrl()
+          media["idx"] = entity.getId()
+          self.toLower(entity)
+          return media
+        else:
+          return False
+    methods['media_send'] = media_send
     
     def presence_sendAvailable(self, nickname):
         presence = PresenceProtocolEntity("available", nickname)
@@ -119,7 +141,9 @@ class AsyncLayer(YowInterfaceLayer):
             if entity.getXmlns() == "urn:xmpp:ping":
               self.onPing(entity)
         elif entity.getType() == "result":
-            if entity.getXmlns() in ["w:profile:picture"]:
+            if entity.getXmlns() == "w:profile:picture":
+              self.onProfilePictureResult(entity)
+            else:
               self.onResult(entity)
 
     @ProtocolEntityCallback("message")
@@ -132,8 +156,6 @@ class AsyncLayer(YowInterfaceLayer):
     @ProtocolEntityCallback("notification")
     def onNotification(self, entity):
         pass
-        '''ack = OutgoingAckProtocolEntity(entity.getId(), "notification", entity.getType())
-        self.toLower(ack)'''
     
     @ProtocolEntityCallback("receipt")
     def onReceipt(self, entity):
@@ -230,8 +252,11 @@ class AsyncLayer(YowInterfaceLayer):
             if self.handle("onMediaReceived", [idx, jid, participant, caption, "vcard", card_data, None, None, broadcast]):            
                 self.toLower(receipt)
 
-    def onResult(self, entity):
+    def onProfilePictureResult(self, entity):
         idx = entity.getId()
-        print "idx %s" % idx
         pictureId = entity.getPictureId()
         self.handle("onProfileSetPictureSuccess", [idx, pictureId])
+
+    def onResult(self, entity):
+        idx = entity.getId()
+        pass
