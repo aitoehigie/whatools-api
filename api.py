@@ -17,7 +17,7 @@ import Bot
 reload(sys)
 sys.setdefaultencoding('utf8')
 
-BaseRequest.MEMFILE_MAX = 1.5 * 1024 * 1024 
+BaseRequest.MEMFILE_MAX = 10 * 1024 * 1024 
 
 running = {}
 uploads = {}
@@ -980,7 +980,7 @@ def media_vCard_post():
                     if token["key"] in runningTokens:
                       if token["push"] and token["key"] != key:
                         url = "https://api.wha.tools/v%s/?cId=%s&mId=%s" % (v, chat["_id"], msg["id"])
-                        pushRes = push(lId, token, "media_carbon", {"messageId": idx, "jid": to, "type": type, "name": name, "url": url, "timestamp": stamp})
+                        pushRes = push(lId, token, "media_carbon", {"messageId": idx, "jid": to, "type": type, "caption": name, "url": url, "timestamp": stamp})
                         if pushRes:
                           print pushRes.read()
               else:
@@ -1040,13 +1040,14 @@ def media_location_get():
     
 @route("/media/picture", method="POST")
 def media_picture_post():
+  q = queue.Queue()
   res = {"success": False}
   key = request.params.key
   to = request.params.to
   body = request.params.caption.encode('utf8','replace') if request.params.caption else None
   broadcast = request.params.broadcast
   honor = request.params.honor
-  upload = request.files.get('file')
+  upload = request.files.get('attachment')
   msgId = False
   if key:
     line = Lines.find_one({"tokens": {"$elemMatch": {"key": key}}})
@@ -1067,12 +1068,58 @@ def media_picture_post():
                 path = "%s/%s" % (folder, upload.filename)
                 if not os.path.exists(folder):
                   os.makedirs(folder)
-                upload.save(path, overwrite = True)
+                content = upload.file.read()
+                if "Content-Encoding" in request.headers:
+                  if request.headers["Content-Encoding"] == "base64":
+                    content = base64.b64decode(content)
+                  else:
+                    res["error"] = "wrong-encoding"   
+                with open(path, 'w') as open_file:
+                  open_file.write(content)
                 def success(resultEntity, requestEntity):
                   def uploadSuccess(path, to, url):
-                    idx = wa.call("media_send", ["image", path, to, url, signedBody])
+                    media = wa.call("media_send", ["image", path, to, url, signedBody])
                     os.remove(path)
-                    logger(lId, "mediaPicturePostProgress", {"success": True})
+                    if media:
+                      res["result"] = media
+                      res["success"] = True
+                      chat = Chats.find_one({"from": lId, "to": to})
+                      stamp = long(time.time()*1000)
+                      media["preview"] = base64.b64encode(media["preview"]) if "preview" in media else None
+                      idx = media["idx"]
+                      del media["idx"]
+                      msg = {
+                        "id": idx,
+                        "mine": True,
+                        "body": body,
+                        "stamp": stamp,
+                        "ack": "sent",
+                        "media": media
+                      }
+                      if chat:
+                        # Push it
+                        Chats.update({"from": lId, "to": to}, {"$push": {"messages": msg}, "$set": {"lastStamp": stamp, "unread": 0}});
+                      else:
+                        # Create new chat
+                        Chats.insert({
+                          "_id": str(objectid.ObjectId()),
+                          "from": lId,
+                          "to": to,
+                          "messages": [msg],
+                          "lastStamp": stamp
+                        })
+                      runningTokens = running[line["_id"]]["tokens"]
+                      for token in line["tokens"]:
+                        if token["key"] in runningTokens:
+                          if token["push"] and token["key"] != key:
+                            pushRes = push(lId, token, "media_carbon", {"messageId": idx, "jid": to, "type": type, "caption": body, "url": url, "timestamp": stamp})
+                            if pushRes:
+                              print pushRes.read()
+                      logger(lId, "mediaPicturePostProgress", {"success": True})
+                    else:
+                      res["error"] = "unsupported-type"
+                    q.put(json.dumps(res))
+                    q.put(StopIteration)
                   def uploadError(path, to, url):
                     os.remove(path)
                     logger(lId, "mediaPicturePostProgress", {"success": False, "error": "upload-error"})
@@ -1104,7 +1151,10 @@ def media_picture_post():
       res["error"] = "no-line-matches-key"
   else:
     res["error"] = "no-key"
-  return res
+  if "error" in res:
+    q.put(json.dumps(res))
+    q.put(StopIteration)
+  return q
   
 '''
 

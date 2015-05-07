@@ -82,12 +82,19 @@ class AsyncLayer(YowInterfaceLayer):
     methods['media_upload_request'] = media_upload_request
 
     def media_send(self, type, path, to, url, ip = None, caption = None):
+        media = {"type": type}
         to = self.normalizeJid(to)
-        if type == "image":
-          entity = ImageDownloadableMediaMessageProtocolEntity.fromFilePath(path, url, ip, to, caption = caption)
-        print entity
-        self.toLower(entity)
-        return entity.getId()
+        if type in ["image"]:
+          if type == "image":
+            entity = ImageDownloadableMediaMessageProtocolEntity.fromFilePath(path, url, ip, to, caption = caption)
+            media["preview"] = entity.getPreview()
+          media["size"] = entity.getMediaSize()
+          media["url"] = entity.getMediaUrl()
+          media["idx"] = entity.getId()
+          self.toLower(entity)
+          return media
+        else:
+          return False
     methods['media_send'] = media_send
     
     def presence_sendAvailable(self, nickname):
