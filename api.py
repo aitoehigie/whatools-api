@@ -321,12 +321,12 @@ def onMediaReceived(wa, messageId, jid, participant, caption, type, preview, url
       if token["key"] in runningTokens:
         if token["push"]:
           if type == "location":
-            pushData = {"messageId": messageId, "jid": jid, "type": type, "preview": preview, "latitude": url, "longitude": size, "timestamp": stamp}
+            pushData = {"messageId": messageId, "jid": jid, "type": type, "preview": base64.b64encode(preview), "latitude": url, "longitude": size, "timestamp": stamp}
           elif type == "vcard":
             url = "https://api.wha.tools/v%s/?cId=%s&mId=%s" % (v, chat["_id"], msg["id"])
             pushData = {"messageId": messageId, "jid": jid, "type": type, "name": caption, "url": url, "timestamp": stamp}
           else:
-            pushData = {"messageId": messageId, "jid": jid, "type": type, "preview": preview, "url": url, "size": size, "timestamp": stamp}
+            pushData = {"messageId": messageId, "jid": jid, "type": type, "preview": base64.b64encode(preview), "url": url, "size": size, "timestamp": stamp}
           if participant:
             pushData["participant"] = participant
           if isBroadCast:
