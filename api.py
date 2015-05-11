@@ -153,32 +153,33 @@ def botify(wa, msg, pn):
       pass
     else:
       answer = res.read()
-      msgId = wa.call("message_send", (to, messageSign(answer, wa.line)))
-      msg = {
-        "id": msgId,
-        "mine": True,
-        "body": answer,
-        "stamp": stamp,
-        "ack": "sent"
-      }
-      if chat:
-        Chats.update({"from": wa.line["_id"], "to": to}, {"$set": {"folder": "inbox"}, "$push": {"messages": msg}, "$set": {"lastStamp": stamp}})
-      else:
-        Chats.insert({
-          "_id": str(objectid.ObjectId()),
-          "from": wa.line["_id"],
-          "to": to,
-          "messages": [msg],
-          "lastStamp": stamp,
-          "alias": False
-        })
-      runningTokens = running[wa.line["_id"]]["tokens"]
-      for token in wa.line["tokens"]:
-        if token["key"] in runningTokens:
-          if token["push"]:
-            pushRes = push(wa.line["_id"], token, "carbon", {"messageId": msgId, "jid": to, "messageContent": answer, "timestamp": stamp})
-            if pushRes:
-              print pushRes.read()
+      if len(answer):
+        msgId = wa.call("message_send", (to, messageSign(answer, wa.line)))
+        msg = {
+          "id": msgId,
+          "mine": True,
+          "body": answer,
+          "stamp": stamp,
+          "ack": "sent"
+        }
+        if chat:
+          Chats.update({"from": wa.line["_id"], "to": to}, {"$set": {"folder": "inbox"}, "$push": {"messages": msg}, "$set": {"lastStamp": stamp}})
+        else:
+          Chats.insert({
+            "_id": str(objectid.ObjectId()),
+            "from": wa.line["_id"],
+            "to": to,
+            "messages": [msg],
+            "lastStamp": stamp,
+            "alias": False
+          })
+        runningTokens = running[wa.line["_id"]]["tokens"]
+        for token in wa.line["tokens"]:
+          if token["key"] in runningTokens:
+            if token["push"]:
+              pushRes = push(wa.line["_id"], token, "carbon", {"messageId": msgId, "jid": to, "messageContent": answer, "timestamp": stamp})
+              if pushRes:
+                print pushRes.read()
     
   actions = {
     'answer': action_answer,
