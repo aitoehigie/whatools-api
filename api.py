@@ -38,7 +38,7 @@ storage = "/var/waapi/storage/"
 
 def logger(lId, event, data={}):
   if lId and event:
-    Logs.insert({"line": lId, "stamp": long(time.time())*1000, "event": event, "data": data})
+    Logs.insert({"line": lId, "stamp": int(time.time())*1000, "event": event, "data": data})
 
 def unbottle(data):
   dataDict = {}
@@ -57,7 +57,7 @@ def botify(wa, msg, pn):
   def action_answer(msg, payload):
     to = msg["from"]
     body = payload.encode('utf8','replace')
-    stamp = long(time.time()*1000)
+    stamp = int(time.time()*1000)
     chat = Chats.find_one({"from": wa.line["_id"], "to": to})
     msgId = wa.call("message_send", (msg["from"], messageSign(body, wa.line)))
     msg = {
@@ -81,7 +81,7 @@ def botify(wa, msg, pn):
     canned = next((x for x in wa.line["canned"] if x["id"] == payload), "")
     if canned and len(canned):
       body = canned["body"].encode('utf8','replace')
-      stamp = long(time.time()*1000)
+      stamp = int(time.time()*1000)
       chat = Chats.find_one({"from": wa.line["_id"], "to": to})
       msgId = wa.call("message_send", (msg["from"], messageSign(body, line)))
       msg = {
@@ -135,7 +135,7 @@ def botify(wa, msg, pn):
   def action_post(msg, payload):
     to = msg["from"]
     url = payload
-    stamp =  long(time.time()*1000)
+    stamp =  int(time.time()*1000)
     chat = Chats.find_one({"from": wa.line["_id"], "to": to})
     data = {
       "body": msg["body"]
@@ -246,7 +246,7 @@ def recover(lines=False):
   return
 
 def lineIsNotExpired(line):
-  now = long(time.time()*1000)
+  now = int(time.time()*1000)
   return now < int(line["expires"])
   
 def messageSign(text, line):
@@ -322,7 +322,7 @@ def onDisconnected(wa, reason):
 def onMediaReceived(wa, messageId, jid, participant, caption, type, preview, url, size, isBroadCast):
   to = jid.split("@")[0]
   chat = Chats.find_one({"from": wa.line["_id"], "to": to})
-  stamp = long(time.time())*1000
+  stamp = int(time.time())*1000
   msg = {
     "id": messageId,
     "mine": False,
@@ -388,7 +388,7 @@ def onMediaReceived(wa, messageId, jid, participant, caption, type, preview, url
 def onMessageReceived(wa, messageId, jid, participant, messageContent, timestamp, pushName, isBroadCast):
   to = jid.split("@")[0]
   chat = Chats.find_one({"from": wa.line["_id"], "to": to})
-  stamp = long(timestamp)*1000
+  stamp = int(timestamp)*1000
   msg = {
     "id": messageId,
     "mine": False,
@@ -445,7 +445,11 @@ def onPing(wa, pingId):
     del running[line["_id"]]
   else:
     logger(line["_id"], "onPing", [pingId])
-  
+    
+def onPresence(wa, _type, _from, last):
+  if last is not None:
+    Chats.update({"to": from}, {"$set": {"lastSeen": int(last)}})
+
 def onProfileSetPictureError(wa, idx, errorCode):
   if idx in uploads:
     allTokens = Lines.find_one({"_id": wa.line["_id"]})["tokens"]
@@ -490,6 +494,7 @@ eventHandler = {
   "onMediaReceived": onMediaReceived,
   "onMessageReceived": onMessageReceived,
   "onPing": onPing,
+  "onPresence": onPresence,
   "onProfileSetPictureError": onProfileSetPictureError,
   "onProfileSetPictureSuccess": onProfileSetPictureSuccess,
   "onProfileSetStatusSuccess": onProfileSetStatusSuccess
@@ -526,7 +531,7 @@ def message_post():
                   res["result"] = msgId
                   res["success"] = True
                   chat = Chats.find_one({"from": lId, "to": to})
-                  stamp = long(time.time()*1000)
+                  stamp = int(time.time()*1000)
                   msg = {
                     "id": msgId,
                     "mine": True,
@@ -765,8 +770,8 @@ def unsubscribe():
 def history():
   res = {"success": False}
   key = request.params.key
-  start = request.params.start or long(0)
-  end = request.params.end or long(time.time()*1000)
+  start = request.params.start or int(0)
+  end = request.params.end or int(time.time()*1000)
   if key:
     line = Lines.find_one({"tokens": {"$elemMatch": {"key": key}}})
     if line:
@@ -786,7 +791,7 @@ def history():
           myChats = Chats.find({"from": lId})
           for chat in myChats:
             for message in chat["messages"]:
-              if long(message["stamp"]) >= long(start) and long(message["stamp"]) <= long(end):
+              if int(message["stamp"]) >= int(start) and int(message["stamp"]) <= int(end):
                 message["from"] = line["cc"] + line["pn"]
                 message["to"] = chat["to"]
                 obj["messages"].append(message)
@@ -1001,7 +1006,7 @@ def media_vCard_post():
                   res["result"] = idx
                   res["success"] = True
                   chat = Chats.find_one({"from": lId, "to": to})
-                  stamp = long(time.time()*1000)
+                  stamp = int(time.time()*1000)
                   msg = {
                     "id": idx,
                     "mine": True,
@@ -1134,7 +1139,7 @@ def media_picture_post():
                       res["result"] = media
                       res["success"] = True
                       chat = Chats.find_one({"from": lId, "to": to})
-                      stamp = long(time.time()*1000)
+                      stamp = int(time.time()*1000)
                       media["preview"] = base64.b64encode(media["preview"]) if "preview" in media else None
                       idx = media["idx"]
                       del media["idx"]
