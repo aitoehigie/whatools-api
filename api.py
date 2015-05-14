@@ -448,7 +448,8 @@ def onPing(wa, pingId):
     
 def onPresence(wa, _type, _from, last):
   if last is not None:
-    Chats.update({"to": _from}, {"$set": {"lastSeen": int(last)}})
+    to = _from.split("@")[0]
+    Chats.update({"to": to}, {"$set": {"lastSeen": int(last)}})
 
 def onProfileSetPictureError(wa, idx, errorCode):
   if idx in uploads:
