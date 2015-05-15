@@ -18,7 +18,8 @@ import logging
 logging.basicConfig(level=logging.DEBUG)
 
 class YowsupAsyncStack(object):
-    def __init__(self, credentials, line, token, eventHandlers, logger, cb):
+    def __init__(self, line, token, eventHandlers, logger, cb):
+        credentials = [line["cc"] + line["pn"], line["pass"]]
         layers = (
             AsyncLayer,
             YowParallelLayer(YOWSUP_PROTOCOL_LAYERS_FULL),
@@ -47,11 +48,10 @@ class YowsupAsyncStack(object):
         try:
             self.stack.loop()
         except AuthError as e:
-            print("Authentication Error: %s" % e.message)
-            return "auth-error"
+             self.stack.getProp(AsyncLayer.CB)(self, False)
             
     def logout(self):
         return self.call("logout", [])
             
-    def call(self, method, params):
-        return self.layer.call(method, params)
+    def call(self, method, params, success = None, fail = None):
+        return self.layer.call(method, params, success, fail)

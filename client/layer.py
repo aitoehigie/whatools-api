@@ -109,11 +109,11 @@ class AsyncLayer(YowInterfaceLayer):
         return iq.getId()
     methods['profile_setStatus'] = profile_setStatus
     
-    def profile_setPicture(self, pictureData, previewData):
+    def profile_setPicture(self, pictureData, previewData, success, error):
         iq = PictureIqProtocolEntity(self.normalizeJid("%s%s" % (self.line["cc"], self.line["pn"])), type="set")
         iq.setPictureData(pictureData)
         iq.setPreviewData(previewData)
-        self.toLower(iq)
+        self._sendIq(iq, success, error)
         return iq.getId()
     methods['profile_setPicture'] = profile_setPicture
     
