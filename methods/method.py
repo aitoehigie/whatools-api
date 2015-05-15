@@ -1,5 +1,6 @@
 import json
 from gevent import queue
+from threading import Timer
 from helpers.bot import *
 from helpers.tools import *
 
@@ -31,6 +32,7 @@ class method(object):
     
     self.error = False
     self.queue = queue.Queue()
+    self.timer = Timer(15.0, self._die, ("timeout"))
     
     self._check()
     
@@ -72,10 +74,12 @@ class method(object):
       obj["result"] = res
     self.queue.put(json.dumps(obj))
     self.queue.put(StopIteration)
+    self.timer.cancel()
     
   def _die(self, error):
     self.queue.put(json.dumps({"success": False, "error": error}))
     self.queue.put(StopIteration)
+    self.timer.cancel()
     
   def push(self, method, data):
     runningTokens = self.running[self.line["_id"]]["tokens"]
