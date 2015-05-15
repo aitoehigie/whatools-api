@@ -21,7 +21,7 @@ class mediaPicturePostMethod(method):
     broadcast = self.params.broadcast
     if not honor:
       to = phoneFormat(self.line["cc"], to)
-    folder =  "%stemp/%s" % (storage, to)
+    folder =  "%stemp/%s" % (g.storage, to)
     path = "%s/%s" % (folder, upload.filename)
     if not os.path.exists(folder):
       os.makedirs(folder)

@@ -1,5 +1,5 @@
 from method import method
-from helpers import db
+from helpers import *
 from PIL import Image
 import time
 
@@ -26,7 +26,7 @@ class avatarPostMethod(method):
     
     src = self.params.src
     name = "avatars/%s%s-%s.jpg" % (self.line["cc"], self.line["pn"], str(int(time.time())))
-    path = storage + name
+    path = g.storage + name
     f = open(path, "wb")
     f.write(src.decode('base64'))
     f.close()
