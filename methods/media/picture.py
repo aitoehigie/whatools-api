@@ -38,8 +38,10 @@ class mediaPicturePostMethod(method):
       self._log("mediaPicturePostProgress")
       
       def uploadSuccess(path, to, url):
-        media = self.wa.call("media_send", ["image", path, to, url, caption])
         chat = db.Chats.find_one({"from": self.line["_id"], "to": to})
+        if chat and not len(chat["messages"]):
+          self.wa.call("presence_subscribe", [to])
+        media = self.wa.call("media_send", ["image", path, to, url, caption])
         stamp = int(time.time() * 1000)
         media["preview"] = media["preview"].encode("base64") if "preview" in media else None
         msgId = media["idx"]
@@ -48,7 +50,6 @@ class mediaPicturePostMethod(method):
         if chat:
           db.Chats.update({"from": self.line["_id"], "to": to}, {"$push": {"messages": msg}, "$set": {"lastStamp": stamp, "unread": 0}});
         else:
-          #self.wa.call("subscribe", [to])
           db.Chats.insert({"_id": str(objectid.ObjectId()), "from": self.line["_id"], "to": to, "messages": [msg], "lastStamp": stamp})
         self.push("media_carbon", {"messageId": msgId, "jid": to, "caption": caption, "timestamp": stamp, "isBroadCast": broadcast})
         self._success()

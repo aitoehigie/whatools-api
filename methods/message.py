@@ -19,15 +19,16 @@ class messagePostMethod(method):
     broadcast = self.params.broadcast
     if not self.params.honor:
       to = phoneFormat(self.line["cc"], to)
+    chat = db.Chats.find_one({"from": self.line["_id"], "to": to})
+    if chat and not len(chat["messages"]):
+      self.wa.call("presence_subscribe", [to])
     msgId = self.wa.call("message_send", [to, signedBody])
     if msgId:
       self._success(msgId)
       stamp = int(time.time() * 1000)
       msg = {"id": msgId, "mine": True, "body": body, "stamp": stamp, "ack": "sent"}
-      chat = db.Chats.find_one({"from": self.line["_id"], "to": to})
       if chat:
         db.Chats.update({"from": self.line["_id"], "to": to}, {"$push": {"messages": msg}, "$set": {"lastStamp": stamp, "unread": 0}})
       else:
-        #self.wa.call("subscribe", [to])
         db.Chats.insert({"_id": str(objectid.ObjectId()), "from": self.line["_id"], "to": to, "messages": [msg], "lastStamp": stamp, "folder": "inbox"})
       self.push("carbon", {"messageId": msgId, "jid": to, "messageContent": body, "timestamp": stamp, "isBroadCast": broadcast})

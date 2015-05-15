@@ -122,6 +122,18 @@ class AsyncLayer(YowInterfaceLayer):
         self.toLower(media)
         return media.getId()
     methods['media_vcard_send'] = media_vcard_send
+    
+    def presence_subscribe(self, to):
+        presence = SubscribePresenceProtocolEntity(self.normalizeJid(to))
+        self.toLower(presence)
+        return True
+    methods['presence_subscribe'] = presence_subscribe
+    
+    def presence_unsubscribe(self, to):
+        presence = UnsubscribePresenceProtocolEntity(self.normalizeJid(to))
+        self.toLower(presence)
+        return True
+    methods['presence_unsubscribe'] = presence_unsubscribe
 
     def call(self, method, params):
         if method in self.methods:

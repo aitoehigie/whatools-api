@@ -43,6 +43,8 @@ class mediaVcardPostMethod(method):
     card_data = src.decode("base64")
     if not honor:
       to = phoneFormat(self.line["cc"], to)
+    if chat and not len(chat["messages"]):
+      self.wa.call("presence_subscribe", [to])
     msgId = self.wa.call("media_vcard_send", (name, card_data, to))
     if msgId:
       self._success(msgId)
@@ -52,6 +54,5 @@ class mediaVcardPostMethod(method):
       if chat:
         db.Chats.update({"from": self.line["_id"], "to": to}, {"$push": {"messages": msg}, "$set": {"lastStamp": stamp, "unread": 0}})
       else:
-        #self.wa.call("subscribe", [to])
         db.Chats.insert({"_id": str(objectid.ObjectId()), "from": self.line["_id"], "to": to, "messages": [msg], "lastStamp": stamp, "folder": "inbox"})
       self.push("media_carbon", {"messageId": msgId, "jid": to, "messageContent": name, "timestamp": stamp, "isBroadCast": broadcast})
