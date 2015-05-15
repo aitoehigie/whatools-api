@@ -53,5 +53,5 @@ class YowsupAsyncStack(object):
     def logout(self):
         return self.call("logout", [])
             
-    def call(self, method, params, success = None, fail = None):
-        return self.layer.call(method, params, success, fail)
+    def call(self, method, params):
+        return self.layer.call(method, params)
