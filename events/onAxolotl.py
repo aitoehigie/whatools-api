@@ -1,6 +1,6 @@
 import gevent
 from helpers import *
-from events import *
+from events import eventHandler
 from client.stack import YowsupAsyncStack
 
 def onAxolotlReady(wa):
