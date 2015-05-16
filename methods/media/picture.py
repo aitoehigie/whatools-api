@@ -46,7 +46,7 @@ class mediaPicturePostMethod(method):
         media["preview"] = media["preview"].encode("base64") if "preview" in media else None
         msgId = media["idx"]
         del media["idx"]
-        msg = {"id": idx, "mine": True, "body": caption, "stamp": stamp, "ack": "sent", "media": media}
+        msg = {"id": msgId, "mine": True, "body": caption, "stamp": stamp, "ack": "sent", "media": media}
         if chat:
           db.Chats.update({"from": self.line["_id"], "to": to}, {"$push": {"messages": msg}, "$set": {"lastStamp": stamp, "unread": 0}});
         else:
