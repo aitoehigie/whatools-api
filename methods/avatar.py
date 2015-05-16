@@ -33,5 +33,5 @@ class avatarPostMethod(method):
     src = Image.open(path)
     pictureData = bytearray(src.resize((640, 640)).tostring("jpeg", "RGB"))
     previewData = bytearray(src.resize((96, 96)).tostring("jpeg", "RGB"))
-    idx = wa.call("profile_setPicture", [pictureData, previewData, success, fail])
+    idx = self.wa.call("profile_setPicture", [pictureData, previewData, success, fail])
     self.src = name
