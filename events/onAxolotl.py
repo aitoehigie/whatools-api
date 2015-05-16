@@ -1,5 +1,5 @@
 import gevent
-from helpers.tools import *
+from helpers.g, helpers.tools import *
 from client.stack import YowsupAsyncStack
 from client.layer import AsyncLayer
 
