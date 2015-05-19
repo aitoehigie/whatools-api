@@ -1,0 +1,1091 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta content="IE=edge,chrome=1" http-equiv="X-UA-Compatible">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>Whatools v2 REST API Reference</title>
+
+    <link href="stylesheets/screen.css" rel="stylesheet" type="text/css" media="screen" />
+    <link href="stylesheets/print.css" rel="stylesheet" type="text/css" media="print" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+      <script src="javascripts/all.js" type="text/javascript"></script>
+
+      <script>
+        $(function() {
+          setupLanguages(["shell","python","php"]);
+        });
+      </script>
+  </head>
+
+  <body class="index">
+    <a href="#" id="nav-button">
+      <span>
+        NAV
+        <img src="images/navbar.png" />
+      </span>
+    </a>
+    <div class="tocify-wrapper">
+      <img src="images/logo.png" />
+        <div class="lang-selector">
+              <a href="#" data-language-name="shell">shell</a>
+              <a href="#" data-language-name="python">python</a>
+              <a href="#" data-language-name="php">php</a>
+        </div>
+        <div class="search">
+          <input type="text" class="search" id="input-search" placeholder="Search">
+        </div>
+        <ul class="search-results"></ul>
+      <div id="toc">
+      </div>
+        <ul class="toc-footer">
+            <li><a href='https://wha.tools'>Sign Up for an App Access Key</a></li>
+            <li><a href='http://github.com/tripit/slate'>Documentation Powered by Slate</a></li>
+        </ul>
+    </div>
+    <div class="page-wrapper">
+      <div class="dark-box"></div>
+      <div class="content">
+        <h1 id="introduction">Introduction</h1>
+
+<blockquote>
+<p>As you read this reference, code examples in the programming language you choose with the tabs in the top will appear here.</p>
+
+<p>Right under the code examples you will find example success responses.</p>
+
+<p>Unsuccesful responses are covered in the &ldquo;Errors&rdquo; section at the end of this reference.</p>
+</blockquote>
+
+<p>You can use our API to send and receive WhatsApp text and multimedia messages as well as many other WhatsApp account management routines.</p>
+
+<p>We have examples and language bindings in Shell, Python and PHP. You can view them in the dark area to the right, and you can switch the programming language of the examples with the tabs in the top right.</p>
+
+<p>All requests must be made over HTTPS. Any HTTP requests are met with a HTTP 302 to its HTTPS equivalent.</p>
+
+<h1 id="authentication">Authentication</h1>
+
+<p>Connecting to WhatsApp by using our API is pretty straightforward.</p>
+
+<p>But there are some important details you need to know first:</p>
+
+<p>Our API allows several applications to manage a single WhatsApp account at the same time. We use WebHooks to forward incoming events (messages, notifications, carbon copies, etc.) to your apps. This means when one of those events is triggered, we will send a HTTP POST payload to your app&rsquo;s configured webhook endpoint URL.</p>
+
+<p>To make sure every event is succesfully forwarded to your app, it is <strong>very important</strong> that you:</p>
+
+<ul>
+<li><strong>Subscribe</strong> your app to start receiving events and be able to send messages.</li>
+<li><em>(Only if your app has a disconnect option):</em> <strong>Unsubscribe</strong> your app once you have finished using it. This will log you out from WhatsApp&rsquo;s servers, you will appear offline and new events will be held by WhatsApp until you subscribe your app once again and connection to WhatsApp is resumed.</li>
+</ul>
+
+<aside class="notice">
+Every method in this API requires the <code>key</code> parameter, which is your app&rsquo;s access key.
+</aside>
+
+<h2 id="subscribe">Subscribe</h2>
+
+<p>Subscribing an app is as easy as ABC.</p>
+<pre class="highlight shell"><code>curl <span class="s2">"https://wha.tools/v2/subscribe?key=bedfcfae-6c45-40d5-c56f"</span>
+</code></pre>
+<pre class="highlight python"><code><span class="kn">import</span> <span class="nn">whatools</span>
+
+<span class="n">api</span> <span class="o">=</span> <span class="n">whatools</span><span class="o">.</span><span class="n">subscribe</span><span class="p">(</span><span class="s">'2'</span><span class="p">,</span> <span class="s">'bedfcfae-6c45-40d5-c56f'</span><span class="p">)</span>
+</code></pre>
+<pre class="highlight php"><code><span class="cp">&lt;?php</span>
+<span class="k">require</span> <span class="s1">'whatools.inc.php'</span><span class="p">;</span>
+
+<span class="nv">$api</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Whatools</span><span class="p">(</span><span class="s1">'2'</span><span class="p">);</span>
+<span class="nv">$api</span><span class="o">-&gt;</span><span class="na">subscribe</span><span class="p">(</span><span class="s1">'bedfcfae-6c45-40d5-c56f'</span><span class="p">);</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+<pre class="highlight json"><code><span class="p">{</span><span class="w">
+  </span><span class="s2">"success"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">
+  </span><span class="s2">"result"</span><span class="p">:</span><span class="w"> 
+    </span><span class="p">{</span><span class="w">
+      </span><span class="s2">"status"</span><span class="p">:</span><span class="w"> </span><span class="s2">"active"</span><span class="p">,</span><span class="w"> 
+      </span><span class="s2">"kind"</span><span class="p">:</span><span class="w"> </span><span class="s2">"free"</span><span class="p">,</span><span class="w"> 
+      </span><span class="s2">"cc"</span><span class="p">:</span><span class="w"> </span><span class="s2">"34"</span><span class="p">,</span><span class="w"> 
+      </span><span class="s2">"pn"</span><span class="p">:</span><span class="w"> </span><span class="s2">"663163375"</span><span class="p">,</span><span class="w"> 
+      </span><span class="s2">"t"</span><span class="p">:</span><span class="w"> </span><span class="mi">1431776860</span><span class="p">,</span><span class="w"> 
+      </span><span class="s2">"creation"</span><span class="p">:</span><span class="w"> </span><span class="mi">1420679945</span><span class="p">,</span><span class="w"> 
+      </span><span class="s2">"api_expiration"</span><span class="p">:</span><span class="w"> </span><span class="mi">1432168433</span><span class="p">,</span><span class="w"> 
+      </span><span class="s2">"expiration"</span><span class="p">:</span><span class="w"> </span><span class="mi">1452215945</span><span class="w">
+    </span><span class="p">}</span><span class="w"> 
+</span><span class="p">}</span><span class="w">
+</span></code></pre>
+
+<h3 id="http-request">HTTP Request</h3>
+
+<p><code class="prettyprint">GET https://api.wha.tools/v2/subscribe</code></p>
+
+<h3 id="query-parameters">Query Parameters</h3>
+
+<table><thead>
+<tr>
+<th>Parameter</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td><code class="prettyprint">key</code></td>
+<td>✓</td>
+<td>Your app&rsquo;s access key.</td>
+</tr>
+</tbody></table>
+
+<h3 id="success-parameters">Success Parameters</h3>
+
+<table><thead>
+<tr>
+<th>Parameter</th>
+<th>Static values</th>
+<th>Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td><code class="prettyprint">status</code></td>
+<td><code class="prettyprint">active</code> <code class="prettyprint">existing</code> <code class="prettyprint">new</code></td>
+<td>WhatsApp registration status</td>
+</tr>
+<tr>
+<td><code class="prettyprint">kind</code></td>
+<td><code class="prettyprint">free</code> <code class="prettyprint">paid</code></td>
+<td>WhatsApp payment status</td>
+</tr>
+<tr>
+<td><code class="prettyprint">cc</code></td>
+<td></td>
+<td>Country code</td>
+</tr>
+<tr>
+<td><code class="prettyprint">pn</code></td>
+<td></td>
+<td>Phone number</td>
+</tr>
+<tr>
+<td><code class="prettyprint">t</code></td>
+<td></td>
+<td>WhatsApp last login</td>
+</tr>
+<tr>
+<td><code class="prettyprint">creation</code></td>
+<td></td>
+<td>WhatsApp account creation date</td>
+</tr>
+<tr>
+<td><code class="prettyprint">expiration</code></td>
+<td></td>
+<td>WhatsApp account expiration date</td>
+</tr>
+<tr>
+<td><code class="prettyprint">api_expiration</code></td>
+<td></td>
+<td>Whatools service expiration date</td>
+</tr>
+</tbody></table>
+
+<h2 id="unsubscribe">Unsubscribe</h2>
+
+<p>The process of unsubscribing an app is very similar to subscribing.</p>
+<pre class="highlight shell"><code>curl <span class="s2">"https://wha.tools/v2/unsubscribe?key=bedfcfae-6c45-40d5-c56f"</span>
+</code></pre>
+<pre class="highlight python"><code><span class="n">api</span><span class="o">.</span><span class="n">unsubscribe</span><span class="p">()</span>
+</code></pre>
+<pre class="highlight php"><code><span class="cp">&lt;?php</span>
+<span class="nv">$api</span><span class="o">-&gt;</span><span class="na">unsubscribe</span><span class="p">();</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+<pre class="highlight json"><code><span class="p">{</span><span class="w">
+  </span><span class="s2">"success"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre>
+
+<h3 id="http-request">HTTP Request</h3>
+
+<p><code class="prettyprint">GET https://api.wha.tools/v2/unsubscribe</code></p>
+
+<h3 id="query-parameters">Query Parameters</h3>
+
+<table><thead>
+<tr>
+<th>Parameter</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td><code class="prettyprint">key</code></td>
+<td>✓</td>
+<td>Your app&rsquo;s access key.</td>
+</tr>
+</tbody></table>
+
+<h1 id="messages">Messages</h1>
+
+<h2 id="send-text-message">Send text message</h2>
+
+<p>You can send messages to any WhatsApp user by using this <code class="prettyprint">POST</code> method. Note that the your app must have been previously subscribed in order to work properly.</p>
+<pre class="highlight shell"><code>curl <span class="s2">"https://wha.tools/v2/message?key=bedfcfae-6c45-40d5-c56f&amp;to=638265868&amp;body=Hello%20world!"</span>
+</code></pre>
+<pre class="highlight python"><code><span class="n">api</span><span class="o">.</span><span class="n">message</span><span class="p">(</span><span class="s">'638265868'</span><span class="p">,</span> <span class="s">'Hello world!'</span><span class="p">)</span>
+</code></pre>
+<pre class="highlight php"><code><span class="cp">&lt;?php</span>
+<span class="nv">$api</span><span class="o">-&gt;</span><span class="na">message</span><span class="p">(</span><span class="s1">'638265868'</span><span class="p">,</span> <span class="s1">'Hello world!'</span><span class="p">);</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+<pre class="highlight shell"><code><span class="c"># Tip: if the phone number is already in international format, </span>
+<span class="c"># you can use the `honor` parameter to tell our system to </span>
+<span class="c"># leave it as is and not to format it again.</span>
+curl -X POST <span class="s2">"https://wha.tools/v2/message?key=bedfcfae-6c45-40d5-c56f&amp;to=34638265868&amp;body=Hello%20world!&amp;honor=true"</span>
+</code></pre>
+<pre class="highlight python"><code><span class="c"># Tip: if the phone number is already in international format, </span>
+<span class="c"># you can use the `honor` parameter to tell our system to </span>
+<span class="c"># leave it as is and not to format it again.</span>
+<span class="n">api</span><span class="o">.</span><span class="n">message</span><span class="p">(</span><span class="s">'34638265868'</span><span class="p">,</span> <span class="s">'Hello world!'</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span>
+</code></pre>
+<pre class="highlight php"><code>/* Tip: if the phone number is already in international format, 
+ you can use the `honor` parameter to tell our system to 
+ leave it as is and not to format it again. */
+<span class="cp">&lt;?php</span>
+<span class="nv">$api</span><span class="o">-&gt;</span><span class="na">message</span><span class="p">(</span><span class="s1">'34638265868'</span><span class="p">,</span> <span class="s1">'Hello world!'</span><span class="p">,</span> <span class="nx">True</span><span class="p">);</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+<pre class="highlight json"><code><span class="p">{</span><span class="w">
+  </span><span class="s2">"success"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre>
+
+<h3 id="http-request">HTTP Request</h3>
+
+<p><code class="prettyprint">POST https://api.wha.tools/v2/message</code></p>
+
+<h3 id="query-parameters">Query Parameters</h3>
+
+<table><thead>
+<tr>
+<th>Parameter</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td><code class="prettyprint">key</code></td>
+<td>✓</td>
+<td>Your app&rsquo;s access key.</td>
+</tr>
+<tr>
+<td><code class="prettyprint">to</code></td>
+<td>✓</td>
+<td>The message&rsquo;s addressee&rsquo;s phone number.</td>
+</tr>
+<tr>
+<td><code class="prettyprint">body</code></td>
+<td>✓</td>
+<td>The body of the message.</td>
+</tr>
+<tr>
+<td><code class="prettyprint">honor</code></td>
+<td></td>
+<td>(true/false) This flag prevents the phone number from being formatted again if it is already in international form.</td>
+</tr>
+</tbody></table>
+
+<aside class="notice">
+Note that success of this method DO imply receival of the message by WhatsApp servers (single tick ✓).
+</aside>
+
+<h2 id="send-vcard">Send vCard</h2>
+
+<p>You can send contacts in vCard format (.vcf) to any WhatsApp user by using this <code class="prettyprint">POST</code> method. Note that the your app must have been previously subscribed in order to work properly.</p>
+<pre class="highlight shell"><code><span class="nv">src</span><span class="o">=</span><span class="k">$(</span> base64 johndoe.vcf <span class="k">)</span>
+curl <span class="s2">"https://wha.tools/v2/media/vcard?key=bedfcfae-6c45-40d5-c56f&amp;to=638265868&amp;name=John%20Doe&amp;src=</span><span class="nv">$src</span><span class="s2">"</span>
+</code></pre>
+<pre class="highlight python"><code><span class="n">api</span><span class="o">.</span><span class="n">vcard</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s">'638265868'</span><span class="p">,</span> <span class="s">'johndoe.vcf'</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
+</code></pre>
+<pre class="highlight php"><code><span class="cp">&lt;?php</span>
+<span class="nv">$api</span><span class="o">-&gt;</span><span class="na">vcard</span><span class="o">-&gt;</span><span class="na">send</span><span class="p">(</span><span class="s1">'638265868'</span><span class="p">,</span> <span class="s1">'johndoe.vcf'</span><span class="p">,</span> <span class="s1">'John Doe'</span><span class="p">);</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+<pre class="highlight json"><code><span class="p">{</span><span class="w">
+  </span><span class="s2">"success"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre>
+
+<h3 id="http-request">HTTP Request</h3>
+
+<p><code class="prettyprint">POST https://api.wha.tools/v2/media/vcard</code></p>
+
+<h3 id="query-parameters">Query Parameters</h3>
+
+<table><thead>
+<tr>
+<th>Parameter</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td><code class="prettyprint">key</code></td>
+<td>✓</td>
+<td>Your app&rsquo;s access key.</td>
+</tr>
+<tr>
+<td><code class="prettyprint">to</code></td>
+<td>✓</td>
+<td>The message&rsquo;s addressee&rsquo;s phone number.</td>
+</tr>
+<tr>
+<td><code class="prettyprint">name</code></td>
+<td>✓</td>
+<td>The contact&rsquo;s preview name.</td>
+</tr>
+<tr>
+<td><code class="prettyprint">src</code></td>
+<td>✓</td>
+<td>The vCard file, encoded using base64. It must weight less than 1.5MB.</td>
+</tr>
+<tr>
+<td><code class="prettyprint">honor</code></td>
+<td></td>
+<td>(true/false) This flag prevents the phone number from being formatted again if it is already in international form.</td>
+</tr>
+</tbody></table>
+
+<h2 id="send-a-picture">Send a picture</h2>
+
+<p>You can send pictures to any WhatsApp user by using this <code class="prettyprint">POST</code> method. Note that the your app must have been previously subscribed in order to work properly.</p>
+<pre class="highlight shell"><code>curl -F <span class="s2">"attachment=@tajmahal.jpg"</span> <span class="s2">"https://wha.tools/v2/media/picture?key=bedfcfae-6c45-40d5-c56f&amp;to=638265868&amp;caption=The%20Taj%20Mahal"</span>
+</code></pre>
+<pre class="highlight python"><code><span class="n">api</span><span class="o">.</span><span class="n">picture</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s">'638265868'</span><span class="p">,</span> <span class="s">'tajmahal.jpg'</span><span class="p">,</span> <span class="s">'The Taj Mahal'</span><span class="p">)</span>
+</code></pre>
+<pre class="highlight php"><code><span class="cp">&lt;?php</span>
+<span class="nv">$api</span><span class="o">-&gt;</span><span class="na">picture</span><span class="o">-&gt;</span><span class="na">send</span><span class="p">(</span><span class="s1">'638265868'</span><span class="p">,</span> <span class="s1">'tajmahal.jpg'</span><span class="p">,</span> <span class="s1">'The Taj Mahal'</span><span class="p">);</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+<pre class="highlight json"><code><span class="p">{</span><span class="w">
+  </span><span class="s2">"success"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre>
+
+<h3 id="http-request">HTTP Request</h3>
+
+<p><code class="prettyprint">POST https://api.wha.tools/v2/media/vcard</code></p>
+
+<h3 id="query-parameters">Query Parameters</h3>
+
+<table><thead>
+<tr>
+<th>Parameter</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td><code class="prettyprint">key</code></td>
+<td>✓</td>
+<td>Your app&rsquo;s access key.</td>
+</tr>
+<tr>
+<td><code class="prettyprint">to</code></td>
+<td>✓</td>
+<td>The message&rsquo;s addressee&rsquo;s phone number.</td>
+</tr>
+<tr>
+<td><code class="prettyprint">caption</code></td>
+<td></td>
+<td>An optional description to be sent along the picture.</td>
+</tr>
+<tr>
+<td><code class="prettyprint">honor</code></td>
+<td></td>
+<td>(true/false) This flag prevents the phone number from being formatted again if it is already in international form.</td>
+</tr>
+</tbody></table>
+
+<h3 id="multipart-fields">Multipart Fields</h3>
+
+<table><thead>
+<tr>
+<th>Parameter</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td><code class="prettyprint">attachment</code></td>
+<td>✓</td>
+<td>The picture file to be sent. Its size should not excess 10MB.</td>
+</tr>
+</tbody></table>
+
+<h1 id="nickname">Nickname</h1>
+
+<h2 id="get-my-nickname">Get my nickname</h2>
+
+<p>You can retrieve your WhatsApp account&rsquo;s nickname (pushname) by using this <code class="prettyprint">GET</code> method.</p>
+<pre class="highlight shell"><code>curl <span class="s2">"https://wha.tools/v2/nickname?key=bedfcfae-6c45-40d5-c56f"</span>
+</code></pre>
+<pre class="highlight python"><code><span class="n">nickname</span> <span class="o">=</span> <span class="n">api</span><span class="o">.</span><span class="n">nickname</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+</code></pre>
+<pre class="highlight php"><code><span class="cp">&lt;?php</span>
+<span class="nv">$nickname</span> <span class="o">=</span> <span class="nv">$api</span><span class="o">-&gt;</span><span class="na">nickname</span><span class="o">-&gt;</span><span class="na">get</span><span class="p">();</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+<pre class="highlight json"><code><span class="p">{</span><span class="w">
+  </span><span class="s2">"success"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">
+  </span><span class="s2">"result"</span><span class="p">:</span><span class="w"> </span><span class="s2">"John Doe"</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre>
+
+<h3 id="http-request">HTTP Request</h3>
+
+<p><code class="prettyprint">GET https://api.wha.tools/v2/nickname</code></p>
+
+<h3 id="query-parameters">Query Parameters</h3>
+
+<table><thead>
+<tr>
+<th>Parameter</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td><code class="prettyprint">key</code></td>
+<td>✓</td>
+<td>Your app&rsquo;s access key.</td>
+</tr>
+</tbody></table>
+
+<h2 id="set-my-nickname">Set my nickname</h2>
+
+<p>You can set your WhatsApp account&rsquo;s nickname (pushname) by using this <code class="prettyprint">POST</code> method.</p>
+<pre class="highlight shell"><code>curl -X POST <span class="s2">"https://wha.tools/v2/nickname?key=bedfcfae-6c45-40d5-c56f&amp;nickname=John%20Doe"</span>
+</code></pre>
+<pre class="highlight python"><code><span class="n">api</span><span class="o">.</span><span class="n">nickname</span><span class="o">.</span><span class="nb">set</span><span class="p">(</span><span class="s">'John Doe'</span><span class="p">)</span>
+</code></pre>
+<pre class="highlight php"><code><span class="cp">&lt;?php</span>
+<span class="nv">$api</span><span class="o">-&gt;</span><span class="na">nickname</span><span class="o">-&gt;</span><span class="na">set</span><span class="p">(</span><span class="s1">'John Doe'</span><span class="p">);</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+<pre class="highlight shell"><code><span class="c"># Tip: you can delete your nickname by making an empty request:</span>
+curl -X POST <span class="s2">"https://wha.tools/v2/nickname?key=bedfcfae-6c45-40d5-c56f&amp;nickname="</span>
+</code></pre>
+<pre class="highlight python"><code><span class="c"># Tip: you can delete your nickname by making an empty request:</span>
+<span class="n">api</span><span class="o">.</span><span class="n">nickname</span><span class="o">.</span><span class="nb">set</span><span class="p">()</span>
+</code></pre>
+<pre class="highlight php"><code><span class="cp">&lt;?php</span>
+<span class="c1">// Tip: you can delete your nickname by making an empty request:
+</span><span class="nv">$api</span><span class="o">-&gt;</span><span class="na">nickname</span><span class="o">-&gt;</span><span class="na">set</span><span class="p">();</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+<pre class="highlight json"><code><span class="p">{</span><span class="w">
+  </span><span class="s2">"success"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre>
+
+<h3 id="http-request">HTTP Request</h3>
+
+<p><code class="prettyprint">POST https://api.wha.tools/v2/nickname</code></p>
+
+<h3 id="query-parameters">Query Parameters</h3>
+
+<table><thead>
+<tr>
+<th>Parameter</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td><code class="prettyprint">key</code></td>
+<td>✓</td>
+<td>Your app&rsquo;s access key.</td>
+</tr>
+<tr>
+<td><code class="prettyprint">nickname</code></td>
+<td></td>
+<td>The text to be set as nickname.</td>
+</tr>
+</tbody></table>
+
+<h1 id="status-messages">Status messages</h1>
+
+<h2 id="get-my-status-message">Get my status message</h2>
+
+<p>You can retrieve your WhatsApp account&rsquo;s status message by using this <code class="prettyprint">GET</code> method.</p>
+<pre class="highlight shell"><code>curl <span class="s2">"https://wha.tools/v2/status?key=bedfcfae-6c45-40d5-c56f"</span>
+</code></pre>
+<pre class="highlight python"><code><span class="n">status</span> <span class="o">=</span> <span class="n">api</span><span class="o">.</span><span class="n">status</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+</code></pre>
+<pre class="highlight php"><code><span class="cp">&lt;?php</span>
+<span class="nv">$status</span> <span class="o">=</span> <span class="nv">$api</span><span class="o">-&gt;</span><span class="na">status</span><span class="o">-&gt;</span><span class="na">get</span><span class="p">();</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+<pre class="highlight json"><code><span class="p">{</span><span class="w">
+  </span><span class="s2">"success"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">
+  </span><span class="s2">"result"</span><span class="p">:</span><span class="w"> </span><span class="s2">"I think therefore I am"</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre>
+
+<h3 id="http-request">HTTP Request</h3>
+
+<p><code class="prettyprint">GET https://api.wha.tools/v2/status</code></p>
+
+<h3 id="query-parameters">Query Parameters</h3>
+
+<table><thead>
+<tr>
+<th>Parameter</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td><code class="prettyprint">key</code></td>
+<td>✓</td>
+<td>Your app&rsquo;s access key.</td>
+</tr>
+</tbody></table>
+
+<h2 id="set-my-status-message">Set my status message</h2>
+
+<p>You can set your WhatsApp account&rsquo;s status message by using this <code class="prettyprint">POST</code> method.</p>
+<pre class="highlight shell"><code>curl -X POST <span class="s2">"https://wha.tools/v2/status?key=bedfcfae-6c45-40d5-c56f&amp;message=I%20think%20therefore%20I%20am"</span>
+</code></pre>
+<pre class="highlight python"><code><span class="n">api</span><span class="o">.</span><span class="n">status</span><span class="o">.</span><span class="nb">set</span><span class="p">(</span><span class="s">'I think therefore I am'</span><span class="p">)</span>
+</code></pre>
+<pre class="highlight php"><code><span class="cp">&lt;?php</span>
+<span class="nv">$api</span><span class="o">-&gt;</span><span class="na">status</span><span class="o">-&gt;</span><span class="na">set</span><span class="p">(</span><span class="s1">'I think therefore I am'</span><span class="p">);</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+<pre class="highlight shell"><code><span class="c"># Tip: you can delete your status message by making an empty request:</span>
+curl -X POST <span class="s2">"https://wha.tools/v2/status?key=bedfcfae-6c45-40d5-c56f&amp;message="</span>
+</code></pre>
+<pre class="highlight python"><code><span class="c"># Tip: you can delete your status message by making an empty request:</span>
+<span class="n">api</span><span class="o">.</span><span class="n">status</span><span class="o">.</span><span class="nb">set</span><span class="p">()</span>
+</code></pre>
+<pre class="highlight php"><code>// Tip: you can delete your status message by making an empty request:
+<span class="cp">&lt;?php</span>
+<span class="nv">$api</span><span class="o">-&gt;</span><span class="na">status</span><span class="o">-&gt;</span><span class="na">set</span><span class="p">();</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+<pre class="highlight json"><code><span class="p">{</span><span class="w">
+  </span><span class="s2">"success"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre>
+
+<h3 id="http-request">HTTP Request</h3>
+
+<p><code class="prettyprint">POST https://api.wha.tools/v2/status</code></p>
+
+<h3 id="query-parameters">Query Parameters</h3>
+
+<table><thead>
+<tr>
+<th>Parameter</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td><code class="prettyprint">key</code></td>
+<td>✓</td>
+<td>Your app&rsquo;s access key.</td>
+</tr>
+<tr>
+<td><code class="prettyprint">message</code></td>
+<td></td>
+<td>The text to be set as status message.</td>
+</tr>
+</tbody></table>
+
+<h1 id="avatars">Avatars</h1>
+
+<h2 id="set-my-avatar">Set my avatar</h2>
+
+<p>You can set your WhatsApp account&rsquo;s avatar (profile picture) by using this <code class="prettyprint">POST</code> method.</p>
+<pre class="highlight shell"><code><span class="nv">src</span><span class="o">=</span><span class="k">$(</span> base64 selfie.jpg <span class="k">)</span>
+curl -X POST <span class="s2">"https://wha.tools/v2/avatar?key=bedfcfae-6c45-40d5-c56f&amp;src=</span><span class="nv">$src</span><span class="s2">"</span>
+</code></pre>
+<pre class="highlight python"><code><span class="n">api</span><span class="o">.</span><span class="n">avatar</span><span class="o">.</span><span class="nb">set</span><span class="p">(</span><span class="s">'selfie.jpg'</span><span class="p">)</span>
+</code></pre>
+<pre class="highlight php"><code><span class="cp">&lt;?php</span>
+<span class="nv">$api</span><span class="o">-&gt;</span><span class="na">avatar</span><span class="o">-&gt;</span><span class="na">set</span><span class="p">(</span><span class="s1">'selfie.jpg'</span><span class="p">);</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+<pre class="highlight shell"><code><span class="c"># Tip: you can delete your current avatar by making an empty request:</span>
+curl -X POST <span class="s2">"https://wha.tools/v2/avatar?key=bedfcfae-6c45-40d5-c56f&amp;src="</span>
+</code></pre>
+<pre class="highlight python"><code><span class="c"># Tip: you can delete your current avatar by making an empty request:</span>
+<span class="n">api</span><span class="o">.</span><span class="n">avatar</span><span class="o">.</span><span class="nb">set</span><span class="p">()</span>
+</code></pre>
+<pre class="highlight php"><code>// Tip: you can delete your current avatar by making an empty request:
+<span class="cp">&lt;?php</span>
+<span class="nv">$api</span><span class="o">-&gt;</span><span class="na">avatar</span><span class="o">-&gt;</span><span class="na">set</span><span class="p">();</span>
+<span class="cp">?&gt;</span>
+</code></pre>
+<pre class="highlight json"><code><span class="p">{</span><span class="w">
+  </span><span class="s2">"success"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre>
+
+<h3 id="http-request">HTTP Request</h3>
+
+<p><code class="prettyprint">POST https://api.wha.tools/v2/avatar</code></p>
+
+<h3 id="query-parameters">Query Parameters</h3>
+
+<table><thead>
+<tr>
+<th>Parameter</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td><code class="prettyprint">key</code></td>
+<td>✓</td>
+<td>Your app&rsquo;s access key.</td>
+</tr>
+<tr>
+<td><code class="prettyprint">src</code></td>
+<td></td>
+<td>The image to be set as avatar, encoded using base64. It must be square, JPG and weight less than 1.5MB</td>
+</tr>
+</tbody></table>
+
+<h1 id="webhook-methods">WebHook Methods</h1>
+
+<p>When a message or notification is received, a <code class="prettyprint">POST</code> HTTP query is sent to the app&rsquo;s every active access key&rsquo;s WebHook URL.</p>
+
+<p>You can tell one method from another by reading the <code class="prettyprint">_method</code> parameter in the <code class="prettyprint">POST</code> query. Currently the possible values are <code class="prettyprint">ping</code>, <code class="prettyprint">message</code>, <code class="prettyprint">carbon</code>, <code class="prettyprint">media</code>, <code class="prettyprint">media_carbon</code> and <code class="prettyprint">ack</code>.</p>
+
+<p>The corresponding line and token IDs are enclosed in the <code class="prettyprint">_lineId</code> and <code class="prettyprint">_tokenId</code> parameters in the <code class="prettyprint">POST</code> query so that you can tell which line and token is calling the WebHook in case that you configure a single endpoint for several lines or tokens.</p>
+
+<aside class="notice">
+In order to preserve your privacy, we encourage you to use HTTPS at the WebHook URL endpoint.
+</aside>
+
+<h2 id="ping">Ping</h2>
+
+<p>Whatools&rsquo; servers can send <code class="prettyprint">ping</code> requests to apps in order to validate WebHook URLs and tell if they are still active.</p>
+
+<p><strong>These requests MUST be always answered with the &ldquo;pong&rdquo; text in the body.</strong></p>
+
+<table><thead>
+<tr>
+<th>Parameter</th>
+<th>Value</th>
+<th>Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td><code class="prettyprint">_method</code></td>
+<td><code class="prettyprint">ping</code></td>
+<td></td>
+</tr>
+</tbody></table>
+
+<h2 id="message">Message</h2>
+
+<p>A <code class="prettyprint">POST</code> with <code class="prettyprint">_method = message</code> is sent every time the WhatsApp account receives a new message.</p>
+
+<table><thead>
+<tr>
+<th>Parameter</th>
+<th>Value</th>
+<th>Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td><code class="prettyprint">_method</code></td>
+<td><code class="prettyprint">message</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code class="prettyprint">id</code></td>
+<td></td>
+<td>Unique ID of the message.</td>
+</tr>
+<tr>
+<td><code class="prettyprint">from</code></td>
+<td></td>
+<td>International phone number of the message sender, like<code class="prettyprint">34638265868</code>.</td>
+</tr>
+<tr>
+<td><code class="prettyprint">body</code></td>
+<td></td>
+<td>The body of the message.</td>
+</tr>
+<tr>
+<td><code class="prettyprint">nickname</code></td>
+<td></td>
+<td>The sender&rsquo;s nickname.</td>
+</tr>
+<tr>
+<td><code class="prettyprint">timestamp</code></td>
+<td></td>
+<td>Time stamp in EPOCH format (seconds since Jan 1st 1970).</td>
+</tr>
+</tbody></table>
+
+<h2 id="carbon">Carbon</h2>
+
+<p>For the sake of synchronization and consistency between apps, when you send a message from an app and there are more subscribed apps, a <code class="prettyprint">POST</code> with <code class="prettyprint">_method = carbon</code> is sent to all of them.</p>
+
+<table><thead>
+<tr>
+<th>Parameter</th>
+<th>Value</th>
+<th>Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td><code class="prettyprint">_method</code></td>
+<td><code class="prettyprint">carbon</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code class="prettyprint">id</code></td>
+<td></td>
+<td>Unique ID of the message.</td>
+</tr>
+<tr>
+<td><code class="prettyprint">to</code></td>
+<td></td>
+<td>International phone number of the message addressee, like<code class="prettyprint">34638265868</code>.</td>
+</tr>
+<tr>
+<td><code class="prettyprint">body</code></td>
+<td></td>
+<td>The body of the message.</td>
+</tr>
+<tr>
+<td><code class="prettyprint">timestamp</code></td>
+<td></td>
+<td>Time stamp in EPOCH format (seconds since Jan 1st 1970).</td>
+</tr>
+</tbody></table>
+
+<h2 id="media">Media</h2>
+
+<p>A <code class="prettyprint">POST</code> with <code class="prettyprint">_method = media</code> is sent every time the WhatsApp account receives a new multimedia message.</p>
+
+<p>Currently supported media types are <code class="prettyprint">image</code>, <code class="prettyprint">audio</code>, <code class="prettyprint">video</code>, <code class="prettyprint">vcard</code> and <code class="prettyprint">location</code>. </p>
+
+<h3 id="common-parameters">Common parameters</h3>
+
+<table><thead>
+<tr>
+<th>Parameter</th>
+<th>Value</th>
+<th>Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td><code class="prettyprint">_method</code></td>
+<td><code class="prettyprint">carbon</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code class="prettyprint">id</code></td>
+<td></td>
+<td>Unique ID of the message.</td>
+</tr>
+<tr>
+<td><code class="prettyprint">from</code></td>
+<td></td>
+<td>International phone number of the message addressee, like<code class="prettyprint">34638265868</code>.</td>
+</tr>
+</tbody></table>
+
+<h3 id="image-specific-parameters">Image-specific parameters</h3>
+
+<table><thead>
+<tr>
+<th>Parameter</th>
+<th>Value</th>
+<th>Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td><code class="prettyprint">type</code></td>
+<td><code class="prettyprint">image</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code class="prettyprint">caption</code></td>
+<td></td>
+<td>An optional description sent along the file.</td>
+</tr>
+<tr>
+<td><code class="prettyprint">preview</code></td>
+<td></td>
+<td>Thumbnail image encoded in base64.</td>
+</tr>
+<tr>
+<td><code class="prettyprint">url</code></td>
+<td></td>
+<td>URL of the image file.</td>
+</tr>
+</tbody></table>
+
+<h3 id="audio-specific-parameters">Audio-specific parameters</h3>
+
+<table><thead>
+<tr>
+<th>Parameter</th>
+<th>Value</th>
+<th>Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td><code class="prettyprint">type</code></td>
+<td><code class="prettyprint">audio</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code class="prettyprint">url</code></td>
+<td></td>
+<td>URL of the audio file.</td>
+</tr>
+</tbody></table>
+
+<h3 id="video-specific-parameters">Video-specific parameters</h3>
+
+<table><thead>
+<tr>
+<th>Parameter</th>
+<th>Value</th>
+<th>Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td><code class="prettyprint">type</code></td>
+<td><code class="prettyprint">video</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code class="prettyprint">caption</code></td>
+<td></td>
+<td>An optional description sent along the file.</td>
+</tr>
+<tr>
+<td><code class="prettyprint">preview</code></td>
+<td></td>
+<td>Thumbnail image encoded in base64.</td>
+</tr>
+<tr>
+<td><code class="prettyprint">url</code></td>
+<td></td>
+<td>URL of the video file.</td>
+</tr>
+</tbody></table>
+
+<h3 id="vcard-specific-parameters">vCard-specific parameters</h3>
+
+<table><thead>
+<tr>
+<th>Parameter</th>
+<th>Value</th>
+<th>Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td><code class="prettyprint">type</code></td>
+<td><code class="prettyprint">vcard</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code class="prettyprint">name</code></td>
+<td></td>
+<td>The contact&rsquo;s preview name.</td>
+</tr>
+<tr>
+<td><code class="prettyprint">url</code></td>
+<td></td>
+<td>URL of the vCard file.</td>
+</tr>
+</tbody></table>
+
+<h3 id="location-specific-parameters">Location-specific parameters</h3>
+
+<table><thead>
+<tr>
+<th>Parameter</th>
+<th>Value</th>
+<th>Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td><code class="prettyprint">type</code></td>
+<td><code class="prettyprint">location</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code class="prettyprint">caption</code></td>
+<td></td>
+<td>An optional description sent along the file.</td>
+</tr>
+<tr>
+<td><code class="prettyprint">preview</code></td>
+<td></td>
+<td>Thumbnail image encoded in base64.</td>
+</tr>
+<tr>
+<td><code class="prettyprint">url</code></td>
+<td></td>
+<td>URL for watching the location in a map.</td>
+</tr>
+<tr>
+<td><code class="prettyprint">latitude</code></td>
+<td></td>
+<td>Latitude of the location point.</td>
+</tr>
+<tr>
+<td><code class="prettyprint">longitude</code></td>
+<td></td>
+<td>Longitude of the location point.</td>
+</tr>
+</tbody></table>
+
+<h2 id="media-carbon">Media carbon</h2>
+
+<p>For the sake of synchronization and consistency between apps, when you send a media file from an app and there are more subscribed apps, a <code class="prettyprint">POST</code> with <code class="prettyprint">_method = media_carbon</code> is sent to all of them.</p>
+
+<table><thead>
+<tr>
+<th>Parameter</th>
+<th>Value</th>
+<th>Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td><code class="prettyprint">_method</code></td>
+<td><code class="prettyprint">media_carbon</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code class="prettyprint">id</code></td>
+<td></td>
+<td>Unique ID of the message.</td>
+</tr>
+<tr>
+<td><code class="prettyprint">to</code></td>
+<td></td>
+<td>International phone number of the message addressee, like<code class="prettyprint">34638265868</code>.</td>
+</tr>
+<tr>
+<td><code class="prettyprint">body</code></td>
+<td></td>
+<td>The body of the message.</td>
+</tr>
+<tr>
+<td><code class="prettyprint">timestamp</code></td>
+<td></td>
+<td>Time stamp in EPOCH format (seconds since Jan 1st 1970).</td>
+</tr>
+</tbody></table>
+
+<aside class="notice">
+Specific parameters are the same as for `_method = media`.
+</aside>
+
+<h2 id="ack">Ack</h2>
+
+<p>A <code class="prettyprint">POST</code> with type <code class="prettyprint">ack</code> is sent to every active app every time a WhatsApp &ldquo;delivery notification&rdquo; (✓✓) is received.</p>
+
+<table><thead>
+<tr>
+<th>Parameter</th>
+<th>Value</th>
+<th>Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td><code class="prettyprint">_method</code></td>
+<td><code class="prettyprint">ack</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code class="prettyprint">id</code></td>
+<td></td>
+<td>Unique ID of the message to be acknowledged.</td>
+</tr>
+<tr>
+<td><code class="prettyprint">from</code></td>
+<td></td>
+<td>International phone number of the message sender, like<code class="prettyprint">34638265868</code>.</td>
+</tr>
+<tr>
+<td><code class="prettyprint">graade</code></td>
+<td><code class="prettyprint">delivered</code> or <code class="prettyprint">visible</code></td>
+<td>Tells if the message has been delivered (gray double tick ✓✓) or visible (blue double tick ✓✓).</td>
+</tr>
+</tbody></table>
+
+          <h1 id="errors">Errors</h1>
+
+<p>The Whatools REST API uses the following error codes:</p>
+
+<table><thead>
+<tr>
+<th>Error Code</th>
+<th>HTTP Code</th>
+<th>Meaning</th>
+</tr>
+</thead><tbody>
+<tr>
+<td><code class="prettyprint">no-key</code></td>
+<td>401</td>
+<td>No access key was provided.</td>
+</tr>
+<tr>
+<td><code class="prettyprint">no-token-matches-key</code></td>
+<td>401</td>
+<td>Your API key is wrong.</td>
+</tr>
+<tr>
+<td><code class="prettyprint">no-line-matches-key</code></td>
+<td>401</td>
+<td>Your API key is wrong.</td>
+</tr>
+<tr>
+<td><code class="prettyprint">wrong-api-version</code></td>
+<td>400</td>
+<td>The line is configured to use a different version of the API.</td>
+</tr>
+<tr>
+<td><code class="prettyprint">line-is-expired</code></td>
+<td>403</td>
+<td>This line has expired.</td>
+</tr>
+<tr>
+<td><code class="prettyprint">no-permission</code></td>
+<td>403</td>
+<td>Your app is not authorized to perform such method.</td>
+</tr>
+<tr>
+<td><code class="prettyprint">bad-param</code></td>
+<td>400</td>
+<td>One ore more parameters in your request are empty not valid.</td>
+</tr>
+<tr>
+<td><code class="prettyprint">inactive-line</code></td>
+<td>405</td>
+<td>The app is not currently subscribed. Please subscribe first.</td>
+</tr>
+</tbody></table>
+
+      </div>
+      <div class="dark-box">
+          <div class="lang-selector">
+                <a href="#" data-language-name="shell">shell</a>
+                <a href="#" data-language-name="python">python</a>
+                <a href="#" data-language-name="php">php</a>
+          </div>
+      </div>
+    </div>
+  </body>
+</html>

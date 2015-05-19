@@ -75,13 +75,13 @@ def media_picture_post():
 '''
 STATIC CONTENT
 '''
-@route("/reference", method="GET")
-def reference():
-  return static_file('reference.htm', './static')
+@route('/:filename#.*#')
+def send_static(filename):
+    return static_file(filename, './static/')
   
 @route("/", method="GET")
 def index():
-  return static_file('reference.htm', './static')
+  return static_file('index.html', './static')
 
 def main():
   recover(list(db.Lines.find({"tokens.active": True, "api": v, "deleted": {"$in": [None, False]}}, {"tokens.$": 1})))
