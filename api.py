@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #  -*- coding: utf8 -*-
 import sys
-from bottle import route, run, request, response, static_file, BaseRequest, FormsDict
+from bottle import route, run, request, response, static_file, BaseRequest, FormsDict, error
 from PIL import Image
 from helpers import *
 from events import *

@@ -1042,11 +1042,6 @@ Specific parameters are the same as for `_method = media`.
 <td>No access key was provided.</td>
 </tr>
 <tr>
-<td><code class="prettyprint">no-token-matches-key</code></td>
-<td>401</td>
-<td>Your API key is wrong.</td>
-</tr>
-<tr>
 <td><code class="prettyprint">no-line-matches-key</code></td>
 <td>401</td>
 <td>Your API key is wrong.</td>
@@ -1058,7 +1053,7 @@ Specific parameters are the same as for `_method = media`.
 </tr>
 <tr>
 <td><code class="prettyprint">line-is-expired</code></td>
-<td>403</td>
+<td>402</td>
 <td>This line has expired.</td>
 </tr>
 <tr>
@@ -1075,6 +1070,11 @@ Specific parameters are the same as for `_method = media`.
 <td><code class="prettyprint">inactive-line</code></td>
 <td>405</td>
 <td>The app is not currently subscribed. Please subscribe first.</td>
+</tr>
+<tr>
+<td><code class="prettyprint">auth-fail</code></td>
+<td>401</td>
+<td>WhatsApp says your credentials are wrong.</td>
 </tr>
 </tbody></table>
 

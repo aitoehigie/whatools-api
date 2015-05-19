@@ -3,23 +3,25 @@ from gevent import queue
 from threading import Timer
 from helpers.bot import *
 from helpers.tools import *
+from bottle import abort, response
 
 class method(object):
 
   errorMessages = {
-    "user": "bad-user",
-    "key": "no-key",
-    "line": "no-line-matches-key",
-    "version": "wrong-api-version",
-    "expired": "line-is-expired",
-    "token": "not-token-matches-key",
-    "permission": "no-permission",
-    "param": "bad-param",
-    "inactive": "inactive-line"
+    "user": ["bad-user", 403],
+    "key": ["no-key", 401],
+    "token": ["no-token-matches-key", 401],
+    "line": ["no-line-matches-key", 401],
+    "version": ["wrong-api-version", 400],
+    "expired": ["line-is-expired", 402],
+    "permission": ["no-permission", 403],
+    "param": ["bad-param", 400],
+    "inactive": ["inactive-line", 405]
   }
 
   def __init__(self, request, running, checks):
     self.request = request
+    self.response = response
     self.running = running
     self.checks = checks
     self.params = self.request.params
@@ -60,7 +62,7 @@ class method(object):
         ]):
           self.error = self.errorMessages[checker]
     if self.error:
-      self._die(self.error)
+      self._die(*self.error)
     if self.expired:
       db.Lines.update({"_id": self.line["_id"]}, {"$set": {"valid": "wrong", "reconnect": False, "active": False}})
 
@@ -76,7 +78,9 @@ class method(object):
     self.queue.put(StopIteration)
     self.timer.cancel()
     
-  def _die(self, error):
+  def _die(self, error, code = None):
+    if code:
+      self.response.status = code
     self.queue.put(json.dumps({"success": False, "error": error}))
     self.queue.put(StopIteration)
     self.timer.cancel()
