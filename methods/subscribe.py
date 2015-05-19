@@ -38,7 +38,7 @@ class subscribeGetMethod(method):
         del self.running[self.line["_id"]]
         db.Lines.update({"_id": self.line["_id"], "tokens.key": self.token["key"]}, {"$set": {"valid": "wrong", "reconnect": False, "tokens.$.active": False}})
         self._log("subscribeGetError")
-        self._die("auth-failed")
+        self._die("auth-failed", 401)
     
     if self.wa is not None:
       cb(self.wa, True, self.line["data"])
@@ -47,7 +47,7 @@ class subscribeGetMethod(method):
       try:
         pw = base64.b64decode(bytes(str(self.line["pass"])))
       except TypeError:
-        self._die("password-type-error")
+        self._die("password-type-error", 401)
         db.Lines.update({"_id": self.line["_id"], "tokens.key": self.token["key"]}, {"$set": {"valid": "wrong", "reconnect": False, "tokens.$.active": False}})
       self.running[self.line["_id"]] = {
         "yowsup": self.wa,
