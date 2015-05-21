@@ -38,11 +38,13 @@ def onMessageReceived(wa, messageId, jid, participant, messageContent, timestamp
       for token in allTokens:
         if token["key"] in runningTokens:
           if token["push"]:
-            pushData = {"messageId": messageId, "jid": jid, "messageContent": messageContent, "timestamp": timestamp}
+            pushData = {"id": messageId, "from": jid, "body": messageContent, "timestamp": timestamp}
             if participant:
               pushData["participant"] = participant
             if isBroadCast:
               pushData["broadcast"] = broadcast
+            if alias:
+              pushData["nickname"] = alias
             res = push(wa.line["_id"], token, "message", pushData)
             if res:
               print res.read()
