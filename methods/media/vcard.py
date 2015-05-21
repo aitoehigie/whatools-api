@@ -55,4 +55,4 @@ class mediaVcardPostMethod(method):
         db.Chats.update({"from": self.line["_id"], "to": to}, {"$push": {"messages": msg}, "$set": {"lastStamp": stamp, "unread": 0}})
       else:
         db.Chats.insert({"_id": str(objectid.ObjectId()), "from": self.line["_id"], "to": to, "messages": [msg], "lastStamp": stamp, "folder": "inbox"})
-      self.push("media_carbon", {"messageId": msgId, "jid": to, "messageContent": name, "timestamp": stamp, "isBroadCast": broadcast})
+      self.push("media_carbon", {"id": msgId, "to": to, "body": name, "timestamp": stamp, "broadcast": broadcast})

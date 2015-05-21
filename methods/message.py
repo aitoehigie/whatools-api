@@ -31,4 +31,4 @@ class messagePostMethod(method):
         db.Chats.update({"from": self.line["_id"], "to": to}, {"$push": {"messages": msg}, "$set": {"lastStamp": stamp, "unread": 0}})
       else:
         db.Chats.insert({"_id": str(objectid.ObjectId()), "from": self.line["_id"], "to": to, "messages": [msg], "lastStamp": stamp, "folder": "inbox"})
-      self.push("carbon", {"messageId": msgId, "jid": to, "messageContent": body, "timestamp": stamp, "isBroadCast": broadcast})
+      self.push("carbon", {"id": msgId, "to": to, "body": body, "timestamp": stamp, "broadcast": broadcast})

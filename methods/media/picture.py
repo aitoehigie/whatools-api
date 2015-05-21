@@ -51,7 +51,7 @@ class mediaPicturePostMethod(method):
           db.Chats.update({"from": self.line["_id"], "to": to}, {"$push": {"messages": msg}, "$set": {"lastStamp": stamp, "unread": 0}});
         else:
           db.Chats.insert({"_id": str(objectid.ObjectId()), "from": self.line["_id"], "to": to, "messages": [msg], "lastStamp": stamp})
-        self.push("media_carbon", {"messageId": msgId, "jid": to, "caption": caption, "timestamp": stamp, "isBroadCast": broadcast})
+        self.push("media_carbon", {"id": msgId, "to": to, "caption": caption, "timestamp": stamp, "broadcast": broadcast})
         self._success()
         
       def uploadError(path, to, url):
