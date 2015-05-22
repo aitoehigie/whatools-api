@@ -37,8 +37,6 @@ class AsyncLayer(YowInterfaceLayer):
             self.handle("onDisconnected", [layerEvent.getArg("reason")])
         elif layerEvent.getName() == YowAuthenticationProtocolLayer.EVENT_AUTHED:
             self.handle("onAuthSuccess")
-        elif layerEvent.getName() == YowAxolotlLayer.EVENT_READY:
-            self.handle("onAxolotlReady")
     
     def normalizeData(self, data):
         data = list(data)

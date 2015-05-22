@@ -17,7 +17,6 @@ from .protocolentities import GetKeysIqProtocolEntity, ResultGetKeysIqProtocolEn
 from axolotl.util.hexutil import HexUtil
 from yowsup.env import CURRENT_ENV
 from axolotl.invalidmessageexception import InvalidMessageException
-from axolotl.nosessionexception import NoSessionException
 from .protocolentities import EncryptNotification
 from yowsup.layers.protocol_acks.protocolentities import OutgoingAckProtocolEntity
 import binascii
@@ -28,7 +27,6 @@ logger = logging.getLogger(__name__)
 
 class YowAxolotlLayer(YowProtocolLayer):
     EVENT_PREKEYS_SET = "org.openwhatsapp.yowsup.events.axololt.setkeys"
-    EVENT_READY = "org.openwhatsapp.yowsup.events.axololt.ready"
     _STATE_INIT = 0
     _STATE_GENKEYS = 1
     _STATE_HASKEYS = 2
@@ -178,17 +176,12 @@ class YowAxolotlLayer(YowProtocolLayer):
         except InvalidMessageException:
             logger.error("Invalid message from %s!! Your axololtl database data might be inconsistent with WhatsApp, or with what that contact has" % node["from"])
             sys.exit(1)
-
     def handlePreKeyWhisperMessage(self, node):
         pkMessageProtocolEntity = EncryptedMessageProtocolEntity.fromProtocolTreeNode(node)
 
         preKeyWhisperMessage = PreKeyWhisperMessage(serialized=pkMessageProtocolEntity.getEncData())
         sessionCipher = self.getSessionCipher(pkMessageProtocolEntity.getFrom(False))
-        plaintext = "[Could not decrypt message]"
-        try:
-            plaintext = sessionCipher.decryptPkmsg(preKeyWhisperMessage)
-        except Exception as e:
-            logger.error("Axolotl %s while decrypting PreKey from %s" % (type(e).__name__, node["from"]))
+        plaintext = sessionCipher.decryptPkmsg(preKeyWhisperMessage)
 
         bodyNode = ProtocolTreeNode("body", data = plaintext)
         node.addChild(bodyNode)
@@ -199,16 +192,11 @@ class YowAxolotlLayer(YowProtocolLayer):
 
         whisperMessage = WhisperMessage(serialized=encMessageProtocolEntity.getEncData())
         sessionCipher = self.getSessionCipher(encMessageProtocolEntity.getFrom(False))
-        plaintext = "[Could not decrypt message]"
-        try:
-            plaintext = sessionCipher.decryptMsg(whisperMessage)
-        except Exception as e:
-            logger.error("Axolotl %s while decrypting message from %s" % (type(e).__name__, node["from"]))
+        plaintext = sessionCipher.decryptMsg(whisperMessage)
 
         bodyNode = ProtocolTreeNode("body", data = plaintext)
         node.addChild(bodyNode)
         self.toUpper(node)
-
     ####
 
     ### keys set and get
@@ -252,7 +240,9 @@ class YowAxolotlLayer(YowProtocolLayer):
         if fresh:
             self.state = self.__class__._STATE_GENKEYS
             self.broadcastEvent(YowLayerEvent(YowNetworkLayer.EVENT_STATE_DISCONNECT))
-            self.emitEvent(YowLayerEvent(self.__class__.EVENT_READY))
+            self.setProp(YowAuthenticationProtocolLayer.PROP_PASSIVE, False)
+            self.state = self.__class__._STATE_HASKEYS
+            self.broadcastEvent(YowLayerEvent(YowNetworkLayer.EVENT_STATE_CONNECT))
 
     def onSentKeysError(self, errorNode, keysEntity):
         raise Exception("Sent keys were not accepted")

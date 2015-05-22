@@ -20,17 +20,15 @@ class AckProtocolEntity(ProtocolEntity):
     def toProtocolTreeNode(self):
         attribs = {
             "id"           : self._id,
+            "class"        : self._class,
         }
-        if self._class is not None:
-            attribs["class"] =  self._class
 
         return self._createProtocolTreeNode(attribs, None, data = None)
 
     def __str__(self):
         out  = "ACK:\n"
         out += "ID: %s\n" % self._id
-        if self._class is not None:
-            out += "Class: %s\n" % self._class
+        out += "Class: %s\n" % self._class
         return out
 
     @staticmethod

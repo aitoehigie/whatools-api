@@ -1,36 +1,31 @@
 from yowsup.structs import ProtocolEntity, ProtocolTreeNode
 from .ack import AckProtocolEntity
-import time
 class OutgoingAckProtocolEntity(AckProtocolEntity):
 
     '''
-    <ack type="{{delivery | ?}}" class="{{message | receipt | ?}}" id="{{MESSAGE_ID}}">
+    <ack type="{{delivery | read}}" class="{{message | receipt | ?}}" id="{{MESSAGE_ID}} to={{TO_JID}}">
     </ack>
     '''
 
-    def __init__(self, _id, _class, _type, _to = None):
+    def __init__(self, _id, _class, _type, _to):
         super(OutgoingAckProtocolEntity, self).__init__(_id, _class)
         self.setOutgoingData(_type, _to)
 
-    def setOutgoingData(self, _type, _to, _t = None):
+    def setOutgoingData(self, _type, _to):
         self._type = _type
         self._to = _to
-        self._t = _t or str(int(time.time()))
     
     def toProtocolTreeNode(self):
         node = super(OutgoingAckProtocolEntity, self).toProtocolTreeNode()
-        if self._type is not None:
+        if self._type:
             node.setAttribute("type", self._type)
-        if self._to is not None:
-            node.setAttribute("to", self._to)
-        if self._t is not None:
-            pass#node.setAttribute("t", self._t)
+        node.setAttribute("to", self._to)
         return node
 
     def __str__(self):
         out  = super(OutgoingAckProtocolEntity, self).__str__()
-        if self._node is not None:
-            out += "Type: %s\n" % self._type
+        out += "Type: %s\n" % self._type
+        out += "To: %s\n" % self._to
         return out
 
     @staticmethod
@@ -39,7 +34,6 @@ class OutgoingAckProtocolEntity(AckProtocolEntity):
         entity.__class__ = OutgoingAckProtocolEntity
         entity.setOutgoingData(
             node.getAttributeValue("type"),
-            node.getAttributeValue("to"),
-            node.getAttributeValue("t")
+            node.getAttributeValue("to")
         )
         return entity

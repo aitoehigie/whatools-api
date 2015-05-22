@@ -13,16 +13,24 @@ class IncomingReceiptProtocolEntity(ReceiptProtocolEntity):
     <receipt offline="0" from="xxxxxxxxxx@s.whatsapp.net" id="1415577964-1" t="1415578027"></receipt>
     '''
 
-    def __init__(self, _id, _from, timestamp, offline = None, type = None, ids = None):
+    def __init__(self, _id, _from, timestamp, offline = None, type = None):
         super(IncomingReceiptProtocolEntity, self).__init__(_id)
-        self.setIncomingData(_from, timestamp, offline, type, ids)
+        self.setIncomingData(_from, timestamp, offline, type)
 
-    def setIncomingData(self, _from, timestamp, offline = None, type = None, ids = None):
+    def getType(self):
+        return self.type
+
+    def getFrom(self):
+        return self._from
+
+    def setIncomingData(self, _from, timestamp, offline, type = None):
         self._from = _from
         self.timestamp = timestamp
-        self._type = type
-        self.offline = offline == "1" or None
-        self.ids = ids
+        self.type = type
+        if offline is not None:
+            self.offline = True if offline == "1" else False
+        else:
+            self.offline = None
 
     def toProtocolTreeNode(self):
         node = super(IncomingReceiptProtocolEntity, self).toProtocolTreeNode()
@@ -30,13 +38,8 @@ class IncomingReceiptProtocolEntity(ReceiptProtocolEntity):
         node.setAttribute("t", str(self.timestamp))
         if self.offline is not None:
             node.setAttribute("offline", "1" if self.offline else "0")
-        if self._type is not None:
-            node.setAttribute("type", self._type)
-        if self.ids is not None:
-            items = []
-            for idx in self.ids:
-                items.append(ProtocolTreeNode("item", {"id": idx}))
-            list_node = ProtocolTreeNode("list", None, items)
+        if self.type is not None:
+            node.setAttribute("type", self.type)
         return node
 
     def __str__(self):
@@ -45,27 +48,16 @@ class IncomingReceiptProtocolEntity(ReceiptProtocolEntity):
         out += "Timestamp: %s\n" % self.timestamp
         if self.offline is not None:
             out += "Offline: %s\n" % ("1" if self.offline else "0")
-        if self._type is not None:
-            out += "Type: %s\n" % (self._type)
-        if self.ids is not None:
-            out += "Ids: ["
-            for idx in self.ids:
-                out += "%s, " % (idx)
-            out += "]\n"
+        if self.type is not None:
+            out += "Type: %s\n" % (self.type)
         return out
 
     @staticmethod
     def fromProtocolTreeNode(node):
-        receipt_items = []
-        list_node = node.getChild("list")
-        if list_node is not None:
-            for item_node in list_node.getAllChildren("item"):
-                receipt_items.append(item_node.getAttributeValue("id"))
         return IncomingReceiptProtocolEntity(
             node.getAttributeValue("id"),
             node.getAttributeValue("from"),
             node.getAttributeValue("t"),
             node.getAttributeValue("offline"),
-            node.getAttributeValue("type"),
-            receipt_items
+            node.getAttributeValue("type")
             )
