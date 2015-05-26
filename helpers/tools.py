@@ -11,9 +11,9 @@ def logger(lId, event, data={}):
 def messageSign(text, line):
   if line["plan"] == "free":
     if len(text) > 0:
-      text += freePlanSignature
+      text += g.freePlanSignature
     else:
-      text = freePlanSignature
+      text = g.freePlanSignature
   return text
 
 def phoneFormat(cc, pn):
