@@ -1,4 +1,4 @@
-import db, time, phonenumbers
+import db, time, phonenumbers, g
 
 def lineIsNotExpired(line):
   now = int(time.time()*1000)
