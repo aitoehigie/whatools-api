@@ -655,6 +655,90 @@ curl -X POST <span class="s2">"https://wha.tools/v2/avatar?key=bedfcfae-6c45-40d
 </tr>
 </tbody></table>
 
+<h1 id="new-lines-register">New lines register</h1>
+
+<p>You can add new lines to your Whatools account using this methods.</p>
+
+<p>The registering process is:</p>
+
+<ul>
+<li>Request a validation code to be sent via SMS using the <code class="prettyprint">/line/codeRequest</code> method.</li>
+<li>Validate your line by calling the <code class="prettyprint">/line/regRequest</code> method with the validation code in the <code class="prettyprint">code</code> parameter.</li>
+</ul>
+
+<aside class="notice">
+These request use a especial `user` parameter different from the regular `key` parameter. You can ask for your user ID code by sending a mail to <a href="mailto:info@wha.tools?subject=User ID">info@wha.tools</a>.
+</aside>
+
+<h2 id="validation-code-request">Validation code request</h2>
+
+<h3 id="http-request">HTTP Request</h3>
+
+<p><code class="prettyprint">GET https://api.wha.tools/v2/line/coderequest</code></p>
+
+<h3 id="query-parameters">Query Parameters</h3>
+
+<table><thead>
+<tr>
+<th>Parameter</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td><code class="prettyprint">user</code></td>
+<td>✓</td>
+<td>Your user ID.</td>
+</tr>
+<tr>
+<td><code class="prettyprint">cc</code></td>
+<td>✓</td>
+<td>International country code.</td>
+</tr>
+<tr>
+<td><code class="prettyprint">pn</code></td>
+<td>✓</td>
+<td>Phone number in national format (no + or 00).</td>
+</tr>
+</tbody></table>
+
+<h2 id="validation-code-confirmation">Validation code confirmation</h2>
+
+<h3 id="http-request">HTTP Request</h3>
+
+<p><code class="prettyprint">GET https://api.wha.tools/v2/line/regrequest</code></p>
+
+<h3 id="query-parameters">Query Parameters</h3>
+
+<table><thead>
+<tr>
+<th>Parameter</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td><code class="prettyprint">user</code></td>
+<td>✓</td>
+<td>Your user ID.</td>
+</tr>
+<tr>
+<td><code class="prettyprint">cc</code></td>
+<td>✓</td>
+<td>International country code.</td>
+</tr>
+<tr>
+<td><code class="prettyprint">pn</code></td>
+<td>✓</td>
+<td>Phone number in national format (no + or 00).</td>
+</tr>
+<tr>
+<td><code class="prettyprint">code</code></td>
+<td>✓</td>
+<td>The confirmation code you received via SMS.</td>
+</tr>
+</tbody></table>
+
 <h1 id="webhook-methods">WebHook Methods</h1>
 
 <p>When a message or notification is received, a <code class="prettyprint">POST</code> HTTP query is sent to the app&rsquo;s every active access key&rsquo;s WebHook URL.</p>
@@ -727,6 +811,11 @@ In order to preserve your privacy, we encourage you to use HTTPS at the WebHook 
 <td><code class="prettyprint">timestamp</code></td>
 <td></td>
 <td>Time stamp in EPOCH format (seconds since Jan 1st 1970).</td>
+</tr>
+<tr>
+<td><code class="prettyprint">participant</code></td>
+<td></td>
+<td><em>(Only defined if group message)</em> Contains the international phone number of the message sender. The <code class="prettyprint">from</code> atribute will contain the group ID.</td>
 </tr>
 </tbody></table>
 
@@ -829,6 +918,11 @@ In order to preserve your privacy, we encourage you to use HTTPS at the WebHook 
 <td></td>
 <td>URL of the image file.</td>
 </tr>
+<tr>
+<td><code class="prettyprint">size</code></td>
+<td></td>
+<td>Size of the file in kilobytes.</td>
+</tr>
 </tbody></table>
 
 <h3 id="audio-specific-parameters">Audio-specific parameters</h3>
@@ -849,6 +943,11 @@ In order to preserve your privacy, we encourage you to use HTTPS at the WebHook 
 <td><code class="prettyprint">url</code></td>
 <td></td>
 <td>URL of the audio file.</td>
+</tr>
+<tr>
+<td><code class="prettyprint">size</code></td>
+<td></td>
+<td>Size of the file in kilobytes.</td>
 </tr>
 </tbody></table>
 
@@ -880,6 +979,11 @@ In order to preserve your privacy, we encourage you to use HTTPS at the WebHook 
 <td><code class="prettyprint">url</code></td>
 <td></td>
 <td>URL of the video file.</td>
+</tr>
+<tr>
+<td><code class="prettyprint">size</code></td>
+<td></td>
+<td>Size of the file in kilobytes.</td>
 </tr>
 </tbody></table>
 

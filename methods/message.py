@@ -1,6 +1,7 @@
 from method import method
 from helpers import db
 from helpers.tools import *
+from bson import objectid
 import time
 
 class messagePostMethod(method):
