@@ -13,7 +13,7 @@ def onAuthSuccess(wa):
 def onDisconnected(wa, reason):
   print "???? DISCONNECTION", reason, wa.line["active"], wa.line["reconnect"], wa.line["_id"]
   if reason != "Requested" and wa.line["active"] and wa.line["reconnect"]:
-    @delay(3.0)
+    @delay(30.0)
     def reconnect():
       print "???? RECONNECTING!"
       line = db.Lines.find_one({"_id": wa.line["_id"]})
