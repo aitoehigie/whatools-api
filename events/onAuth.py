@@ -12,6 +12,7 @@ def onAuthSuccess(wa):
   
 def onDisconnected(wa, reason):
   print "???? DISCONNECTION", reason, wa.line["active"], wa.line["reconnect"], wa.line["_id"]
+  logger(wa.line["_id"], "onDisconnected", {"reason": reason})
   if reason != "Requested" and wa.line["active"] and wa.line["reconnect"]:
     @delay(3.0)
     def reconnect():
