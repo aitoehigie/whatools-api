@@ -12,7 +12,7 @@ def onAuthSuccess(wa):
   
 def onDisconnected(wa, reason):
   print "???? DISCONNECTION", reason, wa.line["active"], wa.line["reconnect"], wa.line["_id"]
-  if reason != "Requested" and wa.line["active"] and wa.line["reconnect"]:
+  '''if reason != "Requested" and wa.line["active"] and wa.line["reconnect"]:
     @delay(30.0)
     def reconnect():
       print "???? RECONNECTING!"
@@ -23,4 +23,4 @@ def onDisconnected(wa, reason):
       newWa = YowsupAsyncStack(line, line["tokens"][0], wa.getProp(AsyncLayer.HANDLERS), logger, cb)
       if newWa:
         gevent.spawn(newWa.login)
-    reconnect()
+    reconnect()'''
