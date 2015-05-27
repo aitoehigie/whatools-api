@@ -1,4 +1,5 @@
-import db, time, phonenumbers, g
+import db, time, phonenumbers, g, threading
+from functools import wraps
 
 def lineIsNotExpired(line):
   now = int(time.time()*1000)
@@ -28,3 +29,16 @@ def unbottle(data):
   for item in data:
     dataDict[item] = data[item]
   return dataDict
+  
+def delay(delay=0.):
+  """
+  Decorator delaying the execution of a function for a while.
+  Original code by Fred Wenzel (http://fredericiana.com)
+  """
+  def wrap(f):
+    @wraps(f)
+    def delayed(*args, **kwargs):
+      timer = threading.Timer(delay, f, args=args, kwargs=kwargs)
+      timer.start()
+    return delayed
+  return wrap
