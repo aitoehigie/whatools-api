@@ -175,6 +175,7 @@ class YowAxolotlLayer(YowProtocolLayer):
                 self.handleWhisperMessage(node)
         except InvalidMessageException:
             logger.error("Invalid message from %s!! Your axololtl database data might be inconsistent with WhatsApp, or with what that contact has" % node["from"])
+
     def handlePreKeyWhisperMessage(self, node):
         pkMessageProtocolEntity = EncryptedMessageProtocolEntity.fromProtocolTreeNode(node)
 
@@ -191,7 +192,6 @@ class YowAxolotlLayer(YowProtocolLayer):
 
         whisperMessage = WhisperMessage(serialized=encMessageProtocolEntity.getEncData())
         sessionCipher = self.getSessionCipher(encMessageProtocolEntity.getFrom(False))
-        print sessionCipher
         plaintext = sessionCipher.decryptMsg(whisperMessage)
 
         bodyNode = ProtocolTreeNode("body", data = plaintext)
@@ -240,9 +240,6 @@ class YowAxolotlLayer(YowProtocolLayer):
         if fresh:
             self.state = self.__class__._STATE_GENKEYS
             self.broadcastEvent(YowLayerEvent(YowNetworkLayer.EVENT_STATE_DISCONNECT))
-            self.setProp(YowAuthenticationProtocolLayer.PROP_PASSIVE, False)
-            self.state = self.__class__._STATE_HASKEYS
-            self.broadcastEvent(YowLayerEvent(YowNetworkLayer.EVENT_STATE_CONNECT))
 
     def onSentKeysError(self, errorNode, keysEntity):
         raise Exception("Sent keys were not accepted")
@@ -285,10 +282,7 @@ class YowAxolotlLayer(YowProtocolLayer):
 
     def getSessionCipher(self, recipientId):
         if recipientId in self.sessionCiphers:
-            print self.sessionCiphers
             return self.sessionCiphers[recipientId]
         else:
-            print self.sessionCiphers
             self.sessionCiphers[recipientId] = SessionCipher(self.store, self.store, self.store, self.store, recipientId, 1)
-            print self.sessionCiphers[recipientId]
             return self.sessionCiphers[recipientId]
