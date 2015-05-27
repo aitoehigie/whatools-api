@@ -38,8 +38,4 @@ def recover(lines=False):
         res["error"] = "connect-error"
         logger(fullLine["_id"], "lineRecoverProgress", {"res": res});
         print "@@@@ RECOVER ERROR @@@@"
-      while not done[0] and count < 20:
-        gevent.sleep(.5)
-        print count, line["_id"], done[0]
-        count += 1
   return

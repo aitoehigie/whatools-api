@@ -76,13 +76,14 @@ class YowAxolotlLayer(YowProtocolLayer):
             if yowLayerEvent.getArg("passive") and self.isInitState():
                 logger.info("Axolotl layer is generating keys")
                 self.sendKeys()
-        elif yowLayerEvent.getName() == YowNetworkLayer.EVENT_STATE_DISCONNECTED:
+        '''elif yowLayerEvent.getName() == YowNetworkLayer.EVENT_STATE_DISCONNECTED:
             if self.isGenKeysState():
                 #we requested this disconnect in this layer to switch off passive
                 #no need to traverse it to upper layers?
                 self.setProp(YowAuthenticationProtocolLayer.PROP_PASSIVE, False)
                 self.state = self.__class__._STATE_HASKEYS
                 self.broadcastEvent(YowLayerEvent(YowNetworkLayer.EVENT_STATE_CONNECT))
+                return True'''
 
     def send(self, node):
         if node.tag == "message" and node["type"] == "text" and node["to"] not in self.skipEncJids:
@@ -240,6 +241,9 @@ class YowAxolotlLayer(YowProtocolLayer):
         if fresh:
             self.state = self.__class__._STATE_GENKEYS
             self.broadcastEvent(YowLayerEvent(YowNetworkLayer.EVENT_STATE_DISCONNECT))
+            self.setProp(YowAuthenticationProtocolLayer.PROP_PASSIVE, False)
+            self.state = self.__class__._STATE_HASKEYS
+            self.broadcastEvent(YowLayerEvent(YowNetworkLayer.EVENT_STATE_CONNECT))
 
     def onSentKeysError(self, errorNode, keysEntity):
         raise Exception("Sent keys were not accepted")

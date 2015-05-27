@@ -13,9 +13,9 @@ def onAuthSuccess(wa):
 def onDisconnected(wa, reason):
   print "???? DISCONNECTION", reason, wa.line["active"], wa.line["reconnect"], wa.line["_id"]
   if reason != "Requested" and wa.line["active"] and wa.line["reconnect"]:
-    print "???? RECONNECTING", wa.line["cc"], wa.line["pn"]
-    @delay(20.0)
+    @delay(10.0)
     def reconnect():
+      print "???? RECONNECTING!"
       line = db.Lines.find_one({"_id": wa.line["_id"]})
       def cb(wa, loginRes, data = None):
         if line["_id"] in g.running:
