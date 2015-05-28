@@ -15,6 +15,7 @@ def push(lId, token, method, data):
   else:
     conn = httplib.HTTPConnection(url[1], int(url[2]))
   try:
+    conn.sock.settimeout(3.0)
     logger(lId, "hookPost", {"url": url, "params": params, "headers": headers})
     conn.request("POST", '/' + url[3], params, headers)
     res = conn.getresponse()
