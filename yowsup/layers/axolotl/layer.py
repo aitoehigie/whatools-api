@@ -16,8 +16,9 @@ from yowsup.structs import ProtocolTreeNode
 from .protocolentities import GetKeysIqProtocolEntity, ResultGetKeysIqProtocolEntity
 from axolotl.util.hexutil import HexUtil
 from yowsup.env import CURRENT_ENV
+from axolotl.nosessionexception import NoSessionException
 from axolotl.invalidmessageexception import InvalidMessageException
-from axolotl.duplicatemessageexception import DuplicateMessageException
+from axolotl.duplicatemessagexception import DuplicateMessageException
 from .protocolentities import EncryptNotification
 from yowsup.layers.protocol_acks.protocolentities import OutgoingAckProtocolEntity
 import binascii
