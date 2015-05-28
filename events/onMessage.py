@@ -2,7 +2,6 @@ from helpers import *
 from bson import objectid
 
 def onMessageReceived(wa, messageId, jid, participant, messageContent, timestamp, pushName, isBroadCast):
-  print "MESSAGE RECEIVED"
   to = jid.split("@")[0]
   chat = db.Chats.find_one({"from": wa.line["_id"], "to": to})
   stamp = int(timestamp)*1000
@@ -54,4 +53,5 @@ def onMessageReceived(wa, messageId, jid, participant, messageContent, timestamp
               print res.read()
     else:
       print "WEIRD ERROR, message received for line not running"
+  print "MESSAGE PROCESSED"
   return True

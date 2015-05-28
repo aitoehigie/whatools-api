@@ -227,6 +227,7 @@ class AsyncLayer(YowInterfaceLayer):
             self.toLower(receipt)
         else:
             print "UNHANDLED ????"
+        print "WTF?"
 
     def onMediaMessage(self, entity):
         idx = entity.getId()
