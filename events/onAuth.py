@@ -11,7 +11,7 @@ def onAuthSuccess(wa):
   db.Lines.update({"_id": wa.line["_id"]}, {"$set": {"active": True, "reconnect": True, "valid": True}});
   
 def onDisconnected(wa, reason):
-  print "???? DISCONNECTION", reason, wa.line["active"], wa.line["reconnect"], wa.line["_id"]
+  print "???? DISCONNECTION", reason, wa.line["active"], wa.line["reconnect"], wa.line["_id"], wa.line["cc"], wa.line["pn"]
   if reason != "Requested" and wa.line["active"] and wa.line["reconnect"]:
     @delay(10.0)
     def reconnect():
