@@ -200,7 +200,7 @@ class AsyncLayer(YowInterfaceLayer):
     def onCall(self, entity):
         if entity.getType() == "offer":
           call = CallProtocolEntity(None, "reject", int(time.time()), _to = entity.getFrom(), callId = entity.getCallId())
-          #self.toLower(call)
+          self.toLower(call)
           
     @ProtocolEntityCallback("presence")
     def onPresence(self, entity):
