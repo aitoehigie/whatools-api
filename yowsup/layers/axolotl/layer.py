@@ -177,7 +177,7 @@ class YowAxolotlLayer(YowProtocolLayer):
             else:
                 self.handleWhisperMessage(node)
         except InvalidMessageException:
-            logger.error("Invalid message from %s!! Your axololtl database data might be inconsistent with WhatsApp, or with what that contact has" % node["from"])
+            logger.debug("Invalid message from %s!! Your axololtl database data might be inconsistent with WhatsApp, or with what that contact has" % node["from"])
 
     def handlePreKeyWhisperMessage(self, node):
         pkMessageProtocolEntity = EncryptedMessageProtocolEntity.fromProtocolTreeNode(node)
@@ -198,7 +198,7 @@ class YowAxolotlLayer(YowProtocolLayer):
           sessionCipher = self.getSessionCipher(encMessageProtocolEntity.getFrom(False))
           plaintext = sessionCipher.decryptMsg(whisperMessage)
         except DuplicateMessageException:
-          logger.error("Duplicate message from %s!!" % node["from"])
+          logger.debug("Duplicate message from %s!!" % node["from"])
           plaintext = "[Duplicate message]"
 
         bodyNode = ProtocolTreeNode("body", data = plaintext)
