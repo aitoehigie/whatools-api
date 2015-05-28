@@ -222,12 +222,8 @@ class AsyncLayer(YowInterfaceLayer):
         notify = entity.getNotify()
         broadcast = entity.isBroadcast()
         if self.handle("onMessageReceived", (idx, jid, participant, body, stamp, notify, broadcast)):
-            print "HANDLED!!!!"
             receipt = OutgoingReceiptProtocolEntity(idx, jid)
             self.toLower(receipt)
-        else:
-            print "UNHANDLED ????"
-        print "WTF?"
 
     def onMediaMessage(self, entity):
         idx = entity.getId()

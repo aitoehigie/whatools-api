@@ -53,5 +53,4 @@ def onMessageReceived(wa, messageId, jid, participant, messageContent, timestamp
               print res.read()
     else:
       print "WEIRD ERROR, message received for line not running"
-  print "MESSAGE PROCESSED"
   return True
