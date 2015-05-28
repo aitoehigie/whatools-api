@@ -10,34 +10,35 @@ def recover(lines=False):
       done = [False]
       count = 0
       res = {"success": False}
-      token = line["tokens"][0]
+      tokens = line["tokens"]
       fullLine = db.Lines.find_one({"_id": line["_id"]})
       user = fullLine["cc"] + fullLine["pn"]
-      logger(line["_id"], "lineRecover", [token]);
-      print "@@@ RECOVERING TOKEN {0} FOR LINE {1} @@@".format(token["key"], line["_id"])
+      logger(line["_id"], "lineRecover", [user]);
+      print "@@@ RECOVERING LINE +%s @@@" % user
       def cb(wa, loginRes, data = None):
-          if loginRes == "success":
-            if fullLine["_id"] in running:
+        if loginRes == "success":
+          if fullLine["_id"] not in running:
+            running[fullLine["_id"]] = {
+              "yowsup": wa,
+              "tokens": []
+            }
+          for token in tokens:
+            if token["active"]:
               running[fullLine["_id"]]["tokens"].append(token["key"])
-            else:
-              running[fullLine["_id"]] = {
-                "yowsup": wa,
-                "tokens": [token["key"]]
-              }
-            print "@@@@ RECOVER SUCCESS @@@@ {0} {1}".format(token["key"], line["_id"])
-            print running
-            res["success"] = True
-          else:
-            print "@@@@ RECOVER ERROR @@@@ {0} {1}".format(token["key"], line["_id"])
-            res["error"] = "auth-error"
-          logger(fullLine["_id"], "lineRecoverProgress", {"res": res});
-          done[0] = True
-      wa = YowsupAsyncStack(fullLine, token, eventHandler, logger, cb)
+          print "@@@@ RECOVER SUCCESS +%s @@@@" % user
+          print running
+          res["success"] = True
+        else:
+          print "@@@@ RECOVER ERROR +%s @@@@" % user
+          res["error"] = "auth-error"
+        logger(fullLine["_id"], "lineRecoverProgress", {"res": res})
+        done[0] = True
+      wa = YowsupAsyncStack(fullLine, tokens[0], eventHandler, logger, cb)
       if wa:
         gevent.Greenlet.spawn(wa.login)
       else:
         res["error"] = "connect-error"
-        logger(fullLine["_id"], "lineRecoverProgress", {"res": res});
+        logger(fullLine["_id"], "lineRecoverProgress", {"res": res})
         print "@@@@ RECOVER ERROR @@@@"
       while not done[0] and count < 20:
         gevent.sleep(.5)
