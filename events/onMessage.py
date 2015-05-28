@@ -44,8 +44,8 @@ def onMessageReceived(wa, messageId, jid, participant, messageContent, timestamp
               pushData["participant"] = participant.split("@")[0]
             if isBroadCast:
               pushData["broadcast"] = broadcast
-            if alias:
-              pushData["nickname"] = alias
+            if pushName:
+              pushData["nickname"] = pushName
             res = push(wa.line["_id"], token, "message", pushData)
             if res:
               print res.read()
