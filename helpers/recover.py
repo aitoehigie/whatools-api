@@ -25,6 +25,7 @@ def recover(lines=False):
                 "tokens": [token["key"]]
               }
             print "@@@@ RECOVER SUCCESS @@@@ {0} {1}".format(token["key"], line["_id"])
+            print running
             res["success"] = True
           else:
             print "@@@@ RECOVER ERROR @@@@ {0} {1}".format(token["key"], line["_id"])

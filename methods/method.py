@@ -4,6 +4,7 @@ from threading import Timer
 from helpers.bot import *
 from helpers.tools import *
 from helpers.push import *
+from helpers.g import *
 from bottle import abort, response
 
 class method(object):
@@ -23,7 +24,7 @@ class method(object):
   def __init__(self, request, running, checks):
     self.request = request
     self.response = response
-    self.running = running
+    self.running = g.running
     self.checks = checks
     self.params = self.request.params
     
