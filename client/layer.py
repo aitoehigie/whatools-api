@@ -178,7 +178,7 @@ class AsyncLayer(YowInterfaceLayer):
         }.get(type, "delivered")
         if self.handle("onAck", [idx, jid, grade]):
             ack = OutgoingAckProtocolEntity(idx, "receipt", type or "delivery", jid)
-            #self.toLower(ack)
+            self.toLower(ack)
             '''if len(entity.ids):
                 for idx in entity.ids:
                     ack = OutgoingAckProtocolEntity(idx, "receipt", type or "delivery", jid)
@@ -200,7 +200,7 @@ class AsyncLayer(YowInterfaceLayer):
     def onCall(self, entity):
         if entity.getType() == "offer":
           call = CallProtocolEntity(None, "reject", int(time.time()), _to = entity.getFrom(), callId = entity.getCallId())
-          self.toLower(call)
+          #self.toLower(call)
           
     @ProtocolEntityCallback("presence")
     def onPresence(self, entity):
