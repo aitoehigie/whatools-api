@@ -2,6 +2,7 @@ from helpers import *
 from bson import objectid
 
 def onMessageReceived(wa, messageId, jid, participant, messageContent, timestamp, pushName, isBroadCast):
+  print "MESSAGE RECEIVED"
   to = jid.split("@")[0]
   chat = db.Chats.find_one({"from": wa.line["_id"], "to": to})
   stamp = int(timestamp)*1000
