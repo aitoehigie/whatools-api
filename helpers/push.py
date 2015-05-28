@@ -1,4 +1,5 @@
 import db, httplib, urllib
+from tools import *
 
 def push(lId, token, method, data):
   res = False
