@@ -42,6 +42,8 @@ def onMessageReceived(wa, messageId, jid, participant, messageContent, timestamp
             pushData = {"id": messageId, "from": jid, "body": messageContent, "timestamp": timestamp}
             if participant:
               pushData["participant"] = participant.split("@")[0]
+            else:
+              pushData["from"] = jid.split("@")[0]
             if isBroadCast:
               pushData["broadcast"] = broadcast
             if pushName:
