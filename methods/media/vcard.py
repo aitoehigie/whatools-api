@@ -41,6 +41,7 @@ class mediaVcardPostMethod(method):
     honor = self.params.honor
     broadcast = self.params.broadcast
     card_data = src.decode("base64")
+    chat = db.Chats.find_one({"from": self.line["_id"], "to": to})
     if not honor:
       to = phoneFormat(self.line["cc"], to)
     if chat and not len(chat["messages"]):
