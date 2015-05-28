@@ -14,7 +14,7 @@ def onDisconnected(wa, reason):
   print "???? DISCONNECTION", reason, wa.line["active"], wa.line["reconnect"], wa.line["_id"], wa.line["cc"], wa.line["pn"]
   if reason != "Requested" and wa.line["reconnect"]:
     print "???? RECONNECTING!"
-    @delay(10.0)
+    '''@delay(10.0)
     def reconnect():
       wa.line["reconnect"] = False
       line = db.Lines.find_one({"_id": wa.line["_id"]})
@@ -24,4 +24,4 @@ def onDisconnected(wa, reason):
       newWa = YowsupAsyncStack(line, line["tokens"][0], wa.getProp(AsyncLayer.HANDLERS), logger, cb)
       if newWa:
         gevent.spawn(newWa.login)
-    reconnect()
+    reconnect()'''
