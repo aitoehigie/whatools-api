@@ -107,6 +107,12 @@ class AsyncLayer(YowInterfaceLayer):
         return iq.getId()
     methods['profile_setStatus'] = profile_setStatus
     
+    def profile_getPicture(self, pn, success, error):
+        iq = GetPictureIqProtocolEntity(self.normalizeJid(pn))
+        self._sendIq(iq, success, error)
+        return iq.getId()
+    methods['profile_getPicture'] = profile_getPicture
+    
     def profile_setPicture(self, pictureData, previewData, success, error):
         iq = PictureIqProtocolEntity(self.normalizeJid("%s%s" % (self.line["cc"], self.line["pn"])), type="set")
         iq.setPictureData(pictureData)
@@ -151,10 +157,7 @@ class AsyncLayer(YowInterfaceLayer):
             if entity.getXmlns() == "urn:xmpp:ping":
               self.onPing(entity)
         elif entity.getType() == "result":
-            if entity.getXmlns() == "w:profile:picture":
-              self.onProfilePictureResult(entity)
-            else:
-              self.onResult(entity)
+            self.onResult(entity)
 
     @ProtocolEntityCallback("message")
     def onMessage(self, entity):
@@ -265,11 +268,6 @@ class AsyncLayer(YowInterfaceLayer):
             receipt = OutgoingReceiptProtocolEntity(entity.getId(), entity.getFrom())
             if self.handle("onMediaReceived", [idx, jid, participant, caption, "vcard", card_data, None, None, broadcast]):            
                 self.toLower(receipt)
-
-    def onProfilePictureResult(self, entity):
-        idx = entity.getId()
-        pictureId = entity.getPictureId()
-        self.handle("onProfileSetPictureSuccess", [idx, pictureId])
 
     def onResult(self, entity):
         idx = entity.getId()

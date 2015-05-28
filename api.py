@@ -52,6 +52,10 @@ def status_get():
 def status_post():
   return statusPostMethod(request, running).queue
 
+@route("/avatar", method="GET")
+def avatar_get():
+  return avatarGetMethod(request, running, response = response).queue
+
 @route("/avatar", method="POST")
 def avatar_post():
   return avatarPostMethod(request, running).queue

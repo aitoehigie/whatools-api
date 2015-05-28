@@ -5,7 +5,7 @@ import time
 class statusGetMethod(method):
 
   def __init__(self, request, running):
-    checks = ["key", "line", "token", ["permission", "read"]]
+    checks = ["key", "line", "expired", "token", ["permission", "read"]]
     super(statusGetMethod, self).__init__(request, running, checks)
     if not self.error:
       self.run()
