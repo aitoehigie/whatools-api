@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #  -*- coding: utf8 -*-
-import sys, re, time
+import sys, re, time, urllib
 import db
 from tools import *
 
