@@ -54,7 +54,7 @@ class mediaPicturePostMethod(method):
         self.push("media_carbon", {"id": msgId, "to": to, "caption": caption, "timestamp": stamp, "broadcast": broadcast})
         self._success()
         
-      def uploadError(path, to, url):
+      def uploadError(path, to = None, url = None):
         self._log("mediaPicturePostError")
         self._die("upload-error")
         os.remove(path)
