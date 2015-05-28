@@ -22,6 +22,7 @@ class subscribeGetMethod(method):
           self.running[self.line["_id"]] = {"tokens": [self.token["key"]], "yowsup": wa}
         elif self.token["key"] not in self.running[self.line["_id"]]["tokens"]:
           self.running[self.line["_id"]]["tokens"].append(self.token["key"])
+        print self.running
         db.Lines.update({"_id": self.line["_id"], "tokens.key": self.token["key"]}, {"$set": {"valid": True, "active": True, "tokens.$.active": True}})
         if data:
           db.Lines.update({"_id": self.line["_id"]}, {"$set": {"data": data}})
