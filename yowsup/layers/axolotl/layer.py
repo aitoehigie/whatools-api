@@ -203,7 +203,10 @@ class YowAxolotlLayer(YowProtocolLayer):
           plaintext = sessionCipher.decryptMsg(whisperMessage)
         except DuplicateMessageException:
           logger.error("Duplicate message from %s!!" % node["from"])
-          plaintext = "[Duplicate message]"
+          plaintext = "[Could not decrypt]"
+        except NoSessionException:
+          logger.error("No session for %s!!" % node["from"])
+          plaintext = "[Could not decrypt]"
 
         bodyNode = ProtocolTreeNode("body", data = plaintext)
         node.addChild(bodyNode)
