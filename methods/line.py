@@ -28,7 +28,7 @@ class lineRegRequestGetMethod(method):
       self.run()
     
   def run(self):
-    wa = WARegRequest(self.params.cc, self.params.pn, method = self.params.code)
+    wa = WARegRequest(self.params.cc, self.params.pn, self.params.code)
     if wa:
       self._success(wa.register())
     else:
