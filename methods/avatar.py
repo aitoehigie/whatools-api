@@ -29,7 +29,7 @@ class avatarGetMethod(method):
     avatar = db.Avatars.find_one({"jid": pn})
     
     if avatar:
-      success(avatar["items"][0])
+      success(avatar["items"][-1])
       
     else:
     
