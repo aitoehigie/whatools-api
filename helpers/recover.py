@@ -41,6 +41,5 @@ def recover(lines=False):
         print "@@@@ RECOVER ERROR @@@@"
       while not done[0] and count < 20:
         gevent.sleep(.5)
-        print "RECOVER ATTEMPT", count, line["_id"], done[0]
         count += 1
   return
