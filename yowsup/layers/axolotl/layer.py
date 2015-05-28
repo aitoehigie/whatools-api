@@ -177,14 +177,18 @@ class YowAxolotlLayer(YowProtocolLayer):
             else:
                 self.handleWhisperMessage(node)
         except InvalidMessageException:
-            logger.debug("Invalid message from %s!! Your axololtl database data might be inconsistent with WhatsApp, or with what that contact has" % node["from"])
+            logger.error("Invalid message from %s!! Your axololtl database data might be inconsistent with WhatsApp, or with what that contact has" % node["from"])
 
     def handlePreKeyWhisperMessage(self, node):
         pkMessageProtocolEntity = EncryptedMessageProtocolEntity.fromProtocolTreeNode(node)
-
-        preKeyWhisperMessage = PreKeyWhisperMessage(serialized=pkMessageProtocolEntity.getEncData())
-        sessionCipher = self.getSessionCipher(pkMessageProtocolEntity.getFrom(False))
-        plaintext = sessionCipher.decryptPkmsg(preKeyWhisperMessage)
+        
+        try:
+          preKeyWhisperMessage = PreKeyWhisperMessage(serialized=pkMessageProtocolEntity.getEncData())
+          sessionCipher = self.getSessionCipher(pkMessageProtocolEntity.getFrom(False))
+          plaintext = sessionCipher.decryptPkmsg(preKeyWhisperMessage)
+        except:
+          logger.error("No such signedPreKey from %s!!" % node["from"])
+          plaintext = "[Could not decrypt]"
 
         bodyNode = ProtocolTreeNode("body", data = plaintext)
         node.addChild(bodyNode)
@@ -198,7 +202,7 @@ class YowAxolotlLayer(YowProtocolLayer):
           sessionCipher = self.getSessionCipher(encMessageProtocolEntity.getFrom(False))
           plaintext = sessionCipher.decryptMsg(whisperMessage)
         except DuplicateMessageException:
-          logger.debug("Duplicate message from %s!!" % node["from"])
+          logger.error("Duplicate message from %s!!" % node["from"])
           plaintext = "[Duplicate message]"
 
         bodyNode = ProtocolTreeNode("body", data = plaintext)
