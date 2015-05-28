@@ -191,9 +191,13 @@ class YowAxolotlLayer(YowProtocolLayer):
     def handleWhisperMessage(self, node):
         encMessageProtocolEntity = EncryptedMessageProtocolEntity.fromProtocolTreeNode(node)
 
-        whisperMessage = WhisperMessage(serialized=encMessageProtocolEntity.getEncData())
-        sessionCipher = self.getSessionCipher(encMessageProtocolEntity.getFrom(False))
-        plaintext = sessionCipher.decryptMsg(whisperMessage)
+        try:
+          whisperMessage = WhisperMessage(serialized=encMessageProtocolEntity.getEncData())
+          sessionCipher = self.getSessionCipher(encMessageProtocolEntity.getFrom(False))
+          plaintext = sessionCipher.decryptMsg(whisperMessage)
+        except DuplicateMessageException:
+          logger.error("Duplicate message from %s!!" % node["from"])
+          plaintext = "[Duplicate message]"
 
         bodyNode = ProtocolTreeNode("body", data = plaintext)
         node.addChild(bodyNode)
