@@ -178,7 +178,7 @@ class AsyncLayer(YowInterfaceLayer):
         }.get(type, "delivered")
         if self.handle("onAck", [idx, jid, grade]):
             ack = OutgoingAckProtocolEntity(idx, "receipt", type or "delivery", jid)
-            self.toLower(ack)
+            #self.toLower(ack)
             '''if len(entity.ids):
                 for idx in entity.ids:
                     ack = OutgoingAckProtocolEntity(idx, "receipt", type or "delivery", jid)
