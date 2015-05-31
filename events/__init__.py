@@ -5,6 +5,7 @@ from onMedia import *
 from onMessage import *
 from onPresence import *
 from onPing import *
+from onNotification import *
 
 eventHandler = {
   "onAck": onAck,
@@ -14,6 +15,8 @@ eventHandler = {
   "onDisconnected": onDisconnected,
   "onMediaReceived": onMediaReceived,
   "onMessageReceived": onMessageReceived,
+  "onNotificationDeletePicture": onNotificationDeletePicture,
+  "onNotificationSetPicture": onNotificationSetPicture,
   "onPing": onPing,
   "onPresence": onPresence
 }

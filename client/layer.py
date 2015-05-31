@@ -10,6 +10,7 @@ from yowsup.layers.protocol_ib.protocolentities        import *
 from yowsup.layers.protocol_iq.protocolentities        import *
 from yowsup.layers.protocol_media.protocolentities     import *
 from yowsup.layers.protocol_messages.protocolentities  import *
+from yowsup.layers.protocol_notifications.protocolentities  import *
 from yowsup.layers.protocol_presence.protocolentities  import *
 from yowsup.layers.protocol_profiles.protocolentities  import *
 from yowsup.layers.protocol_receipts.protocolentities  import *
@@ -166,7 +167,11 @@ class AsyncLayer(YowInterfaceLayer):
             
     @ProtocolEntityCallback("notification")
     def onNotification(self, entity):
-        pass
+        type = entity.getType()
+        if isinstance(entity, SetPictureNotificationProtocolEntity):
+            self.handle("onNotificationSetPicture", [entity.getFrom(), entity.setJid, entity.setId])
+        elif isinstance(entity, DeletePictureNotificationProtocolEntity):
+            self.handle("onNotificationDeletePicture", [entity.getFrom(), entity.deleteJid])
     
     @ProtocolEntityCallback("receipt")
     def onReceipt(self, entity):
