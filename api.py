@@ -88,7 +88,7 @@ def index():
   return static_file('index.html', './static')
 
 def main():
-  recover(list(db.Lines.find({"tokens.active": True, "api": v, "deleted": {"$in": [None, False]}})))
+  recover(list(db.Lines.find({"tokens.active": True, "api": v, "deleted": {"$in": [None, False]}, "valid": True})))
   run(host="127.0.0.1", port="8082", server='gevent')
 
 if __name__ == "__main__":
