@@ -53,6 +53,7 @@ class mediaPicturePostMethod(method):
         else:
           db.Chats.insert({"_id": str(objectid.ObjectId()), "from": self.line["_id"], "to": to, "messages": [msg], "lastStamp": stamp})
         self.push("media_carbon", {"id": msgId, "to": to, "caption": caption, "timestamp": stamp, "broadcast": broadcast})
+        os.remove(path)
         
       def uploadError(path, to = None, url = None):
         self._log("mediaPicturePostError")
