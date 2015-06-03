@@ -11,17 +11,18 @@ def push(lId, token, method, data):
   params = urllib.urlencode(data)
   headers = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/plain"}
   if url[0] == "https":
-    conn = httplib.HTTPSConnection(url[1], int(url[2]))
+    conn = httplib.HTTPSConnection(url[1], int(url[2]), 5)
   else:
-    conn = httplib.HTTPConnection(url[1], int(url[2]))
+    conn = httplib.HTTPConnection(url[1], int(url[2]), 5)
   try:
-    conn.sock.settimeout(3.0)
     logger(lId, "hookPost", {"url": url, "params": params, "headers": headers})
     conn.request("POST", '/' + url[3], params, headers)
     res = conn.getresponse()
-  except:
+  except Exception as e:
     logger(lId, "hookProgress", {"success": False, "url": url, "params": params, "headers": headers})
-    print "[PUSH] Connection refused while trying to " + method
+    print "[WebHook] Connection refused while trying to call method %s" % method
+    print e.__doc__
+    print e.message
   else:  
     logger(lId, "hookProgress", {"success": True, "result": res.read(), "url": url, "params": params, "headers": headers})
   return res
