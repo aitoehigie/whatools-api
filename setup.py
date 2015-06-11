@@ -11,5 +11,5 @@ setup(name='whatools-api',
       author_email='info@waalt.com',
       url='https://api.wha.tools/v2',
       py_modules = ['helpers.bot'],
-      install_requires=['python-dateutil', 'argparse', 'python-axolotl>=0.1.7', 'pillow', 'bottle', 'gevent', 'httplib2', 'urllib3', 'pymongo', 'phonenumbers', 'lxml'],
+      install_requires=['python-dateutil', 'argparse', 'python-axolotl>=0.1.7', 'pillow', 'bottle', 'gevent', 'httplib2', 'urllib3', 'pymongo', 'phonenumbers', 'lxml', 'paste'],
      )
