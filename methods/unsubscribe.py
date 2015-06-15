@@ -5,7 +5,7 @@ import time
 class unsubscribeGetMethod(method):
 
   def __init__(self, request, running):
-    checks = ["key", "line", "token", "inactive"]
+    checks = ["key", "line", "token", "active"]
     super(unsubscribeGetMethod, self).__init__(request, running, checks)
     if not self.error:
       self.run()

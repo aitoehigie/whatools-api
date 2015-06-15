@@ -6,7 +6,7 @@ import time
 class avatarGetMethod(method):
 
   def __init__(self, request, running, response):
-    checks = ["key", "line", "expired", "token", ["permission", "read"], ["param", "pn"], "inactive"]
+    checks = ["key", "line", "expired", "token", ["permission", "read"], ["param", "pn"], "active"]
     super(avatarGetMethod, self).__init__(request, running, checks)
     self.response = response
     if not self.error:
@@ -51,7 +51,7 @@ class avatarGetMethod(method):
 class avatarPostMethod(method):
 
   def __init__(self, request, running):
-    checks = ["key", "line", "expired", "token", ["permission", "write"], ["param", "src"], "inactive"]
+    checks = ["key", "line", "expired", "token", ["permission", "write"], ["param", "src"], "active"]
     super(avatarPostMethod, self).__init__(request, running, checks)
     if not self.error:
       self.run()
