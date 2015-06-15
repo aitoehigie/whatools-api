@@ -76,6 +76,10 @@ def media_location_get():
 def media_picture_post():
   return mediaPicturePostMethod(request, running).queue
   
+@route("/axolotl/regen", method="GET")
+def axolotl_regen_get():
+  return axolotlRegenGetMethod(request, running).queue
+  
 '''
 STATIC CONTENT
 '''

@@ -18,7 +18,7 @@ class statusGetMethod(method):
 class statusPostMethod(method):
 
   def __init__(self, request, running):
-    checks = ["key", "line", "expired", "token", ["permission", "write"], ["param", "message"], "inactive"]
+    checks = ["key", "line", "expired", "token", ["permission", "write"], ["param", "message"], "active"]
     super(statusPostMethod, self).__init__(request, running, checks)
     if not self.error:
       self.run()

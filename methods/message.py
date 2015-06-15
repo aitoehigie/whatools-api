@@ -7,7 +7,7 @@ import time
 class messagePostMethod(method):
 
   def __init__(self, request, running):
-    checks = ["key", "line", "expired", "token", ["permission", "write"], ["param", "to"], ["param", "body"], "inactive"]
+    checks = ["key", "line", "expired", "token", ["permission", "write"], ["param", "to"], ["param", "body"], "active"]
     super(messagePostMethod, self).__init__(request, running, checks)
     if not self.error:
       self.run()

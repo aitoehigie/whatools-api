@@ -18,7 +18,7 @@ class nicknameGetMethod(method):
 class nicknamePostMethod(method):
 
   def __init__(self, request, running):
-    checks = ["key", "line", "expired", "token", ["permission", "write"], ["param", "nickname"], "inactive"]
+    checks = ["key", "line", "expired", "token", ["permission", "write"], ["param", "nickname"], "active"]
     super(nicknamePostMethod, self).__init__(request, running, checks)
     if not self.error:
       self.run()

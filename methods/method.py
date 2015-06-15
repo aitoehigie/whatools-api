@@ -18,7 +18,8 @@ class method(object):
     "expired": ["line-is-expired", 402],
     "permission": ["no-permission", 403],
     "param": ["bad-param", 400],
-    "inactive": ["inactive-line", 405]
+    "active": ["subscribe-first", 405],
+    "inactive": ["unsubscribe-first", 405]
   }
 
   def __init__(self, request, running, checks):
@@ -49,7 +50,8 @@ class method(object):
           check == "line" and not self.line,
           check == "expired" and self.expired,
           check == "token" and not self.token,
-          check == "inactive" and not self.line["_id"] in self.running
+          check == "active" and not self.line["_id"] in self.running
+          check == "inactive" and self.line["_id"] in self.running
           ]):
           self.error = self.errorMessages[check]
           break
