@@ -2,6 +2,7 @@
 #  -*- coding: utf8 -*-
 import sys, re, time, urllib, httplib
 import db
+from push import *
 from tools import *
 
 reload(sys)

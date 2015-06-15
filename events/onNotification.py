@@ -2,14 +2,8 @@ import time
 from helpers import *
 
 def onNotificationDeletePicture(wa, jid, deleteJid):
-  setJid = setJid.split("@")[0]
-  avatars = db.Avatars.find_one({"jid", setJid})
-  if avatars:
-    items = avatars["items"]
-    for index, item in enumerate(items):
-      if item["id"] == setId:
-        items.pop(index)
-        break
+  deleteJid = deleteJid.split("@")[0]
+  avatars = db.Avatars.update({"jid": deleteJid}, {"$set": {"items": []}})
   return True
   
 def onNotificationSetPicture(wa, jid, setJid, setId):
