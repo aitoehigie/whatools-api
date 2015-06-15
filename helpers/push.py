@@ -11,12 +11,12 @@ def push(lId, token, method, data):
   params = urllib.urlencode(data)
   headers = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/plain"}
   if url[0] == "https":
-    conn = httplib.HTTPSConnection(url[1], int(url[2]), 5)
+    conn = httplib.HTTPSConnection(str(url[1]), int(url[2]), timeout=5)
   else:
-    conn = httplib.HTTPConnection(url[1], int(url[2]), 5)
+    conn = httplib.HTTPConnection(str(url[1]), int(url[2]), timeout=5)
   try:
     logger(lId, "hookPost", {"url": url, "params": params, "headers": headers})
-    conn.request("POST", '/' + url[3], params, headers)
+    conn.request("POST", "/%s" + str(url[3]), params, headers)
     res = conn.getresponse()
   except Exception as e:
     logger(lId, "hookProgress", {"success": False, "url": url, "params": params, "headers": headers})
