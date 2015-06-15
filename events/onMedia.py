@@ -64,8 +64,6 @@ def onMediaReceived(wa, messageId, jid, participant, caption, type, preview, url
             pushData["participant"] = participant
           if isBroadCast:
             pushData["broadcast"] = broadcast
-          if alias:
-            pushData["nickname"] = alias
           pushRes = push(wa.line["_id"], token, "media", pushData)
           if pushRes:
             print pushRes.read()
