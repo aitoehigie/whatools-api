@@ -14,7 +14,8 @@ class axolotlRegenGetMethod(method):
     self._log("axolotlRegenGet")
     
     try:
-      shutil.rmtree("%s/%s%s/" % (YowConstants.PATH_STORAGE, self.line["cc"), self.line["pn"])
+      shutil.rmtree("%s/%s%s/" % (YowConstants.PATH_STORAGE, self.line["cc"], self.line["pn"]))
       self._success()
-    except:
+
+    except Exception as e:
       self._die("could-not-regenerate-keys", 500)

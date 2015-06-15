@@ -50,7 +50,7 @@ class method(object):
           check == "line" and not self.line,
           check == "expired" and self.expired,
           check == "token" and not self.token,
-          check == "active" and not self.line["_id"] in self.running
+          check == "active" and not self.line["_id"] in self.running,
           check == "inactive" and self.line["_id"] in self.running
           ]):
           self.error = self.errorMessages[check]
