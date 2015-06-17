@@ -6,7 +6,7 @@ class axolotlRegenGetMethod(method):
 
   def __init__(self, request, running):
     checks = ["key", "line", "expired", "token", ["permission", "write"], "inactive"]
-    super(subscribeGetMethod, self).__init__(request, running, checks)
+    super(axolotlRegenGetMethod, self).__init__(request, running, checks)
     if not self.error:
       self.run()
     
