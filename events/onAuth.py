@@ -14,7 +14,7 @@ def onDisconnected(wa, reason):
   print "???? DISCONNECTION", reason, wa.line["active"], wa.line["reconnect"], wa.line["_id"], wa.line["cc"], wa.line["pn"]
   if reason != "Requested" and wa.line["reconnect"]:
     line = db.Lines.find_one({"_id": wa.line["_id"]})
-    if "reconnecting" not in g.running[line["_id"]] or not g.running[line["_id"]]["reconnecting"]:
+    if line["_id"] in g.running and ("reconnecting" not in g.running[line["_id"]] or not g.running[line["_id"]]["reconnecting"]):
       print "???? RECONNECTING!"
       def cb(wa, loginRes, data = None):
         g.running[line["_id"]]["yowsup"] = wa
