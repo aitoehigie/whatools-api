@@ -52,16 +52,16 @@ def onMediaReceived(wa, messageId, jid, participant, caption, type, preview, url
       if token["key"] in runningTokens:
         if token["push"]:
           if type == "location":
-            pushData = {"id": messageId, "from": jid, "type": type, "preview": base64.b64encode(preview), "latitude": url, "longitude": size, "timestamp": stamp}
+            pushData = {"id": messageId, "from": jid.split("@")[0], "type": type, "preview": base64.b64encode(preview), "latitude": url, "longitude": size, "timestamp": stamp}
           elif type == "vcard":
             url = "https://api.wha.tools/v%s/?cId=%s&mId=%s" % (v, chat["_id"], msg["id"])
-            pushData = {"id": messageId, "from": jid, "type": type, "name": caption, "url": url, "timestamp": stamp}
+            pushData = {"id": messageId, "from": jid.split("@")[0], "type": type, "name": caption, "url": url, "timestamp": stamp}
           else:
-            pushData = {"id": messageId, "from": jid, "type": type, "preview": base64.b64encode(preview), "url": url, "size": size, "timestamp": stamp}
+            pushData = {"id": messageId, "from": jid.split("@")[0], "type": type, "preview": base64.b64encode(preview), "url": url, "size": size, "timestamp": stamp}
             if caption:
               pushData["caption"] = caption
           if participant:
-            pushData["participant"] = participant
+            pushData["participant"] = participant.split("@")[0]
           if isBroadCast:
             pushData["broadcast"] = broadcast
           pushRes = push(wa.line["_id"], token, "media", pushData)

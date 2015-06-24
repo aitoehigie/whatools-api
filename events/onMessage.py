@@ -39,7 +39,7 @@ def onMessageReceived(wa, messageId, jid, participant, messageContent, timestamp
       for token in allTokens:
         if token["key"] in runningTokens:
           if token["push"]:
-            pushData = {"id": messageId, "from": jid, "body": messageContent, "timestamp": timestamp}
+            pushData = {"id": messageId, "from": jid.split("@")[0], "body": messageContent, "timestamp": timestamp}
             if participant:
               pushData["participant"] = participant.split("@")[0]
             else:
