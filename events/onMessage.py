@@ -1,7 +1,7 @@
 from helpers import *
 from bson import objectid
 
-def onMessageReceived(wa, messageId, jid, participant, messageContent, timestamp, pushName, isBroadCast):
+def onMessageReceived(wa, messageId, jid, participant, messageContent, timestamp, notify, isBroadCast):
   to = jid.split("@")[0]
   chat = db.Chats.find_one({"from": wa.line["_id"], "to": to})
   stamp = int(timestamp)*1000
@@ -13,14 +13,13 @@ def onMessageReceived(wa, messageId, jid, participant, messageContent, timestamp
   }
   if participant:
     msg["participant"] = participant
-    msg["pushName"] = pushName
   if isBroadCast:
     msg["broadcast"] = broadcast
   if chat:
     # Push it to db
     db.Chats.update({"from": wa.line["_id"], "to": to}, {"$push": {"messages": msg}, "$set": {"lastStamp": stamp, "folder": "inbox"}, "$inc": {"unread": 1}})
   else:
-    alias = False if participant else (pushName or False)
+    alias = False if participant else (notify or False)
     # Create new chat
     db.Chats.insert({
       "_id": str(objectid.ObjectId()),
@@ -46,8 +45,8 @@ def onMessageReceived(wa, messageId, jid, participant, messageContent, timestamp
               pushData["from"] = jid.split("@")[0]
             if isBroadCast:
               pushData["broadcast"] = broadcast
-            if pushName:
-              pushData["nickname"] = pushName
+            if notify:
+              pushData["nickname"] = notify
             res = push(wa.line["_id"], token, "message", pushData)
             if res:
               print res.read()

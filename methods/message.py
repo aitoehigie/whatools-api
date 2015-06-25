@@ -29,7 +29,7 @@ class messagePostMethod(method):
       stamp = int(time.time() * 1000)
       msg = {"id": msgId, "mine": True, "body": body, "stamp": stamp, "ack": "sent"}
       if chat:
-        db.Chats.update({"from": self.line["_id"], "to": to}, {"$push": {"messages": msg}, "$set": {"lastStamp": stamp, "unread": 0}})
+        db.Chats.update({"from": self.line["_id"], "to": to}, {"$push": {"messages": msg}, "$set": {"lastStamp": stamp, "unread": 0, "folder": "inbox"}})
       else:
         db.Chats.insert({"_id": str(objectid.ObjectId()), "from": self.line["_id"], "to": to, "messages": [msg], "lastStamp": stamp, "folder": "inbox"})
       self.push("carbon", {"id": msgId, "to": to, "body": body, "timestamp": stamp, "broadcast": broadcast})

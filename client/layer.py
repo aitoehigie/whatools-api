@@ -236,26 +236,27 @@ class AsyncLayer(YowInterfaceLayer):
         jid = entity.getFrom()
         broadcast = entity.isBroadcast()
         participant = entity.getParticipant()
+        notify = entity.getNotify()
         if entity.getMediaType() == "image":
             caption = entity.getCaption()
             preview = entity.getPreview()
             url = entity.getMediaUrl()
             size = entity.getMediaSize()
             receipt = OutgoingReceiptProtocolEntity(idx, jid)
-            if self.handle("onMediaReceived", [idx, jid, participant, caption, "image", preview, url, size, broadcast]):
+            if self.handle("onMediaReceived", [idx, jid, participant, caption, "image", preview, url, size, notify, broadcast]):
                 self.toLower(receipt)
         elif entity.getMediaType() == "audio":
             url = entity.getMediaUrl()
             size = entity.getMediaSize()
             receipt = OutgoingReceiptProtocolEntity(idx, jid)
-            if self.handle("onMediaReceived", [idx, jid, participant, None, "audio", None, url, size, broadcast]):
+            if self.handle("onMediaReceived", [idx, jid, participant, None, "audio", None, url, size, notify, broadcast]):
                 self.toLower(receipt)
         elif entity.getMediaType() == "video":
             preview = entity.getPreview()
             url = entity.getMediaUrl()
             size = entity.getMediaSize()
             receipt = OutgoingReceiptProtocolEntity(idx, jid)
-            if self.handle("onMediaReceived", [idx, jid, participant, None, "video", preview, url, size, broadcast]):
+            if self.handle("onMediaReceived", [idx, jid, participant, None, "video", preview, url, size, notify, broadcast]):
                 self.toLower(receipt)
         elif entity.getMediaType() == "location":
             preview = entity.getPreview()
@@ -263,13 +264,13 @@ class AsyncLayer(YowInterfaceLayer):
             longitude = entity.getLongitude()
             name = entity.getLocationName()
             receipt = OutgoingReceiptProtocolEntity(entity.getId(), entity.getFrom())
-            if self.handle("onMediaReceived", [idx, jid, participant, name, "location", preview, latitude, longitude, broadcast]):
+            if self.handle("onMediaReceived", [idx, jid, participant, name, "location", preview, latitude, longitude, notify, broadcast]):
                 self.toLower(receipt)
         elif entity.getMediaType() == "vcard":
             caption = entity.getName()
             card_data = entity.getCardData()
             receipt = OutgoingReceiptProtocolEntity(entity.getId(), entity.getFrom())
-            if self.handle("onMediaReceived", [idx, jid, participant, caption, "vcard", card_data, None, None, broadcast]):            
+            if self.handle("onMediaReceived", [idx, jid, participant, caption, "vcard", card_data, None, None, notify, broadcast]):            
                 self.toLower(receipt)
 
     def onResult(self, entity):

@@ -1,7 +1,7 @@
 from helpers import *
 import time, base64
 
-def onMediaReceived(wa, messageId, jid, participant, caption, type, preview, url, size, isBroadCast):
+def onMediaReceived(wa, messageId, jid, participant, caption, type, preview, url, size, notify, isBroadCast):
   to = jid.split("@")[0]
   chat = db.Chats.find_one({"from": wa.line["_id"], "to": to})
   stamp = int(time.time())*1000
@@ -31,10 +31,13 @@ def onMediaReceived(wa, messageId, jid, participant, caption, type, preview, url
     msg["body"] = caption
   if participant:
     msg["participant"] = participant
+  if isBroadCast:
+    msg["broadcast"] = broadcast
   if chat:
     # Push it to db
-    db.Chats.update({"from": wa.line["_id"], "to": to}, {"$set": {"folder": "inbox"}, "$push": {"messages": msg}, "$set": {"lastStamp": stamp}, "$inc": {"unread": 1}});
+    db.Chats.update({"from": wa.line["_id"], "to": to}, {"$set": {"folder": "inbox"}, "$push": {"messages": msg}, "$set": {"lastStamp": stamp, "folder": "inbox"}, "$inc": {"unread": 1}});
   else:
+    alias = False if participant else (notify or False)
     # Create new chat
     db.Chats.insert({
       "_id": str(objectid.ObjectId()),
@@ -42,7 +45,8 @@ def onMediaReceived(wa, messageId, jid, participant, caption, type, preview, url
       "to": to,
       "messages": [msg],
       "lastStamp": stamp,
-      "alias": False
+      "alias": alias,
+      "folder": "inbox"
     })
   bot.botify(wa, msg, to, running)
   if len(running):
@@ -64,6 +68,8 @@ def onMediaReceived(wa, messageId, jid, participant, caption, type, preview, url
             pushData["participant"] = participant.split("@")[0]
           if isBroadCast:
             pushData["broadcast"] = broadcast
+          if notify:
+            pushData["nickname"] = notify
           pushRes = push(wa.line["_id"], token, "media", pushData)
           if pushRes:
             print pushRes.read()
