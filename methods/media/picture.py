@@ -7,7 +7,7 @@ import os, time
 class mediaPicturePostMethod(method):
 
   def __init__(self, request, running):
-    checks = ["key", "line", "expired", "token", ["permission", "write"], ["param", "to"], ["file", "attachment"], "inactive"]
+    checks = ["key", "line", "expired", "token", ["permission", "write"], ["param", "to"], ["file", "attachment"], "active"]
     super(mediaPicturePostMethod, self).__init__(request, running, checks)
     if not self.error:
       self.run()

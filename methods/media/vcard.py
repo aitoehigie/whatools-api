@@ -28,7 +28,7 @@ class mediaVcardGetMethod(method):
 class mediaVcardPostMethod(method):
 
   def __init__(self, request, running):
-    checks = ["key", "line", "expired", "token", ["permission", "write"], ["param", "name"], ["param", "src"], ["param", "to"], "inactive"]
+    checks = ["key", "line", "expired", "token", ["permission", "write"], ["param", "name"], ["param", "src"], ["param", "to"], "active"]
     super(mediaVcardPostMethod, self).__init__(request, running, checks)
     if not self.error:
       self.run()
