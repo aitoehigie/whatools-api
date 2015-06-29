@@ -5,6 +5,7 @@ def onMediaReceived(wa, messageId, jid, participant, caption, type, preview, url
   to = jid.split("@")[0]
   chat = db.Chats.find_one({"from": wa.line["_id"], "to": to})
   stamp = int(time.time())*1000
+    
   msg = {
     "id": messageId,
     "mine": False,
@@ -28,6 +29,7 @@ def onMediaReceived(wa, messageId, jid, participant, caption, type, preview, url
     })
   }
   if caption:
+    caption = caption.strip().strip("\x01").strip("\x02")
     msg["body"] = caption
   if participant:
     msg["participant"] = participant

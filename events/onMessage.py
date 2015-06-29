@@ -5,6 +5,7 @@ def onMessageReceived(wa, messageId, jid, participant, messageContent, timestamp
   to = jid.split("@")[0]
   chat = db.Chats.find_one({"from": wa.line["_id"], "to": to})
   stamp = int(timestamp)*1000
+  messageContent = messageContent.strip().strip("\x01").strip("\x02")
   msg = {
     "id": messageId,
     "mine": False,
