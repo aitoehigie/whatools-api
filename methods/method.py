@@ -19,7 +19,8 @@ class method(object):
     "permission": ["no-permission", 403],
     "param": ["bad-param", 400],
     "active": ["subscribe-first", 405],
-    "inactive": ["unsubscribe-first", 405]
+    "inactive": ["unsubscribe-first", 405],
+    "file": ["no-attachment", 400]
   }
 
   def __init__(self, request, running, checks):
