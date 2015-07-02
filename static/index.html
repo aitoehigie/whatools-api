@@ -84,7 +84,7 @@ Every method in this API requires the <code>key</code> parameter, which is your 
 <h2 id="subscribe">Subscribe</h2>
 
 <p>Subscribing an app is as easy as ABC.</p>
-<pre class="highlight shell"><code>curl <span class="s2">"https://wha.tools/v2/subscribe?key=bedfcfae-6c45-40d5-c56f"</span>
+<pre class="highlight shell"><code>curl <span class="s2">"https://api.wha.tools/v2/subscribe?key=bedfcfae-6c45-40d5-c56f"</span>
 </code></pre>
 <pre class="highlight python"><code><span class="kn">import</span> <span class="nn">whatools</span>
 
@@ -187,7 +187,7 @@ Every method in this API requires the <code>key</code> parameter, which is your 
 <h2 id="unsubscribe">Unsubscribe</h2>
 
 <p>The process of unsubscribing an app is very similar to subscribing.</p>
-<pre class="highlight shell"><code>curl <span class="s2">"https://wha.tools/v2/unsubscribe?key=bedfcfae-6c45-40d5-c56f"</span>
+<pre class="highlight shell"><code>curl <span class="s2">"https://api.wha.tools/v2/unsubscribe?key=bedfcfae-6c45-40d5-c56f"</span>
 </code></pre>
 <pre class="highlight python"><code><span class="n">api</span><span class="o">.</span><span class="n">unsubscribe</span><span class="p">()</span>
 </code></pre>
@@ -225,7 +225,7 @@ Every method in this API requires the <code>key</code> parameter, which is your 
 <h2 id="send-text-message">Send text message</h2>
 
 <p>You can send messages to any WhatsApp user by using this <code class="prettyprint">POST</code> method. Note that the your app must have been previously subscribed in order to work properly.</p>
-<pre class="highlight shell"><code>curl <span class="s2">"https://wha.tools/v2/message?key=bedfcfae-6c45-40d5-c56f&amp;to=638265868&amp;body=Hello%20world!"</span>
+<pre class="highlight shell"><code>curl <span class="s2">"https://api.wha.tools/v2/message?key=bedfcfae-6c45-40d5-c56f&amp;to=638265868&amp;body=Hello%20world!"</span>
 </code></pre>
 <pre class="highlight python"><code><span class="n">api</span><span class="o">.</span><span class="n">message</span><span class="p">(</span><span class="s">'638265868'</span><span class="p">,</span> <span class="s">'Hello world!'</span><span class="p">)</span>
 </code></pre>
@@ -236,7 +236,7 @@ Every method in this API requires the <code>key</code> parameter, which is your 
 <pre class="highlight shell"><code><span class="c"># Tip: if the phone number is already in international format, </span>
 <span class="c"># you can use the `honor` parameter to tell our system to </span>
 <span class="c"># leave it as is and not to format it again.</span>
-curl -X POST <span class="s2">"https://wha.tools/v2/message?key=bedfcfae-6c45-40d5-c56f&amp;to=34638265868&amp;body=Hello%20world!&amp;honor=true"</span>
+curl -X POST <span class="s2">"https://api.wha.tools/v2/message?key=bedfcfae-6c45-40d5-c56f&amp;to=34638265868&amp;body=Hello%20world!&amp;honor=true"</span>
 </code></pre>
 <pre class="highlight python"><code><span class="c"># Tip: if the phone number is already in international format, </span>
 <span class="c"># you can use the `honor` parameter to tell our system to </span>
@@ -298,7 +298,7 @@ Note that success of this method DO imply receival of the message by WhatsApp se
 
 <p>You can send contacts in vCard format (.vcf) to any WhatsApp user by using this <code class="prettyprint">POST</code> method. Note that the your app must have been previously subscribed in order to work properly.</p>
 <pre class="highlight shell"><code><span class="nv">src</span><span class="o">=</span><span class="k">$(</span> base64 johndoe.vcf <span class="k">)</span>
-curl <span class="s2">"https://wha.tools/v2/media/vcard?key=bedfcfae-6c45-40d5-c56f&amp;to=638265868&amp;name=John%20Doe&amp;src=</span><span class="nv">$src</span><span class="s2">"</span>
+curl <span class="s2">"https://api.wha.tools/v2/media/vcard?key=bedfcfae-6c45-40d5-c56f&amp;to=638265868&amp;name=John%20Doe&amp;src=</span><span class="nv">$src</span><span class="s2">"</span>
 </code></pre>
 <pre class="highlight python"><code><span class="n">api</span><span class="o">.</span><span class="n">vcard</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s">'638265868'</span><span class="p">,</span> <span class="s">'johndoe.vcf'</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span>
 </code></pre>
@@ -354,7 +354,7 @@ curl <span class="s2">"https://wha.tools/v2/media/vcard?key=bedfcfae-6c45-40d5-c
 <h2 id="send-a-picture">Send a picture</h2>
 
 <p>You can send pictures to any WhatsApp user by using this <code class="prettyprint">POST</code> method. Note that the your app must have been previously subscribed in order to work properly.</p>
-<pre class="highlight shell"><code>curl -F <span class="s2">"attachment=@tajmahal.jpg"</span> <span class="s2">"https://wha.tools/v2/media/picture?key=bedfcfae-6c45-40d5-c56f&amp;to=638265868&amp;caption=The%20Taj%20Mahal"</span>
+<pre class="highlight shell"><code>curl -F <span class="s2">"attachment=@tajmahal.jpg"</span> <span class="s2">"https://api.wha.tools/v2/media/picture?key=bedfcfae-6c45-40d5-c56f&amp;to=638265868&amp;caption=The%20Taj%20Mahal"</span>
 </code></pre>
 <pre class="highlight python"><code><span class="n">api</span><span class="o">.</span><span class="n">picture</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s">'638265868'</span><span class="p">,</span> <span class="s">'tajmahal.jpg'</span><span class="p">,</span> <span class="s">'The Taj Mahal'</span><span class="p">)</span>
 </code></pre>
@@ -369,7 +369,7 @@ curl <span class="s2">"https://wha.tools/v2/media/vcard?key=bedfcfae-6c45-40d5-c
 
 <h3 id="http-request">HTTP Request</h3>
 
-<p><code class="prettyprint">POST https://api.wha.tools/v2/media/vcard</code></p>
+<p><code class="prettyprint">POST https://api.wha.tools/v2/media/picture</code></p>
 
 <h3 id="query-parameters">Query Parameters</h3>
 
@@ -423,7 +423,7 @@ curl <span class="s2">"https://wha.tools/v2/media/vcard?key=bedfcfae-6c45-40d5-c
 <h2 id="get-my-nickname">Get my nickname</h2>
 
 <p>You can retrieve your WhatsApp account&rsquo;s nickname (pushname) by using this <code class="prettyprint">GET</code> method.</p>
-<pre class="highlight shell"><code>curl <span class="s2">"https://wha.tools/v2/nickname?key=bedfcfae-6c45-40d5-c56f"</span>
+<pre class="highlight shell"><code>curl <span class="s2">"https://api.wha.tools/v2/nickname?key=bedfcfae-6c45-40d5-c56f"</span>
 </code></pre>
 <pre class="highlight python"><code><span class="n">nickname</span> <span class="o">=</span> <span class="n">api</span><span class="o">.</span><span class="n">nickname</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
 </code></pre>
@@ -460,7 +460,7 @@ curl <span class="s2">"https://wha.tools/v2/media/vcard?key=bedfcfae-6c45-40d5-c
 <h2 id="set-my-nickname">Set my nickname</h2>
 
 <p>You can set your WhatsApp account&rsquo;s nickname (pushname) by using this <code class="prettyprint">POST</code> method.</p>
-<pre class="highlight shell"><code>curl -X POST <span class="s2">"https://wha.tools/v2/nickname?key=bedfcfae-6c45-40d5-c56f&amp;nickname=John%20Doe"</span>
+<pre class="highlight shell"><code>curl -X POST <span class="s2">"https://api.wha.tools/v2/nickname?key=bedfcfae-6c45-40d5-c56f&amp;nickname=John%20Doe"</span>
 </code></pre>
 <pre class="highlight python"><code><span class="n">api</span><span class="o">.</span><span class="n">nickname</span><span class="o">.</span><span class="nb">set</span><span class="p">(</span><span class="s">'John Doe'</span><span class="p">)</span>
 </code></pre>
@@ -469,7 +469,7 @@ curl <span class="s2">"https://wha.tools/v2/media/vcard?key=bedfcfae-6c45-40d5-c
 <span class="cp">?&gt;</span>
 </code></pre>
 <pre class="highlight shell"><code><span class="c"># Tip: you can delete your nickname by making an empty request:</span>
-curl -X POST <span class="s2">"https://wha.tools/v2/nickname?key=bedfcfae-6c45-40d5-c56f&amp;nickname="</span>
+curl -X POST <span class="s2">"https://api.wha.tools/v2/nickname?key=bedfcfae-6c45-40d5-c56f&amp;nickname="</span>
 </code></pre>
 <pre class="highlight python"><code><span class="c"># Tip: you can delete your nickname by making an empty request:</span>
 <span class="n">api</span><span class="o">.</span><span class="n">nickname</span><span class="o">.</span><span class="nb">set</span><span class="p">()</span>
@@ -514,7 +514,7 @@ curl -X POST <span class="s2">"https://wha.tools/v2/nickname?key=bedfcfae-6c45-4
 <h2 id="get-my-status-message">Get my status message</h2>
 
 <p>You can retrieve your WhatsApp account&rsquo;s status message by using this <code class="prettyprint">GET</code> method.</p>
-<pre class="highlight shell"><code>curl <span class="s2">"https://wha.tools/v2/status?key=bedfcfae-6c45-40d5-c56f"</span>
+<pre class="highlight shell"><code>curl <span class="s2">"https://api.wha.tools/v2/status?key=bedfcfae-6c45-40d5-c56f"</span>
 </code></pre>
 <pre class="highlight python"><code><span class="n">status</span> <span class="o">=</span> <span class="n">api</span><span class="o">.</span><span class="n">status</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
 </code></pre>
@@ -551,7 +551,7 @@ curl -X POST <span class="s2">"https://wha.tools/v2/nickname?key=bedfcfae-6c45-4
 <h2 id="set-my-status-message">Set my status message</h2>
 
 <p>You can set your WhatsApp account&rsquo;s status message by using this <code class="prettyprint">POST</code> method.</p>
-<pre class="highlight shell"><code>curl -X POST <span class="s2">"https://wha.tools/v2/status?key=bedfcfae-6c45-40d5-c56f&amp;message=I%20think%20therefore%20I%20am"</span>
+<pre class="highlight shell"><code>curl -X POST <span class="s2">"https://api.wha.tools/v2/status?key=bedfcfae-6c45-40d5-c56f&amp;message=I%20think%20therefore%20I%20am"</span>
 </code></pre>
 <pre class="highlight python"><code><span class="n">api</span><span class="o">.</span><span class="n">status</span><span class="o">.</span><span class="nb">set</span><span class="p">(</span><span class="s">'I think therefore I am'</span><span class="p">)</span>
 </code></pre>
@@ -560,7 +560,7 @@ curl -X POST <span class="s2">"https://wha.tools/v2/nickname?key=bedfcfae-6c45-4
 <span class="cp">?&gt;</span>
 </code></pre>
 <pre class="highlight shell"><code><span class="c"># Tip: you can delete your status message by making an empty request:</span>
-curl -X POST <span class="s2">"https://wha.tools/v2/status?key=bedfcfae-6c45-40d5-c56f&amp;message="</span>
+curl -X POST <span class="s2">"https://api.wha.tools/v2/status?key=bedfcfae-6c45-40d5-c56f&amp;message="</span>
 </code></pre>
 <pre class="highlight python"><code><span class="c"># Tip: you can delete your status message by making an empty request:</span>
 <span class="n">api</span><span class="o">.</span><span class="n">status</span><span class="o">.</span><span class="nb">set</span><span class="p">()</span>
@@ -606,7 +606,7 @@ curl -X POST <span class="s2">"https://wha.tools/v2/status?key=bedfcfae-6c45-40d
 
 <p>You can set your WhatsApp account&rsquo;s avatar (profile picture) by using this <code class="prettyprint">POST</code> method.</p>
 <pre class="highlight shell"><code><span class="nv">src</span><span class="o">=</span><span class="k">$(</span> base64 selfie.jpg <span class="k">)</span>
-curl -X POST <span class="s2">"https://wha.tools/v2/avatar?key=bedfcfae-6c45-40d5-c56f&amp;src=</span><span class="nv">$src</span><span class="s2">"</span>
+curl -X POST <span class="s2">"https://api.wha.tools/v2/avatar?key=bedfcfae-6c45-40d5-c56f&amp;src=</span><span class="nv">$src</span><span class="s2">"</span>
 </code></pre>
 <pre class="highlight python"><code><span class="n">api</span><span class="o">.</span><span class="n">avatar</span><span class="o">.</span><span class="nb">set</span><span class="p">(</span><span class="s">'selfie.jpg'</span><span class="p">)</span>
 </code></pre>
@@ -615,7 +615,7 @@ curl -X POST <span class="s2">"https://wha.tools/v2/avatar?key=bedfcfae-6c45-40d
 <span class="cp">?&gt;</span>
 </code></pre>
 <pre class="highlight shell"><code><span class="c"># Tip: you can delete your current avatar by making an empty request:</span>
-curl -X POST <span class="s2">"https://wha.tools/v2/avatar?key=bedfcfae-6c45-40d5-c56f&amp;src="</span>
+curl -X POST <span class="s2">"https://api.wha.tools/v2/avatar?key=bedfcfae-6c45-40d5-c56f&amp;src="</span>
 </code></pre>
 <pre class="highlight python"><code><span class="c"># Tip: you can delete your current avatar by making an empty request:</span>
 <span class="n">api</span><span class="o">.</span><span class="n">avatar</span><span class="o">.</span><span class="nb">set</span><span class="p">()</span>
