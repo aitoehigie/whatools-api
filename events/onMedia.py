@@ -42,7 +42,6 @@ def onMediaReceived(wa, messageId, jid, participant, caption, type, preview, url
     alias = False if participant else (notify or False)
     # Create new chat
     db.Chats.insert({
-      "_id": str(objectid.ObjectId()),
       "from": wa.line["_id"],
       "to": to,
       "messages": [msg],
