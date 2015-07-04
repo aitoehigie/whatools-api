@@ -6,6 +6,7 @@ from yowsup.layers.network                             import YowNetworkLayer
 from yowsup.layers.auth                                import YowAuthenticationProtocolLayer
 from yowsup.layers.axolotl                             import YowAxolotlLayer
 from yowsup.layers.protocol_acks.protocolentities      import *
+from yowsup.layers.protocol_contacts.protocolentities  import *
 from yowsup.layers.protocol_ib.protocolentities        import *
 from yowsup.layers.protocol_iq.protocolentities        import *
 from yowsup.layers.protocol_media.protocolentities     import *
@@ -14,7 +15,7 @@ from yowsup.layers.protocol_notifications.protocolentities  import *
 from yowsup.layers.protocol_presence.protocolentities  import *
 from yowsup.layers.protocol_profiles.protocolentities  import *
 from yowsup.layers.protocol_receipts.protocolentities  import *
-from yowsup.layers.protocol_calls.protocolentities  import *
+from yowsup.layers.protocol_calls.protocolentities     import *
 import time
 
 class AsyncLayer(YowInterfaceLayer):
@@ -64,22 +65,18 @@ class AsyncLayer(YowInterfaceLayer):
             return False
             
     methods = {}
+
+    def contact_sync(self, numbers, mode, context, success, error):
+        def iqSuccess(resultEntity, requestEntity):
+          success(resultEntity.inNumbers, resultEntity.outNumbers, resultEntity.invalidNumbers)
+        iq = GetSyncIqProtocolEntity(numbers, mode, context)
+        self._sendIq(iq, iqSuccess, error)
+        return iq.getId()
+    methods['contact_sync'] = contact_sync
     
     def logout(self):
         self.broadcastEvent(YowLayerEvent(YowNetworkLayer.EVENT_STATE_DISCONNECT))
     methods['logout'] = logout;
-    
-    def message_send(self, pn, body):
-        outgoingMessage = TextMessageProtocolEntity(body, to=self.normalizeJid(pn))
-        self.toLower(outgoingMessage)
-        return outgoingMessage.getId()
-    methods['message_send'] = message_send
-    
-    def media_upload_request(self, type, path, success, error):
-        entity = RequestUploadIqProtocolEntity(type, filePath=path)
-        self._sendIq(entity, success, error)
-        return entity.getId()
-    methods['media_upload_request'] = media_upload_request
 
     def media_send(self, type, path, to, url, ip = None, caption = None):
         media = {"type": type}
@@ -96,35 +93,29 @@ class AsyncLayer(YowInterfaceLayer):
         else:
           return False
     methods['media_send'] = media_send
-    
-    def presence_sendAvailable(self, nickname):
-        presence = PresenceProtocolEntity("available", nickname)
-        self.toLower(presence)
-    methods['presence_sendAvailable'] = presence_sendAvailable
 
-    def profile_setStatus(self, status, success, error):
-        iq = SetStatusIqProtocolEntity(status)
-        self._sendIq(iq, success, error)
-        return iq.getId()
-    methods['profile_setStatus'] = profile_setStatus
-    
-    def profile_getPicture(self, pn, success, error):
-        iq = GetPictureIqProtocolEntity(self.normalizeJid(pn))
-        self._sendIq(iq, success, error)
-        return iq.getId()
-    methods['profile_getPicture'] = profile_getPicture
-    
-    def profile_setPicture(self, pictureData, previewData, success, error):
-        iq = SetPictureIqProtocolEntity(self.normalizeJid("%s%s" % (self.line["cc"], self.line["pn"])), previewData, pictureData)
-        self._sendIq(iq, success, error)
-        return iq.getId()
-    methods['profile_setPicture'] = profile_setPicture
-    
+    def media_upload_request(self, type, path, success, error):
+        entity = RequestUploadIqProtocolEntity(type, filePath=path)
+        self._sendIq(entity, success, error)
+        return entity.getId()
+    methods['media_upload_request'] = media_upload_request
+
     def media_vcard_send(self, name, card_data, to):
         media = VCardMediaMessageProtocolEntity(name, card_data, to="%s@s.whatsapp.net" % to)
         self.toLower(media)
         return media.getId()
     methods['media_vcard_send'] = media_vcard_send
+
+    def message_send(self, pn, body):
+        outgoingMessage = TextMessageProtocolEntity(body, to=self.normalizeJid(pn))
+        self.toLower(outgoingMessage)
+        return outgoingMessage.getId()
+    methods['message_send'] = message_send
+    
+    def presence_sendAvailable(self, nickname):
+        presence = PresenceProtocolEntity("available", nickname)
+        self.toLower(presence)
+    methods['presence_sendAvailable'] = presence_sendAvailable
     
     def presence_subscribe(self, to):
         presence = SubscribePresenceProtocolEntity(self.normalizeJid(to))
@@ -137,6 +128,24 @@ class AsyncLayer(YowInterfaceLayer):
         self.toLower(presence)
         return True
     methods['presence_unsubscribe'] = presence_unsubscribe
+
+    def profile_getPicture(self, pn, success, error):
+        iq = GetPictureIqProtocolEntity(self.normalizeJid(pn))
+        self._sendIq(iq, success, error)
+        return iq.getId()
+    methods['profile_getPicture'] = profile_getPicture
+    
+    def profile_setPicture(self, pictureData, previewData, success, error):
+        iq = SetPictureIqProtocolEntity(self.normalizeJid("%s%s" % (self.line["cc"], self.line["pn"])), previewData, pictureData)
+        self._sendIq(iq, success, error)
+        return iq.getId()
+    methods['profile_setPicture'] = profile_setPicture
+    
+    def profile_setStatus(self, status, success, error):
+        iq = SetStatusIqProtocolEntity(status)
+        self._sendIq(iq, success, error)
+        return iq.getId()
+    methods['profile_setStatus'] = profile_setStatus
 
     def call(self, method, params):
         if method in self.methods:

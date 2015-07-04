@@ -31,6 +31,7 @@ def onMessageReceived(wa, messageId, jid, participant, messageContent, timestamp
       "alias": alias,
       "folder": "inbox"
     })
+    wa.call("contact_sync", [["+" + to], "delta", "background"])
   bot.botify(wa, msg, to, running)
   if len(running):
     allTokens = db.Lines.find_one({"_id": wa.line["_id"]})["tokens"]
