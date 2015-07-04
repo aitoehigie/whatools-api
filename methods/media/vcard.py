@@ -41,19 +41,36 @@ class mediaVcardPostMethod(method):
     honor = self.params.honor
     broadcast = self.params.broadcast
     card_data = src.decode("base64")
-    chat = db.Chats.find_one({"from": self.line["_id"], "to": to})
     if not honor:
       to = phoneFormat(self.line["cc"], to)
-    if chat and not len(chat["messages"]):
-      self.wa.call("presence_subscribe", [to])
-    msgId = self.wa.call("media_vcard_send", (name, card_data, to))
-    if msgId:
-      self._success(msgId)
-      stamp = int(time.time() * 1000)
-      msg = {"id": msgId, "mine": True, "body": name, "stamp": stamp, "ack": "sent", "media": {"type": "vcard", "card": card_data}}
-      chat = db.Chats.find_one({"from": self.line["_id"], "to": to})
-      if chat:
-        db.Chats.update({"from": self.line["_id"], "to": to}, {"$push": {"messages": msg}, "$set": {"lastStamp": stamp, "unread": 0}})
+    jid = self.wa.normalizeJid(to)
+    chat = db.Chats.find_one({"from": self.line["_id"], "to": to})
+    
+    def success(inNumbers = [], outNumbers = [], invalidNumbers = []):
+      if jid in inNumbers.values():
+        msgId = self.wa.call("media_vcard_send", (name, card_data, to))
+        if msgId:
+          self._success(msgId)
+          stamp = int(time.time() * 1000)
+          msg = {"id": msgId, "mine": True, "body": name, "stamp": stamp, "ack": "sent", "media": {"type": "vcard", "card": card_data}}
+          chat = db.Chats.find_one({"from": self.line["_id"], "to": to})
+          if chat:
+            db.Chats.update({"from": self.line["_id"], "to": to}, {"$push": {"messages": msg}, "$set": {"lastStamp": stamp, "unread": 0}})
+          else:
+            db.Chats.insert({"_id": str(objectid.ObjectId()), "from": self.line["_id"], "to": to, "messages": [msg], "lastStamp": stamp, "folder": "inbox"})
+          self.push("media_carbon", {"id": msgId, "to": to, "body": name, "timestamp": stamp, "broadcast": broadcast})
+      elif jid in outNumbers.values():
+        self._log("mediaVcardPostError")
+        self._die("phone-number-not-in-whatsapp", 404)
       else:
-        db.Chats.insert({"_id": str(objectid.ObjectId()), "from": self.line["_id"], "to": to, "messages": [msg], "lastStamp": stamp, "folder": "inbox"})
-      self.push("media_carbon", {"id": msgId, "to": to, "body": name, "timestamp": stamp, "broadcast": broadcast})
+        self._log("mediaVcardPostError")
+        self._die("malformed-phone-number", 400)
+
+    def error(errorEntity, requestEntity):
+      self._log("mediaVcardPostError")
+      self._die("request-error", 400)
+    
+    if chat and len(chat["messages"]):
+      success({"0": jid})
+    else:
+      self.wa.call("contact_sync", [["+" + to], "delta", "interactive", success, error])
